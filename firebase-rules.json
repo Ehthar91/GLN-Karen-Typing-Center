@@ -1,0 +1,35 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        "hostUid": {
+          ".write": "auth != null && (!data.exists() && newData.val() === auth.uid || data.val() === auth.uid && newData.val() === auth.uid)"
+        },
+        "passage": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "status": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "createdAt": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "expiresAt": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "startedAt": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "players": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['id','name','progress','wpm','accuracy','color','joinedAt','finishedAt']) && newData.child('id').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 24 && newData.child('progress').isNumber() && newData.child('progress').val() >= 0 && newData.child('progress').val() <= 100"
+          }
+        }
+      }
+    }
+  }
+}
