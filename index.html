@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#12213f" />
+  <title>GLN Karen Typing Center</title>
+  <meta name="description" content="Type, practice, play, and learn S'gaw Karen Unicode at GLN Karen Typing Center." />
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="stylesheet" href="padauk.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="practice.css" />
+  <link rel="stylesheet" href="games.css" />
+  <link rel="stylesheet" href="race.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="GLN Karen Typing Center home">
+        <img class="brand-logo" src="logo.png" alt="GLN Karen Typing logo" />
+        <span><strong>GLN Karen Typing Center</strong><small>ကညီကျိာ် လံာ်တီၢ်</small></span>
+      </a>
+      <nav class="topnav" aria-label="Main sections">
+        <button class="active" id="navType" type="button">Type</button>
+        <button id="navPractice" type="button">Practice</button>
+        <button id="navGames" type="button">Games</button>
+      </nav>
+    </header>
+
+    <section class="workspace" id="typeView" aria-labelledby="editor-title">
+      <div class="workspace-heading">
+        <div><p class="eyebrow">S’GAW KAREN · ကညီကျိာ်</p><h1 id="editor-title">Type in Karen</h1></div>
+        <p class="hint">KarenKNU layout — use your English keyboard or tap below.</p>
+      </div>
+
+      <div class="editor-card">
+        <textarea id="editor" lang="ksw" spellcheck="false" autofocus placeholder="တီၢ်လံာ်ဖဲအံၤ…" aria-label="Karen text editor"></textarea>
+        <div class="editor-footer">
+          <span id="count">0 characters</span>
+          <div class="actions">
+            <button class="button ghost" id="undo" type="button" aria-label="Undo last change">↶ <span>Undo</span></button>
+            <button class="button ghost" id="selectAll" type="button">Select all</button>
+            <button class="button danger" id="clear" type="button">Clear</button>
+            <button class="button primary" id="copy" type="button"><span id="copyIcon">▣</span> <span id="copyText">Copy text</span></button>
+          </div>
+        </div>
+      </div>
+
+      <section class="keyboard-card" aria-label="On-screen Karen keyboard">
+        <div class="keyboard-top">
+          <div class="mode-switch" role="group" aria-label="Keyboard layer">
+            <button class="active" id="normalMode" type="button">Normal</button>
+            <button id="shiftMode" type="button">Shift</button>
+          </div>
+          <button class="layout-note" id="toggleGuide" type="button">Keyboard guide <span>⌄</span></button>
+        </div>
+        <div class="guide" id="guide" hidden>This is the KarenKNU S’gaw Karen layout. Each key shows its English shortcut. Press Shift for the second layer.</div>
+        <div class="keyboard" id="keyboard"></div>
+      </section>
+
+      <p class="privacy"><span aria-hidden="true">●</span> Your text stays on this device.</p>
+    </section>
+
+    <section class="workspace games-view" id="gamesView" aria-labelledby="games-title" hidden>
+      <div class="games-heading">
+        <div><p class="eyebrow">KAREN TYPING GAMES</p><h1 id="games-title">Choose a challenge</h1></div>
+        <p class="hint">Practice Karen words while building speed and accuracy.</p>
+      </div>
+      <div class="game-grid" id="gameGrid">
+        <button class="game-card race-card" data-game="race" type="button"><span class="game-icon">🏁</span><span><strong>Classroom Car Race</strong><small>Create one room code. Students join with their names and race live.</small></span><em>Race →</em></button>
+        <button class="game-card sprint-card" data-game="sprint" type="button"><span class="game-icon">⚡</span><span><strong>Word Sprint</strong><small>Type as many Karen words as you can in 45 seconds.</small></span><em>Play →</em></button>
+        <button class="game-card rain-card" data-game="rain" type="button"><span class="game-icon">↓</span><span><strong>Falling Words</strong><small>Type each word before it reaches the bottom.</small></span><em>Play →</em></button>
+      </div>
+      <section class="game-stage" id="gameStage" hidden aria-live="polite">
+        <div class="game-stage-top"><button class="back-games" id="backGames" type="button">← All games</button><strong id="activeGameTitle">Word Sprint</strong><button class="button ghost" id="restartGame" type="button">↻ Restart</button></div>
+        <div class="game-stats"><div><span>Score</span><strong id="gameScore">0</strong></div><div><span id="gameMiddleLabel">Streak</span><strong id="gameMiddle">0</strong></div><div><span id="gameTimeLabel">Time</span><strong id="gameTime">45</strong></div></div>
+        <div class="playfield" id="playfield">
+          <div class="game-message" id="gameMessage"><strong>Ready?</strong><span>Press Start to begin.</span><button class="button primary" id="startGame" type="button">Start game</button></div>
+          <div class="word-challenge" id="wordChallenge" hidden><span class="challenge-label" id="challengeLabel">TYPE THIS WORD</span><strong id="challengeWord" lang="ksw"></strong><div class="typed-answer" id="typedAnswer" lang="ksw"></div></div>
+          <div class="falling-word" id="fallingWord" lang="ksw" hidden></div>
+        </div>
+        <p class="game-tip" id="gameTip">Use your English keyboard or tap the highlighted key below.</p>
+        <div class="game-keyboard keyboard" id="gameKeyboard"></div>
+      </section>
+      <section class="race-stage" id="raceStage" hidden aria-live="polite">
+        <div class="race-top"><button class="back-games" id="backRace" type="button">← All games</button><strong>Classroom Car Race</strong><span id="raceConnection">Online</span></div>
+        <div class="race-join" id="raceJoin">
+          <div class="race-intro"><span class="race-flag">🏁</span><h2>Race your classmates</h2><p>Everyone types the same Karen passage. Accurate typing moves your car toward the finish line.</p></div>
+          <div class="race-options">
+            <form class="race-option" id="createRaceForm"><strong>Teacher</strong><p>Create a room and share its code.</p><button class="button primary" type="submit">Create a race</button></form>
+            <form class="race-option" id="joinRaceForm"><strong>Student</strong><p>Enter the shared code and your name.</p><label>Room code<input id="raceCodeInput" maxlength="5" autocomplete="off" placeholder="ABCDE" required /></label><label>Your name<input id="raceNameInput" maxlength="24" autocomplete="name" placeholder="Student name" required /></label><button class="button primary" type="submit">Join race</button></form>
+          </div>
+          <p class="race-error" id="raceError" role="alert"></p>
+        </div>
+        <div class="race-lobby" id="raceLobby" hidden>
+          <div class="room-code-card"><span>ROOM CODE</span><strong id="roomCode">—</strong><button class="button ghost" id="copyRaceCode" type="button">Copy code</button></div>
+          <div class="lobby-copy"><h2 id="lobbyTitle">Waiting for racers</h2><p id="lobbyHint">Students enter this code and their names.</p><button class="button primary" id="startRace" type="button" hidden>Start race</button></div>
+          <div class="player-chips" id="lobbyPlayers"></div>
+        </div>
+        <div class="race-live" id="raceLive" hidden>
+          <div class="race-status"><span id="raceStatusText">Race in progress</span><strong id="racePosition">—</strong></div>
+          <div class="race-track" id="raceTrack"></div>
+          <div class="race-passage" id="racePassage" lang="ksw"></div>
+          <p class="race-prompt" id="racePrompt">Start typing with your English keyboard.</p>
+          <div class="race-keyboard keyboard" id="raceKeyboard"></div>
+        </div>
+      </section>
+      <p class="privacy"><span aria-hidden="true">●</span> Race rooms expire after four hours.</p>
+    </section>
+
+    <section class="workspace practice-view" id="practiceView" aria-labelledby="practice-title" hidden>
+      <div class="practice-head">
+        <div><p class="eyebrow">KAREN TYPING PRACTICE</p><h1 id="practice-title">Learn one key at a time</h1></div>
+        <label class="lesson-picker">Lesson
+          <select id="lessonSelect" aria-label="Choose a typing lesson"></select>
+        </label>
+      </div>
+
+      <div class="stats-grid" aria-label="Practice statistics">
+        <div><strong id="progressStat">0%</strong><span>Progress</span></div>
+        <div><strong id="accuracyStat">100%</strong><span>Accuracy</span></div>
+        <div><strong id="wpmStat">0</strong><span>WPM</span></div>
+      </div>
+
+      <div class="lesson-card">
+        <div class="lesson-meta"><span id="lessonNumber">Lesson 1</span><span id="lessonFocus">Basic letters</span></div>
+        <div class="progress-track"><span id="progressBar"></span></div>
+        <div class="target-text" id="targetText" lang="ksw" aria-live="polite" style="color:#17233b;position:relative"></div>
+        <p class="type-prompt" id="typePrompt">Start typing with your English keyboard.</p>
+        <div class="lesson-actions">
+          <button class="button ghost" id="restartLesson" type="button">↻ Restart</button>
+          <button class="button primary" id="nextLesson" type="button" hidden>Next lesson →</button>
+        </div>
+      </div>
+
+      <section class="keyboard-card practice-keyboard-card" aria-label="Practice keyboard">
+        <div class="keyboard-top">
+          <div class="mode-switch" role="group" aria-label="Practice keyboard layer">
+            <button class="active" id="practiceNormal" type="button">Normal</button>
+            <button id="practiceShift" type="button">Shift</button>
+          </div>
+          <span class="next-key-label">Next key: <strong id="nextKey">—</strong></span>
+        </div>
+        <div class="keyboard" id="practiceKeyboard"></div>
+      </section>
+      <p class="privacy"><span aria-hidden="true">●</span> Practice progress is saved on this device.</p>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite">Copied to clipboard</div>
+  <script src="app.js"></script>
+  <script src="practice.js"></script>
+  <script src="games.js"></script>
+  <script src="race.js"></script>
+</body>
+</html>
