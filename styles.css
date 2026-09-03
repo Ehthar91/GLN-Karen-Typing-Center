@@ -20,3 +20,13 @@ body::before,body::after{content:"";position:fixed;top:78px;bottom:0;width:clamp
   html.phone-fit .keyboard .key{height:43px;font-size:.95rem;border-radius:6px}
   html.phone-fit .keyboard .key small{font-size:.42rem;left:2px}
 }
+
+/* Phone-style Shift key */
+@media(max-width:720px){
+  .mode-switch{display:none}
+  .mobile-bottom-row .phone-shift{display:flex;align-items:center;justify-content:center;flex:.95;min-width:0;max-width:none;font-family:Inter,ui-sans-serif,sans-serif;font-size:1.35rem;font-weight:800;background:#dbe3ec;border-color:#aeb9c7;color:#172033}
+  .mobile-bottom-row .phone-shift .shift-arrow{line-height:1;transform:translateY(-1px)}
+  .mobile-bottom-row .phone-shift.active{background:#172033;color:white;border-color:#172033;box-shadow:0 2px 7px rgba(15,23,42,.25)}
+  .mobile-bottom-row .space{flex:3.6}
+  .mobile-bottom-row .wide:not(.space):not(.phone-shift){flex:1.15}
+}
