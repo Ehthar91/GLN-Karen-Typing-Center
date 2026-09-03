@@ -1,4 +1,8 @@
-const editor=document.querySelector('#editor');const keyboard=document.querySelector('#keyboard');const count=document.querySelector('#count');const toast=document.querySelector('#toast');let shifted=false;const mobileOnScreenKeyboard=matchMedia('(pointer: coarse)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(mobileOnScreenKeyboard){editor.readOnly=true;editor.setAttribute('inputmode','none');editor.setAttribute('aria-description','Use the Karen keyboard below to type.');}
+const editor=document.querySelector('#editor');const keyboard=document.querySelector('#keyboard');const count=document.querySelector('#count');const toast=document.querySelector('#toast');let shifted=false;
+function isMobileDevice(){return matchMedia('(max-width:720px)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)}
+function applyPhoneFit(){document.documentElement.classList.toggle('phone-fit',isMobileDevice())}
+if(isMobileDevice()){editor.readOnly=true;editor.setAttribute('inputmode','none');editor.addEventListener('click',()=>editor.blur())}
+addEventListener('resize',applyPhoneFit);applyPhoneFit();
 // KarenKNU S'gaw Karen Unicode map: [English key, normal, shifted].
 const rows=[
 [['`','ပ','ြု'],['1','၁','ည'],['2','၂','ၥ'],['3','၃','£'],['4','၄','၃'],['5','၅','ရ'],['6','၆','၄'],['7','၇','ရ'],['8','၈','ဂ'],['9','၉','('],['0','ဝ',')'],['-','ြ','ြ'],['=','—','ှု']],
@@ -9,7 +13,7 @@ const rows=[
 const special=[['Backspace','Backspace','⌫'],[' ','Space','Space'],['Enter','Enter','↵ Enter']];
 function render(){keyboard.innerHTML='';rows.forEach(row=>{const el=document.createElement('div');el.className='key-row';row.forEach(([latin,normal,shift])=>el.appendChild(makeKey(latin,shifted?shift:normal)));keyboard.appendChild(el)});const bottom=document.createElement('div');bottom.className='key-row';special.forEach(([value,label,display])=>{const b=makeKey(label,display,value);b.classList.add('wide');if(value===' ')b.classList.add('space');bottom.appendChild(b)});keyboard.appendChild(bottom)}
 function makeKey(label,char,value=char){const b=document.createElement('button');b.type='button';b.className='key';b.dataset.value=value;b.dataset.code=label;b.innerHTML=`<small>${label==='Space'?'':label}</small>${char}`;b.addEventListener('click',()=>insert(value));return b}
-function insert(value){const start=editor.selectionStart??editor.value.length;const end=editor.selectionEnd??start;let text='',from=start,to=end;if(value==='Backspace'){if(start===end&&start>0){from=start-1;to=start}else if(start===end){return}}else if(value==='Enter'){text='\n'}else{text=value}editor.setRangeText(text,from,to,'end');editor.dispatchEvent(new Event('input',{bubbles:true}));editor.focus({preventScroll:true})}
+function insert(value){const start=editor.selectionStart??editor.value.length;const end=editor.selectionEnd??start;if(value==='Backspace'){if(start!==end){editor.setRangeText('',start,end,'end')}else if(start>0){const before=[...editor.value.slice(0,start)];const remove=before.at(-1)||'';editor.setRangeText('',start-remove.length,start,'end')}}else{const text=value==='Enter'?'\n':value;editor.setRangeText(text,start,end,'end')}updateCount();if(!isMobileDevice())editor.focus()}
 function updateCount(){const n=[...editor.value].length;count.textContent=`${n} ${n===1?'character':'characters'}`}
 function setShift(on){shifted=on;document.querySelector('#normalMode').classList.toggle('active',!on);document.querySelector('#shiftMode').classList.toggle('active',on);render()}
 document.querySelector('#normalMode').onclick=()=>setShift(false);document.querySelector('#shiftMode').onclick=()=>setShift(true);
@@ -18,8 +22,4 @@ editor.addEventListener('input',updateCount);editor.addEventListener('keydown',e
 function flashKey(code){const b=[...document.querySelectorAll('.key')].find(k=>k.dataset.code===code);if(b){b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),110)}}
 document.querySelector('#copy').onclick=async()=>{if(!editor.value){showToast('Type something first');return}try{await navigator.clipboard.writeText(editor.value)}catch{editor.select();document.execCommand('copy')}document.querySelector('#copyText').textContent='Copied';showToast('Copied to clipboard');setTimeout(()=>document.querySelector('#copyText').textContent='Copy text',1400)};
 document.querySelector('#clear').onclick=()=>{if(!editor.value)return;editor.value='';updateCount();editor.focus();showToast('Text cleared')};document.querySelector('#selectAll').onclick=()=>{editor.focus();editor.select()};document.querySelector('#undo').onclick=()=>{editor.focus();document.execCommand('undo');updateCount()};document.querySelector('#toggleGuide').onclick=()=>{const g=document.querySelector('#guide');g.hidden=!g.hidden};
-function showToast(message){toast.textContent=message;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1600)}
-const mobileFitToggle=document.querySelector('#mobileFitToggle');
-function setMobileFit(on){document.body.classList.toggle('mobile-fit',on);if(mobileFitToggle){mobileFitToggle.setAttribute('aria-pressed',String(on));mobileFitToggle.textContent=on?'Fit phone ✓':'Scroll keys'}try{localStorage.setItem('glnMobileFit',on?'1':'0')}catch{}}
-if(mobileFitToggle){let saved=null;try{saved=localStorage.getItem('glnMobileFit')}catch{}const defaultFit=window.matchMedia('(max-width:720px)').matches;setMobileFit(saved===null?defaultFit:saved==='1');mobileFitToggle.addEventListener('click',()=>setMobileFit(!document.body.classList.contains('mobile-fit')))}
-render();updateCount();
+function showToast(message){toast.textContent=message;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1600)}render();updateCount();
