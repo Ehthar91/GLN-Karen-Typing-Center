@@ -1,4 +1,4 @@
-const editor=document.querySelector('#editor');const keyboard=document.querySelector('#keyboard');const count=document.querySelector('#count');const toast=document.querySelector('#toast');let shifted=false;
+const editor=document.querySelector('#editor');const keyboard=document.querySelector('#keyboard');const count=document.querySelector('#count');const toast=document.querySelector('#toast');let shifted=false;const mobileOnScreenKeyboard=matchMedia('(pointer: coarse)').matches||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(mobileOnScreenKeyboard){editor.readOnly=true;editor.setAttribute('inputmode','none');editor.setAttribute('aria-description','Use the Karen keyboard below to type.');}
 // KarenKNU S'gaw Karen Unicode map: [English key, normal, shifted].
 const rows=[
 [['`','ပ','ြု'],['1','၁','ည'],['2','၂','ၥ'],['3','၃','£'],['4','၄','၃'],['5','၅','ရ'],['6','၆','၄'],['7','၇','ရ'],['8','၈','ဂ'],['9','၉','('],['0','ဝ',')'],['-','ြ','ြ'],['=','—','ှု']],
@@ -9,7 +9,7 @@ const rows=[
 const special=[['Backspace','Backspace','⌫'],[' ','Space','Space'],['Enter','Enter','↵ Enter']];
 function render(){keyboard.innerHTML='';rows.forEach(row=>{const el=document.createElement('div');el.className='key-row';row.forEach(([latin,normal,shift])=>el.appendChild(makeKey(latin,shifted?shift:normal)));keyboard.appendChild(el)});const bottom=document.createElement('div');bottom.className='key-row';special.forEach(([value,label,display])=>{const b=makeKey(label,display,value);b.classList.add('wide');if(value===' ')b.classList.add('space');bottom.appendChild(b)});keyboard.appendChild(bottom)}
 function makeKey(label,char,value=char){const b=document.createElement('button');b.type='button';b.className='key';b.dataset.value=value;b.dataset.code=label;b.innerHTML=`<small>${label==='Space'?'':label}</small>${char}`;b.addEventListener('click',()=>insert(value));return b}
-function insert(value){editor.focus();if(value==='Backspace'){document.execCommand('delete');}else if(value==='Enter'){document.execCommand('insertText',false,'\n');}else{document.execCommand('insertText',false,value)}updateCount()}
+function insert(value){const start=editor.selectionStart??editor.value.length;const end=editor.selectionEnd??start;let text='',from=start,to=end;if(value==='Backspace'){if(start===end&&start>0){from=start-1;to=start}else if(start===end){return}}else if(value==='Enter'){text='\n'}else{text=value}editor.setRangeText(text,from,to,'end');editor.dispatchEvent(new Event('input',{bubbles:true}));editor.focus({preventScroll:true})}
 function updateCount(){const n=[...editor.value].length;count.textContent=`${n} ${n===1?'character':'characters'}`}
 function setShift(on){shifted=on;document.querySelector('#normalMode').classList.toggle('active',!on);document.querySelector('#shiftMode').classList.toggle('active',on);render()}
 document.querySelector('#normalMode').onclick=()=>setShift(false);document.querySelector('#shiftMode').onclick=()=>setShift(true);
