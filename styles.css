@@ -30,3 +30,52 @@ body::before,body::after{content:"";position:fixed;top:78px;bottom:0;width:clamp
   .mobile-bottom-row .space{flex:3.6}
   .mobile-bottom-row .wide:not(.space):not(.phone-shift){flex:1.15}
 }
+
+/* Strong phone-keyboard modifier layout: Shift left, Backspace right */
+@media(max-width:720px){
+  .phone-letter-bottom{align-items:stretch}
+  html.phone-fit .keyboard .phone-letter-bottom .phone-modifier{
+    flex:1.28 1 0;
+    min-width:0;
+    max-width:none;
+    font-family:Inter,ui-sans-serif,sans-serif;
+    font-size:1.15rem;
+    font-weight:800;
+    background:#dbe3ec;
+    border-color:#aeb9c7;
+    color:#172033;
+  }
+  html.phone-fit .keyboard .phone-letter-bottom .phone-shift.active{
+    background:#172033;
+    color:#fff;
+    border-color:#172033;
+    box-shadow:0 2px 7px rgba(15,23,42,.25);
+  }
+  html.phone-fit .keyboard .phone-letter-bottom .phone-backspace{
+    font-size:1rem;
+  }
+  .mobile-bottom-row .phone-shift{display:none!important}
+}
+
+
+/* Mobile: top-right Backspace + prevent accidental double-tap zoom */
+@media(max-width:720px){
+  html,body,.app-shell,.keyboard,.key,.button,textarea{touch-action:manipulation}
+  .phone-top-row{align-items:stretch}
+  html.phone-fit .keyboard .phone-backspace-top{
+    flex:1.28 1 0;
+    min-width:0;
+    max-width:none;
+    font-family:Inter,ui-sans-serif,sans-serif;
+    font-size:1rem;
+    font-weight:800;
+    background:#dbe3ec;
+    border-color:#aeb9c7;
+    color:#172033;
+  }
+  html.phone-fit .keyboard .phone-letter-bottom .phone-shift{
+    flex:1.28 1 0;
+    min-width:0;
+    max-width:none;
+  }
+}
