@@ -1,8 +1,8 @@
-const CACHE = 'gln-karen-typing-undo-v1';
+const CACHE = 'gln-karen-typing-undo-v2';
 const ASSETS = [
   './','./index.html','./logo.png','./icon-192.png','./icon-512.png','./apple-touch-icon.png',
-  './manifest.webmanifest','./padauk.css','./styles.css?v=undo1','./practice.css','./games.css','./race.css',
-  './app.js?v=undo1','./practice.js','./games.js','./race.js','./firebase-config.js'
+  './manifest.webmanifest','./padauk.css','./styles.css?v=undo2','./practice.css','./games.css','./race.css',
+  './app.js?v=undo2','./practice.js','./games.js','./race.js','./firebase-config.js'
 ];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
