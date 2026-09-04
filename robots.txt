@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ehthar91.github.io/GLN-Karen-Typing-Center/sitemap.xml
