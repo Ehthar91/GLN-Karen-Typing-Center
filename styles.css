@@ -79,3 +79,20 @@ body::before,body::after{content:"";position:fixed;top:78px;bottom:0;width:clamp
     max-width:none;
   }
 }
+
+/* Mobile text cursor/caret support */
+@media(max-width:720px){
+  #editor{caret-color:#2563eb;cursor:text;-webkit-user-select:text;user-select:text;}
+}
+
+/* Mobile caret visibility fix v3 */
+@media(max-width:720px){
+  #editor{
+    caret-color:#2563eb !important;
+    cursor:text;
+    -webkit-user-select:text;
+    user-select:text;
+  }
+  #editor:focus{outline:2px solid rgba(37,99,235,.22);outline-offset:-2px;}
+  .keyboard .key{-webkit-tap-highlight-color:transparent;}
+}

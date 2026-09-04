@@ -16,3 +16,7 @@ The GLN logo will be used as the Home Screen icon and the site opens in standalo
 - The Type, Practice, and Games interface can be cached for offline use after the first successful visit.
 - Classroom Race still needs internet because it uses Firebase for live multiplayer.
 - If you update cached files later, change the CACHE name in sw.js (for example v1 to v2) so installed copies refresh cleanly.
+
+
+## Mobile cursor
+The mobile typing editor now supports a visible text cursor/caret and tap-to-position editing while keeping `inputmode=none` so the custom Karen keyboard remains the intended input method.
