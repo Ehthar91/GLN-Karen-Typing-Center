@@ -26,7 +26,12 @@
   <meta name="twitter:image" content="https://ehthar91.github.io/GLN-Karen-Typing-Center/logo.png" />
 
   <link rel="icon" type="image/png" href="logo.png" />
-  <link rel="apple-touch-icon" href="logo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="GLN Karen Typing" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -198,5 +203,10 @@
   <script src="practice.js"></script>
   <script src="games.js"></script>
   <script src="race.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
 </body>
 </html>
