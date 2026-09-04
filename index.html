@@ -55,7 +55,7 @@
   }
   </script>
   <link rel="stylesheet" href="padauk.css" />
-  <link rel="stylesheet" href="styles.css?v=caret5" />
+  <link rel="stylesheet" href="styles.css?v=langmix1" />
   <link rel="stylesheet" href="practice.css" />
   <link rel="stylesheet" href="games.css" />
   <link rel="stylesheet" href="race.css" />
@@ -100,13 +100,19 @@
 
       <section class="keyboard-card" aria-label="On-screen Karen keyboard">
         <div class="keyboard-top">
-          <div class="mode-switch" role="group" aria-label="Keyboard layer">
+          <div class="keyboard-left-controls">
+            <div class="language-switch" role="group" aria-label="Keyboard language">
+              <button class="active" id="karenMode" type="button">Karen</button>
+              <button id="englishMode" type="button">English</button>
+            </div>
+            <div class="mode-switch" role="group" aria-label="Keyboard layer">
             <button class="active" id="normalMode" type="button">Normal</button>
             <button id="shiftMode" type="button">Shift</button>
+            </div>
           </div>
           <div class="keyboard-tools"><button class="layout-note" id="toggleGuide" type="button">Keyboard guide <span>⌄</span></button></div>
         </div>
-        <div class="guide" id="guide" hidden>This is the KarenKNU S’gaw Karen layout. Each key shows its English shortcut. Press Shift for the second layer.</div>
+        <div class="guide" id="guide" hidden><span id="guideText">This is the KarenKNU S’gaw Karen layout. Each key shows its English shortcut. Press Shift for the second layer.</span></div>
         <div class="keyboard" id="keyboard"></div>
       </section>
 
@@ -199,7 +205,7 @@
     </section>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite">Copied to clipboard</div>
-  <script src="app.js?v=caret5"></script>
+  <script src="app.js?v=langmix1"></script>
   <script src="practice.js"></script>
   <script src="games.js"></script>
   <script src="race.js"></script>
