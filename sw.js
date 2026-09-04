@@ -1,4 +1,4 @@
-const CACHE = 'gln-karen-typing-caret-v5';
+const CACHE = 'gln-karen-typing-caret-v6';
 const ASSETS = [
   './','./index.html','./logo.png','./icon-192.png','./icon-512.png','./apple-touch-icon.png',
   './manifest.webmanifest','./padauk.css','./styles.css?v=cursor4','./practice.css','./games.css','./race.css',
