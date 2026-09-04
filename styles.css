@@ -96,3 +96,13 @@ body::before,body::after{content:"";position:fixed;top:78px;bottom:0;width:clamp
   #editor:focus{outline:2px solid rgba(37,99,235,.22);outline-offset:-2px;}
   .keyboard .key{-webkit-tap-highlight-color:transparent;}
 }
+
+
+/* Mobile persistent visual caret v5 */
+@media(max-width:720px){
+  #editor{caret-color:transparent !important;}
+  .mobile-visual-caret{position:fixed;display:none;width:2px;background:#2563eb;border-radius:2px;pointer-events:none;z-index:9999;transform:translateZ(0)}
+  .mobile-visual-caret.show{display:block;animation:glnCaretBlink 1s steps(1,end) infinite}
+  .mobile-caret-mirror{position:absolute;left:-100000px;top:0;visibility:hidden;pointer-events:none;overflow:hidden;min-height:0!important;height:auto!important}
+}
+@keyframes glnCaretBlink{0%,52%{opacity:1}53%,100%{opacity:0}}
