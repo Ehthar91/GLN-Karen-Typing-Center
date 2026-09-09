@@ -2,11 +2,6 @@ const raceStage=document.querySelector('#raceStage'),raceJoin=document.querySele
 let raceCode='',racePlayerId='',racePlayerName='',racePassageText='',raceTyped='',raceSendTimer=null,raceStartedAt=0,raceCorrect=0,raceErrors=0,raceMode='',raceUnsubscribe=null;
 let fb=null,db=null,auth=null,currentUser=null;
 const carColors=['🚗','🚙','🏎️','🚕','🚓','🚘'];
-const RACE_PASSAGES=[
-  'မိၢ် ပၢ် မိၢ်ပၢ် ဖိခွါ ဖိမုၣ် ဟံၣ်ဖိဃီဖိ',
-  'မုၢ်ဒဲး မုၢ်ဆၣ် မုၢ်ယူာ် ကိးနံၤဒဲး ကိးဂီၤဒဲး',
-  'မ့ၤ တၢ်အီၣ် ညၣ် ဆီညၣ် ကိးဟါဒဲး ကိးနၤဒဲး'
-];
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 async function initRaceFirebase(){
@@ -37,6 +32,7 @@ function makeRoomCode(){
   return Array.from({length:5},()=>CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]).join('');
 }
 function cleanName(value){return String(value||'').trim().replace(/\s+/g,' ').slice(0,24)}
+function cleanWords(value){return String(value||'').replace(/[,;\n\r\t]+/g,' ').trim().replace(/\s+/g,' ').slice(0,800)}
 function roomRef(code){return fb.ref(db,`rooms/${code}`)}
 function playerRef(code,uid){return fb.ref(db,`rooms/${code}/players/${uid}`)}
 
@@ -45,6 +41,7 @@ function openRace(){
   document.querySelector('#raceError').textContent='';
   document.querySelector('#raceCodeInput').value='';
   document.querySelector('#raceNameInput').value='';
+  document.querySelector('#raceWordsInput').value='';
   document.querySelector('#raceConnection').textContent='Connecting…';
   initRaceFirebase().then(()=>document.querySelector('#raceConnection').textContent='Online').catch(()=>{});
 }
@@ -57,7 +54,9 @@ function raceError(message){document.querySelector('#raceError').textContent=mes
 
 document.querySelector('#createRaceForm').onsubmit=async e=>{
   e.preventDefault();raceError('');
+  const passage=cleanWords(document.querySelector('#raceWordsInput').value);
   try{
+    if(!passage) throw new Error('Paste at least one Karen word for the race.');
     await initRaceFirebase();
     let created=false,tries=0;
     while(!created && tries<10){
@@ -69,7 +68,7 @@ document.querySelector('#createRaceForm').onsubmit=async e=>{
       const now=Date.now();
       await fb.set(ref,{
         hostUid:currentUser.uid,
-        passage:RACE_PASSAGES[Math.floor(Math.random()*RACE_PASSAGES.length)],
+        passage,
         status:'waiting',
         createdAt:now,
         expiresAt:now+14400000,
@@ -186,7 +185,9 @@ function renderRacePassage(){
   const rest=document.createTextNode(racePassageText.slice(raceTyped.length+1));box.append(done,current,rest)
 }
 function renderRaceKeyboard(){
-  const box=document.querySelector('#raceKeyboard');box.innerHTML='';const expected=raceExpected(),shifted=expected?.shift||false;
+  const box=document.querySelector('#raceKeyboard');box.innerHTML='';const expected=raceExpected(),shifted=expected?.shift||false,instruction=document.querySelector('#raceKeyInstruction');
+  instruction.textContent=expected?(expected.key==='Space'?'Press Space':shifted?`Hold Shift + press ${expected.key}`:`Press ${expected.key}`):'Finished!';
+  instruction.classList.toggle('needs-shift',shifted);
   rows.slice(1).forEach(row=>{
     const line=document.createElement('div');line.className='key-row';
     row.forEach(([key,normal,shift])=>{
@@ -195,8 +196,10 @@ function renderRaceKeyboard(){
       button.onclick=()=>acceptRaceInput(shifted?shift:normal);line.appendChild(button)
     });box.appendChild(line)
   });
-  const line=document.createElement('div'),space=document.createElement('button');line.className='key-row';space.type='button';space.className='key wide space';space.textContent='Space';
-  if(expected?.key==='Space')space.classList.add('expected');space.onclick=()=>acceptRaceInput(' ');line.appendChild(space);box.appendChild(line)
+  const line=document.createElement('div'),leftShift=document.createElement('button'),space=document.createElement('button'),rightShift=document.createElement('button');line.className='key-row';
+  [leftShift,rightShift].forEach(button=>{button.type='button';button.className='key wide shift-key';button.textContent='Shift';button.tabIndex=-1;if(shifted)button.classList.add('shift-required')});
+  space.type='button';space.className='key wide space';space.textContent='Space';
+  if(expected?.key==='Space')space.classList.add('expected');space.onclick=()=>acceptRaceInput(' ');line.append(leftShift,space,rightShift);box.appendChild(line)
 }
 function acceptRaceInput(value){
   if(raceMode!=='player'||raceLive.hidden||raceTyped.length>=racePassageText.length)return;
