@@ -4,66 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#12213f" />
-  <title>GLN Karen Typing Center — Free S'gaw Karen Unicode Keyboard & Typing Practice</title>
-  <meta name="description" content="GLN Karen Typing Center is a free S'gaw Karen Unicode keyboard and typing tutor. Type Karen online, practice Karen typing lessons, and play Karen typing games." />
-  <meta name="keywords" content="Karen typing, S'gaw Karen keyboard, Karen Unicode keyboard, Karen typing practice, Karen typing tutor, Karen typing games, KarenKNU keyboard, GLN Karen Typing Center" />
-  <meta name="author" content="GLN Karen Typing Center" />
-  <meta name="application-name" content="GLN Karen Typing Center" />
-  <meta name="robots" content="index, follow, max-image-preview:large" />
-  <link rel="canonical" href="https://ehthar91.github.io/GLN-Karen-Typing-Center/" />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="GLN Karen Typing Center" />
-  <meta property="og:title" content="GLN Karen Typing Center | S'gaw Karen Keyboard, Practice & Games" />
-  <meta property="og:description" content="Type, practice, play, and learn S'gaw Karen Unicode with a KarenKNU keyboard, lessons, and typing games." />
-  <meta property="og:url" content="https://ehthar91.github.io/GLN-Karen-Typing-Center/" />
-  <meta property="og:image" content="https://ehthar91.github.io/GLN-Karen-Typing-Center/logo.png" />
-  <meta property="og:image:alt" content="GLN Karen Typing Center logo" />
-
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="GLN Karen Typing Center" />
-  <meta name="twitter:description" content="Free S'gaw Karen Unicode keyboard, typing practice, and typing games." />
-  <meta name="twitter:image" content="https://ehthar91.github.io/GLN-Karen-Typing-Center/logo.png" />
-
+  <title>GLN Karen Typing Center</title>
+  <meta name="description" content="Type, practice, play, and learn S'gaw Karen Unicode at GLN Karen Typing Center." />
   <link rel="icon" type="image/png" href="logo.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="GLN Karen Typing" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": ["WebApplication", "LearningResource"],
-    "name": "GLN Karen Typing Center",
-    "alternateName": ["GLN Karen Typing", "Karen Typing Center"],
-    "url": "https://ehthar91.github.io/GLN-Karen-Typing-Center/",
-    "applicationCategory": "EducationalApplication",
-    "operatingSystem": "Any",
-    "isAccessibleForFree": true,
-    "description": "A free S'gaw Karen Unicode typing center with a KarenKNU keyboard, typing practice, lessons, classroom races, and games.",
-    "inLanguage": ["en", "ksw"],
-    "image": "https://ehthar91.github.io/GLN-Karen-Typing-Center/logo.png",
-    "featureList": [
-      "S'gaw Karen Unicode keyboard",
-      "KarenKNU keyboard layout",
-      "Typing practice lessons",
-      "Karen typing games",
-      "Classroom car race"
-    ]
-  }
-  </script>
   <link rel="stylesheet" href="padauk.css" />
-  <link rel="stylesheet" href="styles.css?v=undo2" />
+  <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="practice.css" />
   <link rel="stylesheet" href="games.css" />
   <link rel="stylesheet" href="race.css" />
-  <style>
-    .seo-about{max-width:980px;margin:12px auto 32px;padding:18px 22px;font-family:Inter,ui-sans-serif,sans-serif;color:#526071;font-size:.92rem;line-height:1.6}
-    .seo-about h2{margin:0 0 6px;color:#26354b;font-size:1.08rem}
-    .seo-about p{margin:6px 0}
-  </style>
 </head>
 <body>
   <main class="app-shell">
@@ -81,12 +29,12 @@
 
     <section class="workspace" id="typeView" aria-labelledby="editor-title">
       <div class="workspace-heading">
-        <div><p class="eyebrow">GLN KAREN TYPING CENTER · S’GAW KAREN · ကညီကျိာ်</p><h1 id="editor-title">Free S’gaw Karen Unicode Keyboard</h1></div>
+        <div><p class="eyebrow">S’GAW KAREN · ကညီကျိာ်</p><h1 id="editor-title">Type in Karen</h1></div>
         <p class="hint">KarenKNU layout — use your English keyboard or tap below.</p>
       </div>
 
       <div class="editor-card">
-        <textarea id="editor" lang="ksw" spellcheck="false" autofocus inputmode="none" autocomplete="off" autocorrect="off" placeholder="တီၢ်လံာ်ဖဲအံၤ…" aria-label="Karen text editor"></textarea>
+        <textarea id="editor" lang="ksw" spellcheck="false" autofocus placeholder="တီၢ်လံာ်ဖဲအံၤ…" aria-label="Karen text editor"></textarea>
         <div class="editor-footer">
           <span id="count">0 characters</span>
           <div class="actions">
@@ -100,19 +48,13 @@
 
       <section class="keyboard-card" aria-label="On-screen Karen keyboard">
         <div class="keyboard-top">
-          <div class="keyboard-left-controls">
-            <div class="language-switch" role="group" aria-label="Keyboard language">
-              <button class="active" id="karenMode" type="button">Karen</button>
-              <button id="englishMode" type="button">English</button>
-            </div>
-            <div class="mode-switch" role="group" aria-label="Keyboard layer">
+          <div class="mode-switch" role="group" aria-label="Keyboard layer">
             <button class="active" id="normalMode" type="button">Normal</button>
             <button id="shiftMode" type="button">Shift</button>
-            </div>
           </div>
-          <div class="keyboard-tools"><button class="layout-note" id="toggleGuide" type="button">Keyboard guide <span>⌄</span></button></div>
+          <button class="layout-note" id="toggleGuide" type="button">Keyboard guide <span>⌄</span></button>
         </div>
-        <div class="guide" id="guide" hidden><span id="guideText">This is the KarenKNU S’gaw Karen layout. Each key shows its English shortcut. Press Shift for the second layer.</span></div>
+        <div class="guide" id="guide" hidden>This is the KarenKNU S’gaw Karen layout. Each key shows its English shortcut. Press Shift for the second layer.</div>
         <div class="keyboard" id="keyboard"></div>
       </section>
 
@@ -145,7 +87,7 @@
         <div class="race-join" id="raceJoin">
           <div class="race-intro"><span class="race-flag">🏁</span><h2>Race your classmates</h2><p>Everyone types the same Karen passage. Accurate typing moves your car toward the finish line.</p></div>
           <div class="race-options">
-            <form class="race-option" id="createRaceForm"><strong>Teacher</strong><p>Create a room and share its code.</p><button class="button primary" type="submit">Create a race</button></form>
+            <form class="race-option" id="createRaceForm"><strong>Teacher</strong><p>Paste the Karen words your students will type.</p><label>Race words<textarea id="raceWordsInput" lang="ksw" rows="5" maxlength="800" placeholder="မိၢ်&#10;ပၢ်&#10;မိၢ်ပၢ်" required></textarea><small>Use one word per line, commas, or spaces.</small></label><button class="button primary" type="submit">Create a race</button></form>
             <form class="race-option" id="joinRaceForm"><strong>Student</strong><p>Enter the shared code and your name.</p><label>Room code<input id="raceCodeInput" maxlength="5" autocomplete="off" placeholder="ABCDE" required /></label><label>Your name<input id="raceNameInput" maxlength="24" autocomplete="name" placeholder="Student name" required /></label><button class="button primary" type="submit">Join race</button></form>
           </div>
           <p class="race-error" id="raceError" role="alert"></p>
@@ -159,6 +101,7 @@
           <div class="race-status"><span id="raceStatusText">Race in progress</span><strong id="racePosition">—</strong></div>
           <div class="race-track" id="raceTrack"></div>
           <div class="race-passage" id="racePassage" lang="ksw"></div>
+          <div class="race-key-instruction" id="raceKeyInstruction" aria-live="polite"></div>
           <p class="race-prompt" id="racePrompt">Start typing with your English keyboard.</p>
           <div class="race-keyboard keyboard" id="raceKeyboard"></div>
         </div>
@@ -205,14 +148,9 @@
     </section>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite">Copied to clipboard</div>
-  <script src="app.js?v=undo2"></script>
+  <script src="app.js"></script>
   <script src="practice.js"></script>
   <script src="games.js"></script>
   <script src="race.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-    }
-  </script>
 </body>
 </html>
