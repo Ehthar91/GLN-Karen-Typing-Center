@@ -21,7 +21,8 @@
   <link rel="stylesheet" href="quiz.css?v=20260910-6" />
   <link rel="stylesheet" href="quiz-classroom.css?v=20260910-8" />
   <link rel="stylesheet" href="quiz-print.css?v=20260910-9" />
-  <link rel="stylesheet" href="calculator.css?v=20260910-13" />
+  <link rel="stylesheet" href="calculator.css?v=20260910-15" />
+  <link rel="stylesheet" href="seating.css?v=20260910-19" />
 </head>
 <body>
   <main class="app-shell">
@@ -36,6 +37,7 @@
         <button id="navGames" type="button">Games</button>
         <button id="navQuiz" type="button">Quiz</button>
         <button id="navCalculator" type="button">Calculator</button>
+        <button id="navTools" type="button">Classroom Tools</button>
       </nav>
       <div class="language-switch" role="group" aria-label="Typing language">
         <button class="active" id="languageKaren" type="button">S’gaw Karen</button>
@@ -222,29 +224,78 @@ Fish = ညၣ်</textarea>
 
     <section class="calculator-view" id="calculatorView" aria-labelledby="calculator-title" hidden>
       <div class="calculator-heading">
-        <div><p class="eyebrow">GLN MATH TOOLS</p><h1 id="calculator-title">Graphing &amp; Scientific Calculator</h1></div>
+        <div><p class="eyebrow" id="calculatorEyebrow">GLN CALCULATOR</p><h1 id="calculator-title">Graphing &amp; Scientific Calculator</h1></div>
         <p class="hint" id="calculatorHint">Choose GLN TI-84 or GLN TI-30XS inside the calculator.</p>
       </div>
-      <div class="calculator-mode-switch" role="group" aria-label="Choose a math tool">
-        <button class="active" id="showCalculators" type="button">Calculators</button>
-        <button id="showConverter" type="button">Unit Converter</button>
+      <div class="calculator-mode-switch" id="classroomToolSwitch" role="group" aria-label="Choose a classroom tool" hidden>
+        <button id="showWheel" type="button">Random Wheel</button>
+        <button id="showSeating" type="button">Seating Chart</button>
       </div>
       <div class="calculator-frame-card" id="calculatorPanel">
         <iframe id="calculatorFrame" src="calculator.html?v=20260910-11" title="GLN graphing and scientific calculators" loading="lazy" allow="fullscreen"></iframe>
       </div>
-      <section class="converter-card" id="converterPanel" aria-labelledby="converterTitle" hidden>
-        <div class="converter-top">
-          <div><p class="eyebrow">CONVERT UNITS</p><h2 id="converterTitle">Unit Converter</h2></div>
-          <label>Category<select id="converterCategory" aria-label="Conversion category"></select></label>
+      <section class="wheel-card" id="wheelPanel" aria-labelledby="wheelTitle" hidden>
+        <div class="wheel-toolbar">
+          <div><p class="eyebrow">CLASSROOM PICKER</p><h2 id="wheelTitle">Random Wheel</h2></div>
+          <button class="button ghost" id="wheelFullscreen" type="button">⛶ Full screen</button>
         </div>
-        <div class="converter-workspace">
-          <label class="converter-field"><span>From</span><input id="converterInput" type="number" inputmode="decimal" value="1" step="any" aria-label="Value to convert" /><select id="converterFrom" aria-label="Convert from unit"></select></label>
-          <button class="converter-swap" id="converterSwap" type="button" aria-label="Swap units">⇄<span>Swap</span></button>
-          <label class="converter-field converter-result"><span>To</span><output id="converterOutput" aria-live="polite">—</output><select id="converterTo" aria-label="Convert to unit"></select></label>
+        <div class="wheel-layout">
+          <div class="wheel-stage">
+            <div class="wheel-pointer" aria-hidden="true"></div>
+            <canvas id="randomWheel" width="640" height="640" aria-label="Random selection wheel"></canvas>
+            <button class="wheel-spin" id="spinWheel" type="button">SPIN</button>
+          </div>
+          <div class="wheel-controls">
+            <label class="wheel-entry-label">Names, words, or topics<textarea id="wheelEntries" rows="12" spellcheck="false" placeholder="Enter one item per line">Alex
+Maria
+Saw Htoo
+Naw Paw
+Jordan
+Taylor</textarea><small>Enter one item per line.</small></label>
+            <div class="wheel-actions"><button class="button ghost" id="shuffleWheel" type="button">Shuffle</button><button class="button ghost" id="clearWheel" type="button">Clear</button></div>
+            <div class="wheel-options"><label class="wheel-check"><input id="wheelNoDuplicates" type="checkbox" checked /> Remove duplicate entries</label><label class="wheel-time">Spin time<select id="wheelSpinTime" aria-label="Wheel spin time"><option value="1" selected>1 second</option><option value="2">2 seconds</option><option value="3">3 seconds</option><option value="4">4 seconds</option><option value="5">5 seconds</option><option value="6">6 seconds</option><option value="7">7 seconds</option><option value="8">8 seconds</option><option value="9">9 seconds</option><option value="10">10 seconds</option></select></label></div>
+            <div class="wheel-history"><div><strong>Results</strong><button id="clearWheelResults" type="button">Clear results</button></div><ol id="wheelResults"><li>No results yet</li></ol></div>
+          </div>
         </div>
-        <p class="converter-equation" id="converterEquation"></p>
+        <div class="wheel-winner" id="wheelWinner" hidden role="dialog" aria-modal="true" aria-labelledby="wheelWinnerName">
+          <div class="wheel-confetti" id="wheelConfetti" aria-hidden="true"></div>
+          <div class="wheel-winner-card"><span>Selected</span><strong id="wheelWinnerName">—</strong><div><button class="button ghost" id="keepWheelWinner" type="button">Keep</button><button class="button primary" id="removeWheelWinner" type="button">Remove</button></div></div>
+        </div>
       </section>
-      <p class="privacy"><span aria-hidden="true">●</span> Your calculator work stays on this device.</p>
+      <section class="seating-card" id="seatingPanel" aria-labelledby="seatingTitle" hidden>
+        <div class="seating-toolbar">
+          <div><p class="eyebrow">CLASSROOM LAYOUT</p><h2 id="seatingTitle">Seating Chart</h2></div>
+          <div><button class="button ghost" id="downloadSeating" type="button">Download PNG</button><button class="button ghost" id="printSeating" type="button">Print</button><button class="button ghost" id="seatingFullscreen" type="button">⛶ Full screen</button></div>
+        </div>
+        <div class="seating-layout">
+          <aside class="seating-setup">
+            <div class="seating-storage"><span>Save with</span><div><button class="active" id="seatingLocalMode" type="button">This device</button><button id="seatingGoogleMode" type="button">Google account</button></div><button class="button primary" id="seatingGoogleSignIn" type="button" hidden>Sign in with Google</button><small id="seatingStorageStatus">Saved locally on this device</small></div>
+            <div class="class-manager"><label>Saved class<select id="seatingClassSelect" aria-label="Choose a saved class"></select></label><div><button class="button ghost" id="newSeatingClass" type="button">＋ New</button><button class="button danger" id="deleteSeatingClass" type="button">Delete</button></div></div>
+            <label>Class name<input id="seatingClassName" value="My Class" maxlength="50" /></label>
+            <label>Student names<textarea id="seatingRoster" rows="11" spellcheck="false" placeholder="Enter one student per line">Alex
+Maria
+Saw Htoo
+Naw Paw
+Jordan
+Taylor</textarea><small>Enter one student per line.</small></label>
+            <input id="seatingFileInput" type="file" accept=".csv,.txt" hidden /><button class="button ghost" id="importSeatingRoster" type="button">Upload CSV or text file</button>
+            <div class="seating-dimensions"><label>Rows<select id="seatingRows"></select></label><label>Columns<select id="seatingColumns"></select></label></div>
+            <button class="button primary" id="buildSeating" type="button">Build seating chart</button>
+            <div class="seating-actions"><button class="button ghost" id="shuffleSeating" type="button">Shuffle seats</button><button class="button ghost" id="flipSeating" type="button">Flip room</button></div>
+            <details class="seating-rules"><summary>Classroom rules</summary><label>Keep apart<textarea id="seatingKeepApart" rows="3" placeholder="Alex, Jordan&#10;Maria, Taylor"></textarea><small>One pair per line, separated by a comma.</small></label><label>Place near front<textarea id="seatingNearFront" rows="2" placeholder="Saw Htoo&#10;Naw Paw"></textarea></label><label class="rule-check"><input id="seatingAlternateGender" type="checkbox" /> Alternate groups A and B when possible</label><label>Group A names<textarea id="seatingGroupA" rows="2"></textarea></label><label>Group B names<textarea id="seatingGroupB" rows="2"></textarea></label></details>
+            <details class="seating-groups"><summary>Automatic groups</summary><label>Number of groups<select id="seatingGroupCount"></select></label><button class="button primary" id="makeSeatingGroups" type="button">Create groups</button><div id="seatingGroupResults"></div></details>
+            <p class="seating-help">Drag students to exchange seats. Use the lock on a seat to keep that student in place when shuffling.</p>
+          </aside>
+          <div class="seating-board-wrap" id="seatingPrintArea">
+            <div class="seating-board" id="seatingBoard">
+              <div class="seating-front">FRONT OF ROOM</div>
+              <h3 id="seatingChartName">My Class</h3>
+              <div class="seating-grid" id="seatingGrid"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <p class="privacy"><span aria-hidden="true">●</span> Save on this device or connect your Google account.</p>
     </section>
 
     <section class="workspace practice-view" id="practiceView" aria-labelledby="practice-title" hidden>
@@ -293,9 +344,10 @@ Fish = ညၣ်</textarea>
   <script src="app.js?v=20260910-6"></script>
   <script src="practice.js?v=20260910-6"></script>
   <script src="games.js?v=20260910-6"></script>
-  <script src="race.js?v=20260910-6"></script>
+  <script src="race.js?v=20260910-17"></script>
   <script src="quiz.js?v=20260910-9"></script>
   <script src="quiz-classroom.js?v=20260910-9"></script>
-  <script src="calculator.js?v=20260910-12"></script>
+  <script src="calculator.js?v=20260910-19"></script>
+  <script src="seating.js?v=20260910-18"></script>
 </body>
 </html>

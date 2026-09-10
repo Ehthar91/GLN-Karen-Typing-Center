@@ -19,8 +19,9 @@ async function initRaceFirebase(){
     auth=authMod.getAuth(app);
     db=dbMod.getDatabase(app);
     fb={...authMod,...dbMod};
-    const credential=await authMod.signInAnonymously(auth);
-    currentUser=credential.user;
+    if(typeof auth.authStateReady==='function')await auth.authStateReady();
+    if(auth.currentUser)currentUser=auth.currentUser;
+    else{const credential=await authMod.signInAnonymously(auth);currentUser=credential.user}
     return currentUser;
   }catch(error){
     raceError(error.message || 'Could not connect to the classroom race service.');
