@@ -10,14 +10,15 @@
   <title>GLN Karen Typing Center</title>
   <meta name="description" content="Type, practice, play, and learn S'gaw Karen Unicode at GLN Karen Typing Center." />
   <link rel="icon" type="image/png" href="logo.png" />
-  <link rel="stylesheet" href="padauk.css?v=20260910-4" />
-  <link rel="stylesheet" href="styles.css?v=20260910-4" />
-  <link rel="stylesheet" href="practice.css?v=20260910-4" />
-  <link rel="stylesheet" href="games.css?v=20260910-4" />
-  <link rel="stylesheet" href="race.css?v=20260910-4" />
-  <link rel="stylesheet" href="mobile-keyboard.css?v=20260910-4" />
-  <link rel="stylesheet" href="race-modern.css?v=20260910-4" />
-  <link rel="stylesheet" href="creator-credit.css?v=20260910-4" />
+  <link rel="stylesheet" href="padauk.css?v=20260910-6" />
+  <link rel="stylesheet" href="styles.css?v=20260910-6" />
+  <link rel="stylesheet" href="practice.css?v=20260910-6" />
+  <link rel="stylesheet" href="games.css?v=20260910-6" />
+  <link rel="stylesheet" href="race.css?v=20260910-6" />
+  <link rel="stylesheet" href="mobile-keyboard.css?v=20260910-6" />
+  <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
+  <link rel="stylesheet" href="creator-credit.css?v=20260910-6" />
+  <link rel="stylesheet" href="quiz.css?v=20260910-6" />
 </head>
 <body>
   <main class="app-shell">
@@ -30,6 +31,7 @@
         <button class="active" id="navType" type="button">Type</button>
         <button id="navPractice" type="button">Practice</button>
         <button id="navGames" type="button">Games</button>
+        <button id="navQuiz" type="button">Quiz</button>
       </nav>
       <div class="language-switch" role="group" aria-label="Typing language">
         <button class="active" id="languageKaren" type="button">S’gaw Karen</button>
@@ -132,6 +134,69 @@
       <p class="privacy"><span aria-hidden="true">●</span> Race rooms expire after four hours.</p>
     </section>
 
+    <section class="workspace quiz-view" id="quizView" aria-labelledby="quiz-title" hidden>
+      <div class="quiz-heading">
+        <div><p class="eyebrow">TEACHER QUIZ MAKER</p><h1 id="quiz-title">Create a quiz from your list</h1></div>
+        <p class="hint">Paste pairs, generate questions, and let students answer.</p>
+      </div>
+
+      <section class="quiz-builder" id="quizBuilder">
+        <div class="quiz-builder-grid">
+          <label class="quiz-list-field">Words and answers
+            <textarea id="quizPairs" rows="8" spellcheck="false" placeholder="Meat = တၢ်ညၣ်&#10;Fish = ညၣ်">Meat = တၢ်ညၣ်
+Fish = ညၣ်</textarea>
+            <small>Enter one pair per line using an equals sign.</small>
+          </label>
+          <div class="quiz-settings">
+            <label>Question type
+              <select id="quizRelation">
+                <option value="translation">Translation</option>
+                <option value="custom">Custom question</option>
+              </select>
+            </label>
+            <label id="quizTemplateField" hidden>Question template
+              <input id="quizTemplate" value="What is the answer for {term}?" placeholder="Write a question using {term}" />
+              <small>Use <b>{term}</b> where the first item should appear.</small>
+            </label>
+            <label>Question direction
+              <select id="quizDirection"><option value="forward">First item → answer</option><option value="reverse">Answer → first item</option><option value="mixed">Mix both directions</option></select>
+            </label>
+            <label>Answer style
+              <select id="quizAnswerMode"><option value="typing">Type the answer</option><option value="choice">Multiple choice</option><option value="mixed">Mixed</option></select>
+            </label>
+            <button class="button primary quiz-generate" id="generateQuiz" type="button">✦ Generate questions</button>
+          </div>
+        </div>
+        <p class="quiz-error" id="quizError" role="alert"></p>
+        <div class="quiz-preview" id="quizPreview" hidden>
+          <div class="quiz-preview-head"><div><span>QUESTION PREVIEW</span><strong id="quizPreviewCount">0 questions</strong></div><button class="button primary" id="startQuiz" type="button">Start quiz →</button></div>
+          <ol id="quizPreviewList"></ol>
+        </div>
+      </section>
+
+      <section class="quiz-player" id="quizPlayer" hidden aria-live="polite">
+        <div class="quiz-player-top"><button class="back-games" id="editQuiz" type="button">← Edit quiz</button><strong id="quizProgress">Question 1 of 2</strong><span id="quizScore">Score: 0</span></div>
+        <div class="quiz-progress-track"><span id="quizProgressBar"></span></div>
+        <div class="quiz-question-card">
+          <span class="quiz-type" id="quizType">TYPE YOUR ANSWER</span>
+          <h2 id="quizQuestion">Question</h2>
+          <div class="quiz-typed-answer" id="quizTypedAnswer" lang="ksw" tabindex="0"></div>
+          <div class="quiz-choices" id="quizChoices" hidden></div>
+          <p class="quiz-feedback" id="quizFeedback"></p>
+          <button class="button primary" id="checkQuizAnswer" type="button">Check answer</button>
+          <button class="button primary" id="nextQuizQuestion" type="button" hidden>Next question →</button>
+        </div>
+        <div class="quiz-keyboard keyboard" id="quizKeyboard"></div>
+      </section>
+
+      <section class="quiz-results" id="quizResults" hidden>
+        <span class="quiz-result-icon">✓</span><p class="eyebrow">QUIZ COMPLETE</p><h2 id="quizResultScore">0 out of 0</h2><p id="quizResultMessage">Review your answers and try again.</p>
+        <div class="quiz-review" id="quizReview"></div>
+        <div class="quiz-result-actions"><button class="button primary" id="retryQuiz" type="button">Try again</button><button class="button ghost" id="newQuiz" type="button">Edit word list</button></div>
+      </section>
+      <p class="privacy"><span aria-hidden="true">●</span> Quiz lists and answers stay on this device.</p>
+    </section>
+
     <section class="workspace practice-view" id="practiceView" aria-labelledby="practice-title" hidden>
       <div class="practice-head">
         <div><p class="eyebrow" id="practiceEyebrow">KAREN TYPING PRACTICE</p><h1 id="practice-title">Learn one key at a time</h1></div>
@@ -171,13 +236,14 @@
     </section>
   </main>
   <aside class="creator-credit" aria-label="Website creator">
-    <img src="creator-ehthar.png?v=20260910-4" alt="Ehthar Htain" />
+    <img src="creator-ehthar.png?v=20260910-6" alt="Ehthar Htain" />
     <span>Created by<strong>Ehthar Htain</strong></span>
   </aside>
   <div class="toast" id="toast" role="status" aria-live="polite">Copied to clipboard</div>
-  <script src="app.js?v=20260910-4"></script>
-  <script src="practice.js?v=20260910-4"></script>
-  <script src="games.js?v=20260910-4"></script>
-  <script src="race.js?v=20260910-4"></script>
+  <script src="app.js?v=20260910-6"></script>
+  <script src="practice.js?v=20260910-6"></script>
+  <script src="games.js?v=20260910-6"></script>
+  <script src="race.js?v=20260910-6"></script>
+  <script src="quiz.js?v=20260910-6"></script>
 </body>
 </html>
