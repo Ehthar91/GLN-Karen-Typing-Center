@@ -2,8 +2,25 @@
 .calculator-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:24px}
 .calculator-heading h1{margin:.25rem 0 0;font-size:clamp(2rem,4vw,3.2rem);line-height:1.05}
 .calculator-heading .hint{max-width:440px;text-align:right}
+.calculator-mode-switch{display:flex;width:max-content;max-width:100%;gap:5px;margin:0 auto 18px;padding:5px;border-radius:12px;background:#dfe8f3}
+.calculator-mode-switch button{min-height:42px;padding:0 22px;border:0;border-radius:9px;background:transparent;color:#526075;font:800 .9rem Inter,ui-sans-serif,sans-serif;cursor:pointer}
+.calculator-mode-switch button.active{background:#fff;color:#173868;box-shadow:0 3px 10px rgba(18,33,63,.14)}
 .calculator-frame-card{overflow:hidden;border:1px solid var(--line);border-radius:24px;background:#fff;box-shadow:var(--shadow)}
 .calculator-frame-card iframe{display:block;width:100%;height:1100px;border:0;background:#eef3f8}
+.converter-card{max-width:900px;margin:0 auto;padding:32px;border:1px solid var(--line);border-radius:24px;background:#fff;box-shadow:var(--shadow)}
+.converter-card[hidden]{display:none}
+.converter-top{display:flex;align-items:end;justify-content:space-between;gap:24px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.converter-top h2{margin:0;color:#173868;font-size:1.8rem}
+.converter-top label,.converter-field{display:flex;flex-direction:column;gap:8px;color:#526075;font-size:.82rem;font-weight:800}
+.converter-top select,.converter-field select,.converter-field input{min-height:48px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#17233b;padding:0 13px;font:700 1rem Inter,ui-sans-serif,sans-serif}
+.converter-top select{min-width:210px}
+.converter-workspace{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;gap:18px;padding:34px 0 24px}
+.converter-field input,.converter-field output{width:100%;min-height:76px;padding:13px 16px;border:2px solid #b9c8da;border-radius:13px;background:#fbfdff;color:#173868;font:800 clamp(1.6rem,4vw,2.35rem)/1.2 Inter,ui-sans-serif,sans-serif}
+.converter-field input:focus{outline:0;border-color:#258bd5;box-shadow:0 0 0 4px rgba(37,139,213,.12)}
+.converter-field output{display:flex;align-items:center;overflow:auto;border-color:#9bd3bf;background:#f0fbf6;color:#087344}
+.converter-swap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:58px;height:58px;margin-bottom:7px;border:0;border-radius:50%;background:#173868;color:#fff;font:800 1.35rem Inter,sans-serif;cursor:pointer;box-shadow:0 6px 15px rgba(23,56,104,.2)}
+.converter-swap span{font-size:.58rem;text-transform:uppercase;letter-spacing:.05em}
+.converter-equation{min-height:24px;margin:0;text-align:center;color:#667085;font-size:.9rem}
 body.calculator-open .language-switch{visibility:hidden}
-@media(max-width:900px){.calculator-view{padding:28px 14px 52px}.calculator-heading{display:block}.calculator-heading .hint{text-align:left;margin-top:10px}.calculator-frame-card{border-radius:16px}.calculator-frame-card iframe{height:1050px}}
-@media(max-width:620px){.calculator-view{padding:18px 6px 42px}.calculator-heading{padding:0 10px}.calculator-heading h1{font-size:1.85rem}.calculator-frame-card iframe{height:980px}}
+@media(max-width:900px){.calculator-view{padding:28px 14px 52px}.calculator-heading{display:block}.calculator-heading .hint{text-align:left;margin-top:10px}.calculator-frame-card,.converter-card{border-radius:16px}.calculator-frame-card iframe{height:1050px}}
+@media(max-width:620px){.calculator-view{padding:18px 6px 42px}.calculator-heading{padding:0 10px}.calculator-heading h1{font-size:1.85rem}.calculator-frame-card iframe{height:980px}.calculator-mode-switch{width:calc(100% - 20px)}.calculator-mode-switch button{flex:1;padding:0 10px}.converter-card{padding:20px 14px}.converter-top{align-items:stretch;flex-direction:column}.converter-top select{width:100%}.converter-workspace{grid-template-columns:1fr;gap:14px;padding-top:22px}.converter-swap{justify-self:center;margin:0;transform:rotate(90deg)}.converter-swap span{display:none}.converter-field input,.converter-field output{min-height:66px}}

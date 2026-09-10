@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="quiz.css?v=20260910-6" />
   <link rel="stylesheet" href="quiz-classroom.css?v=20260910-8" />
   <link rel="stylesheet" href="quiz-print.css?v=20260910-9" />
-  <link rel="stylesheet" href="calculator.css?v=20260910-10" />
+  <link rel="stylesheet" href="calculator.css?v=20260910-13" />
 </head>
 <body>
   <main class="app-shell">
@@ -222,12 +222,28 @@ Fish = ညၣ်</textarea>
 
     <section class="calculator-view" id="calculatorView" aria-labelledby="calculator-title" hidden>
       <div class="calculator-heading">
-        <div><p class="eyebrow">GLN CALCULATORS</p><h1 id="calculator-title">Graphing &amp; Scientific Calculator</h1></div>
-        <p class="hint">Choose GLN TI-84 or GLN TI-30XS inside the calculator.</p>
+        <div><p class="eyebrow">GLN MATH TOOLS</p><h1 id="calculator-title">Graphing &amp; Scientific Calculator</h1></div>
+        <p class="hint" id="calculatorHint">Choose GLN TI-84 or GLN TI-30XS inside the calculator.</p>
       </div>
-      <div class="calculator-frame-card">
+      <div class="calculator-mode-switch" role="group" aria-label="Choose a math tool">
+        <button class="active" id="showCalculators" type="button">Calculators</button>
+        <button id="showConverter" type="button">Unit Converter</button>
+      </div>
+      <div class="calculator-frame-card" id="calculatorPanel">
         <iframe id="calculatorFrame" src="calculator.html?v=20260910-11" title="GLN graphing and scientific calculators" loading="lazy" allow="fullscreen"></iframe>
       </div>
+      <section class="converter-card" id="converterPanel" aria-labelledby="converterTitle" hidden>
+        <div class="converter-top">
+          <div><p class="eyebrow">CONVERT UNITS</p><h2 id="converterTitle">Unit Converter</h2></div>
+          <label>Category<select id="converterCategory" aria-label="Conversion category"></select></label>
+        </div>
+        <div class="converter-workspace">
+          <label class="converter-field"><span>From</span><input id="converterInput" type="number" inputmode="decimal" value="1" step="any" aria-label="Value to convert" /><select id="converterFrom" aria-label="Convert from unit"></select></label>
+          <button class="converter-swap" id="converterSwap" type="button" aria-label="Swap units">⇄<span>Swap</span></button>
+          <label class="converter-field converter-result"><span>To</span><output id="converterOutput" aria-live="polite">—</output><select id="converterTo" aria-label="Convert to unit"></select></label>
+        </div>
+        <p class="converter-equation" id="converterEquation"></p>
+      </section>
       <p class="privacy"><span aria-hidden="true">●</span> Your calculator work stays on this device.</p>
     </section>
 
@@ -280,6 +296,6 @@ Fish = ညၣ်</textarea>
   <script src="race.js?v=20260910-6"></script>
   <script src="quiz.js?v=20260910-9"></script>
   <script src="quiz-classroom.js?v=20260910-9"></script>
-  <script src="calculator.js?v=20260910-10"></script>
+  <script src="calculator.js?v=20260910-12"></script>
 </body>
 </html>
