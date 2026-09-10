@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="quiz.css?v=20260910-6" />
   <link rel="stylesheet" href="quiz-classroom.css?v=20260910-8" />
   <link rel="stylesheet" href="quiz-print.css?v=20260910-9" />
+  <link rel="stylesheet" href="calculator.css?v=20260910-10" />
 </head>
 <body>
   <main class="app-shell">
@@ -34,6 +35,7 @@
         <button id="navPractice" type="button">Practice</button>
         <button id="navGames" type="button">Games</button>
         <button id="navQuiz" type="button">Quiz</button>
+        <button id="navCalculator" type="button">Calculator</button>
       </nav>
       <div class="language-switch" role="group" aria-label="Typing language">
         <button class="active" id="languageKaren" type="button">S’gaw Karen</button>
@@ -218,6 +220,17 @@ Fish = ညၣ်</textarea>
       <p class="privacy"><span aria-hidden="true">●</span> Quiz lists and answers stay on this device.</p>
     </section>
 
+    <section class="calculator-view" id="calculatorView" aria-labelledby="calculator-title" hidden>
+      <div class="calculator-heading">
+        <div><p class="eyebrow">GLN CALCULATORS</p><h1 id="calculator-title">Graphing &amp; Scientific Calculator</h1></div>
+        <p class="hint">Choose GLN TI-84 or GLN TI-30XS inside the calculator.</p>
+      </div>
+      <div class="calculator-frame-card">
+        <iframe id="calculatorFrame" src="calculator.html?v=20260910-11" title="GLN graphing and scientific calculators" loading="lazy" allow="fullscreen"></iframe>
+      </div>
+      <p class="privacy"><span aria-hidden="true">●</span> Your calculator work stays on this device.</p>
+    </section>
+
     <section class="workspace practice-view" id="practiceView" aria-labelledby="practice-title" hidden>
       <div class="practice-head">
         <div><p class="eyebrow" id="practiceEyebrow">KAREN TYPING PRACTICE</p><h1 id="practice-title">Learn one key at a time</h1></div>
@@ -267,5 +280,6 @@ Fish = ညၣ်</textarea>
   <script src="race.js?v=20260910-6"></script>
   <script src="quiz.js?v=20260910-9"></script>
   <script src="quiz-classroom.js?v=20260910-9"></script>
+  <script src="calculator.js?v=20260910-10"></script>
 </body>
 </html>
