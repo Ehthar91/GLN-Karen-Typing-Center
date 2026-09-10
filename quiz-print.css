@@ -1,0 +1,13 @@
+@media print {
+  body{background:#fff!important;color:#111!important}
+  body::before,body::after,.topbar,.creator-credit,.toast{display:none!important}
+  .app-shell>main>section:not(.quiz-view),.quiz-heading,.quiz-builder,.quiz-player,.privacy{display:none!important}
+  .quiz-view{display:block!important;max-width:none!important;padding:0!important;margin:0!important}
+  .quiz-results,.quiz-classroom{display:block!important;box-shadow:none!important;border:0!important;margin:0!important;padding:0!important}
+  .quiz-classroom>.quiz-class-top,.quiz-lobby,.quiz-teacher-live,.quiz-class-error{display:none!important}
+  .quiz-class-results,.quiz-results{display:block!important;text-align:center!important}
+  .quiz-result-actions{display:none!important}
+  .quiz-review{max-width:none!important}
+  .quiz-class-list{max-width:650px!important;margin:1rem auto!important}
+  .print-date{color:#666!important}
+}

@@ -1,6 +1,6 @@
 import { readFile, mkdir, rm, writeFile } from 'node:fs/promises';
 
-const files=['index.html','styles.css','padauk.css','practice.css','games.css','race.css','mobile-keyboard.css','race-modern.css','creator-credit.css','quiz.css','app.js','practice.js','games.js','race.js','quiz.js'];
+const files=['index.html','styles.css','padauk.css','practice.css','games.css','race.css','mobile-keyboard.css','race-modern.css','creator-credit.css','quiz.css','quiz-classroom.css','app.js','practice.js','games.js','race.js','quiz.js','quiz-classroom.js'];
 const types={html:'text/html; charset=UTF-8',css:'text/css; charset=UTF-8',js:'text/javascript; charset=UTF-8'};
 const assets={};
 for(const file of files){const ext=file.split('.').pop();assets[`/${file==='index.html'?'':file}`]={body:await readFile(file,'utf8'),type:types[ext]}}

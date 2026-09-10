@@ -30,6 +30,17 @@
           }
         }
       }
+    },
+    "quizRooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() && newData.child('hostUid').val() === auth.uid || data.child('hostUid').val() === auth.uid)",
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('quizRooms').child($code).child('hostUid').val() === auth.uid)"
+          }
+        }
+      }
     }
   }
 }

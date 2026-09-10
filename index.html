@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
   <link rel="stylesheet" href="creator-credit.css?v=20260910-6" />
   <link rel="stylesheet" href="quiz.css?v=20260910-6" />
+  <link rel="stylesheet" href="quiz-classroom.css?v=20260910-8" />
+  <link rel="stylesheet" href="quiz-print.css?v=20260910-9" />
 </head>
 <body>
   <main class="app-shell">
@@ -159,7 +161,7 @@ Fish = ညၣ်</textarea>
               <small>Use <b>{term}</b> where the first item should appear.</small>
             </label>
             <label>Question direction
-              <select id="quizDirection"><option value="forward">First item → answer</option><option value="reverse">Answer → first item</option><option value="mixed">Mix both directions</option></select>
+              <select id="quizDirection"><option value="forward">First item → answer</option><option value="reverse">Answer → first item</option></select>
             </label>
             <label>Answer style
               <select id="quizAnswerMode"><option value="typing">Type the answer</option><option value="choice">Multiple choice</option><option value="mixed">Mixed</option></select>
@@ -169,9 +171,28 @@ Fish = ညၣ်</textarea>
         </div>
         <p class="quiz-error" id="quizError" role="alert"></p>
         <div class="quiz-preview" id="quizPreview" hidden>
-          <div class="quiz-preview-head"><div><span>QUESTION PREVIEW</span><strong id="quizPreviewCount">0 questions</strong></div><button class="button primary" id="startQuiz" type="button">Start quiz →</button></div>
+          <div class="quiz-preview-head"><div><span>QUESTION PREVIEW</span><strong id="quizPreviewCount">0 questions</strong></div><div class="quiz-preview-actions"><button class="button ghost" id="startQuiz" type="button">Practice solo</button><button class="button ghost" id="exportGoogleQuiz" type="button">Export Google Quiz</button><button class="button primary" id="createClassQuiz" type="button">Create classroom quiz →</button></div></div>
           <ol id="quizPreviewList"></ol>
         </div>
+        <div class="quiz-join-card">
+          <div><span class="quiz-join-icon">#</span><div><strong>Join a classroom quiz</strong><small>Enter the code from your teacher.</small></div></div>
+          <form id="joinQuizForm"><label>Room code<input id="quizCodeInput" maxlength="5" autocomplete="off" placeholder="ABCDE" required /></label><label>Your name<input id="quizNameInput" maxlength="24" autocomplete="name" placeholder="Student name" required /></label><button class="button primary" type="submit">Join quiz</button></form>
+        </div>
+      </section>
+
+      <section class="quiz-classroom" id="quizClassroom" hidden>
+        <div class="quiz-class-top"><button class="back-games" id="leaveClassQuiz" type="button">← Leave room</button><strong>Classroom Quiz</strong><span id="quizClassConnection">Online</span></div>
+        <div class="quiz-class-lobby" id="quizClassLobby">
+          <div class="quiz-room-code"><span>ROOM CODE</span><strong id="quizRoomCode">—</strong><button class="button ghost" id="copyQuizCode" type="button">Copy code</button></div>
+          <div class="quiz-lobby-info"><h2 id="quizLobbyTitle">Waiting for students</h2><p id="quizLobbyHint">Share the room code with your class.</p><label id="quizPaceField">Quiz pace<select id="quizPace"><option value="teacher">Teacher-paced</option><option value="student">Student-paced</option></select></label><label id="quizAdvanceField">Question advance<select id="quizAdvance"><option value="manual">Teacher clicks next</option><option value="auto">Auto-next after everyone answers</option></select></label><button class="button primary" id="startClassQuiz" type="button">Start quiz</button></div>
+          <div class="quiz-student-chips" id="quizLobbyStudents"><span>No students yet</span></div>
+        </div>
+        <div class="quiz-teacher-live" id="quizTeacherLive" hidden>
+          <div class="quiz-live-status"><div><span id="quizLiveLabel">QUESTION 1 OF 2</span><h2 id="quizLiveQuestion">Question</h2><small id="quizLiveAnswer">Answer: —</small></div><button class="button primary" id="advanceClassQuiz" type="button">Next question →</button></div>
+          <div class="quiz-live-scoreboard"><div class="quiz-score-head"><span>Student</span><span>Progress</span><span>Score</span></div><div id="quizLiveStudents"></div></div>
+        </div>
+        <div class="quiz-class-results" id="quizClassResults" hidden><p class="eyebrow">CLASS RESULTS</p><h2>Quiz complete!</h2><p class="print-date" id="quizPrintDate"></p><div class="quiz-class-podium" id="quizClassPodium"></div><div class="quiz-class-list" id="quizClassList"></div><div class="quiz-result-actions"><button class="button primary" id="quizClassAgain" type="button">Use this quiz again</button><button class="button ghost print-quiz" id="printClassResults" type="button">Print results</button></div></div>
+        <p class="quiz-class-error" id="quizClassError" role="alert"></p>
       </section>
 
       <section class="quiz-player" id="quizPlayer" hidden aria-live="polite">
@@ -192,7 +213,7 @@ Fish = ညၣ်</textarea>
       <section class="quiz-results" id="quizResults" hidden>
         <span class="quiz-result-icon">✓</span><p class="eyebrow">QUIZ COMPLETE</p><h2 id="quizResultScore">0 out of 0</h2><p id="quizResultMessage">Review your answers and try again.</p>
         <div class="quiz-review" id="quizReview"></div>
-        <div class="quiz-result-actions"><button class="button primary" id="retryQuiz" type="button">Try again</button><button class="button ghost" id="newQuiz" type="button">Edit word list</button></div>
+    <div class="quiz-result-actions"><button class="button primary" id="retryQuiz" type="button">Try again</button><button class="button ghost" id="newQuiz" type="button">Edit word list</button><button class="button ghost print-quiz" id="printQuizResults" type="button">Print results</button></div>
       </section>
       <p class="privacy"><span aria-hidden="true">●</span> Quiz lists and answers stay on this device.</p>
     </section>
@@ -244,6 +265,7 @@ Fish = ညၣ်</textarea>
   <script src="practice.js?v=20260910-6"></script>
   <script src="games.js?v=20260910-6"></script>
   <script src="race.js?v=20260910-6"></script>
-  <script src="quiz.js?v=20260910-6"></script>
+  <script src="quiz.js?v=20260910-9"></script>
+  <script src="quiz-classroom.js?v=20260910-9"></script>
 </body>
 </html>
