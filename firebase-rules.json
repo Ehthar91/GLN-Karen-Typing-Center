@@ -25,8 +25,8 @@
         },
         "players": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid",
-            ".validate": "newData.hasChildren(['id','name','progress','wpm','accuracy','color','joinedAt','finishedAt']) && newData.child('id').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 24 && newData.child('progress').isNumber() && newData.child('progress').val() >= 0 && newData.child('progress').val() <= 100"
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($code).child('hostUid').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['id','name','progress','wpm','accuracy','color','joinedAt','finishedAt']) && newData.child('id').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 24 && newData.child('progress').isNumber() && newData.child('progress').val() >= 0 && newData.child('progress').val() <= 100"
           }
         }
       }

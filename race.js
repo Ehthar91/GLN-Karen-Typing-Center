@@ -1,8 +1,9 @@
-const raceStage=document.querySelector('#raceStage'),raceJoin=document.querySelector('#raceJoin'),raceLobby=document.querySelector('#raceLobby'),raceLive=document.querySelector('#raceLive');
-let raceCode='',racePlayerId='',racePlayerName='',racePassageText='',raceTyped='',raceSendTimer=null,raceStartedAt=0,raceCorrect=0,raceErrors=0,raceMode='',raceUnsubscribe=null;
+const raceStage=document.querySelector('#raceStage'),raceJoin=document.querySelector('#raceJoin'),raceLobby=document.querySelector('#raceLobby'),raceLive=document.querySelector('#raceLive'),raceResults=document.querySelector('#raceResults');
+let raceCode='',racePlayerId='',racePlayerName='',racePassageText='',raceTyped='',raceSendTimer=null,raceCountdownTimer=null,raceCountdownDone=true,raceStartedAt=0,raceCorrect=0,raceErrors=0,raceMode='',raceUnsubscribe=null,raceLanguage=typingLanguage,raceLastStatus='',raceFinishing=false;
 let fb=null,db=null,auth=null,currentUser=null;
-const carColors=['🚗','🚙','🏎️','🚕','🚓','🚘'];
+const carColors=['#ef3340','#1687e8','#19a974','#f5a623','#8b5cf6','#ec4899'];
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function raceCarGraphic(colorIndex=0){const color=carColors[colorIndex%carColors.length];return `<svg class="race-car-svg" viewBox="0 0 120 52" aria-hidden="true"><path class="car-shadow" d="M14 43h92"/><path fill="${color}" d="M8 34c2-7 8-10 18-11l15-13h35c10 0 18 5 25 13l12 3c4 1 6 4 6 9v6H8z"/><path fill="#dff4ff" d="M45 13h27c7 0 13 3 20 10H34z"/><path fill="rgba(255,255,255,.45)" d="M20 27h78l-7 5H17z"/><path fill="#fff" d="M103 27h9v5h-12z"/><circle cx="31" cy="40" r="9" fill="#17233b"/><circle cx="31" cy="40" r="4" fill="#cbd5e1"/><circle cx="92" cy="40" r="9" fill="#17233b"/><circle cx="92" cy="40" r="4" fill="#cbd5e1"/></svg>`}
 
 async function initRaceFirebase(){
   if(currentUser) return currentUser;
@@ -33,6 +34,9 @@ function makeRoomCode(){
 }
 function cleanName(value){return String(value||'').trim().replace(/\s+/g,' ').slice(0,24)}
 function cleanWords(value){return String(value||'').replace(/[,;\n\r\t]+/g,' ').trim().replace(/\s+/g,' ').slice(0,800)}
+const PWO_RACE_MARKER='\u2060';
+function storedRacePassage(passage,language){return language==='pwo'?PWO_RACE_MARKER+passage:passage}
+function racePassageInfo(value){const stored=String(value||'');if(stored.startsWith(PWO_RACE_MARKER))return{language:'pwo',text:stored.slice(1)};return{language:/^[\x00-\x7F]*$/.test(stored)?'en':'ksw',text:stored}}
 function roomRef(code){return fb.ref(db,`rooms/${code}`)}
 function playerRef(code,uid){return fb.ref(db,`rooms/${code}/players/${uid}`)}
 
@@ -42,12 +46,13 @@ function openRace(){
   document.querySelector('#raceCodeInput').value='';
   document.querySelector('#raceNameInput').value='';
   document.querySelector('#raceWordsInput').value='';
+  raceLanguage=typingLanguage;raceLastStatus='';raceFinishing=false;raceResults.hidden=true;updateRaceLanguageInput();
   document.querySelector('#raceConnection').textContent='Connecting…';
   initRaceFirebase().then(()=>document.querySelector('#raceConnection').textContent='Online').catch(()=>{});
 }
 function closeRace(){
   if(raceUnsubscribe){raceUnsubscribe();raceUnsubscribe=null}
-  clearTimeout(raceSendTimer);raceStage.hidden=true;raceCode='';racePlayerId='';raceTyped='';raceMode='';
+  clearTimeout(raceSendTimer);clearInterval(raceCountdownTimer);raceStage.hidden=true;raceCode='';racePlayerId='';raceTyped='';raceMode='';raceLastStatus='';raceResults.hidden=true;
 }
 document.querySelector('#backRace').onclick=()=>{closeRace();gameGrid.hidden=false};
 function raceError(message){document.querySelector('#raceError').textContent=message}
@@ -56,7 +61,7 @@ document.querySelector('#createRaceForm').onsubmit=async e=>{
   e.preventDefault();raceError('');
   const passage=cleanWords(document.querySelector('#raceWordsInput').value);
   try{
-    if(!passage) throw new Error('Paste at least one Karen word for the race.');
+    if(!passage) throw new Error(`Paste at least one ${languageName()} word for the race.`);
     await initRaceFirebase();
     let created=false,tries=0;
     while(!created && tries<10){
@@ -68,7 +73,7 @@ document.querySelector('#createRaceForm').onsubmit=async e=>{
       const now=Date.now();
       await fb.set(ref,{
         hostUid:currentUser.uid,
-        passage,
+        passage:storedRacePassage(passage,typingLanguage),
         status:'waiting',
         createdAt:now,
         expiresAt:now+14400000,
@@ -77,7 +82,7 @@ document.querySelector('#createRaceForm').onsubmit=async e=>{
       raceCode=code;created=true;
     }
     if(!created) throw new Error('Could not create a room. Please try again.');
-    raceMode='host';racePlayerId='';
+    raceMode='host';racePlayerId='';raceLanguage=typingLanguage;
     showRaceLobby({players:[]});watchRace();
   }catch(error){raceError(error.message)}
 };
@@ -98,7 +103,7 @@ document.querySelector('#joinRaceForm').onsubmit=async e=>{
     const players=Object.values(room.players||{});
     if(players.length>=30) throw new Error('This room is full.');
     if(players.some(p=>String(p.name||'').toLowerCase()===name.toLowerCase())) throw new Error('That name is already in this room. Add an initial.');
-    raceCode=code;racePlayerId=currentUser.uid;racePlayerName=name;raceMode='player';
+    raceCode=code;racePlayerId=currentUser.uid;racePlayerName=name;raceMode='player';raceLanguage=racePassageInfo(room.passage).language;
     await fb.set(playerRef(code,currentUser.uid),{
       id:currentUser.uid,name,progress:0,wpm:0,accuracy:100,
       color:players.length%carColors.length,joinedAt:Date.now(),finishedAt:0
@@ -108,7 +113,7 @@ document.querySelector('#joinRaceForm').onsubmit=async e=>{
 };
 
 function showRaceLobby(data){
-  raceJoin.hidden=true;raceLobby.hidden=false;raceLive.hidden=true;
+  raceJoin.hidden=true;raceLobby.hidden=false;raceLive.hidden=true;raceLive.classList.remove('show-results');raceResults.hidden=true;
   document.querySelector('#roomCode').textContent=raceCode;
   document.querySelector('#startRace').hidden=raceMode!=='host';
   document.querySelector('#lobbyTitle').textContent=raceMode==='host'?'Waiting for racers':'You are in!';
@@ -133,7 +138,7 @@ document.querySelector('#startRace').onclick=async()=>{
     const room=snap.val();
     if(room.hostUid!==currentUser.uid) throw new Error('Only the teacher who created this room can start it.');
     if(!Object.keys(room.players||{}).length) throw new Error('Wait for at least one student to join.');
-    await fb.update(roomRef(raceCode),{status:'racing',startedAt:Date.now()});
+    await fb.update(roomRef(raceCode),{status:'racing',startedAt:Date.now()+3500});
   }catch(error){document.querySelector('#lobbyHint').textContent=error.message}
 };
 
@@ -144,24 +149,33 @@ function watchRace(){
     const room=snap.val();
     document.querySelector('#raceConnection').textContent='Online';
     const players=Object.values(room.players||{});
-    if(room.status==='waiting'){renderLobbyPlayers(players);return}
+    if(room.status==='waiting'){
+      const returning=raceLastStatus==='racing'||raceLastStatus==='finished';raceLastStatus='waiting';
+      if(returning){raceTyped='';raceFinishing=false;showRaceLobby({players});if(raceMode==='player'&&racePlayerId){const me=(room.players||{})[racePlayerId];if(me&&(me.progress||me.finishedAt))fb.update(playerRef(raceCode,racePlayerId),{progress:0,wpm:0,accuracy:100,finishedAt:0}).catch(()=>{})}}
+      else renderLobbyPlayers(players);return
+    }
+    raceLastStatus=room.status;
     const data={...room,players};
     if(raceLive.hidden)beginLiveRace(data);
     renderRace(data);
   },()=>document.querySelector('#raceConnection').textContent='Reconnecting…');
 }
 function beginLiveRace(data){
-  raceLobby.hidden=true;raceLive.hidden=false;racePassageText=data.passage;raceTyped='';raceStartedAt=Date.now();raceCorrect=0;raceErrors=0;
+  const passageInfo=racePassageInfo(data.passage);raceLobby.hidden=true;raceLive.hidden=false;raceLive.classList.remove('show-results');raceResults.hidden=true;raceLanguage=passageInfo.language;racePassageText=passageInfo.text;raceTyped='';raceStartedAt=data.startedAt||Date.now();raceCorrect=0;raceErrors=0;
+  raceLive.classList.toggle('teacher-view',raceMode==='host');document.querySelector('#raceFullscreen').hidden=raceMode!=='host';
+  document.querySelector('#racePassage').lang=raceLanguage==='en'?'en':raceLanguage==='pwo'?'kjp':'ksw';
   renderRacePassage();renderRaceKeyboard();
+  startRaceCountdown(raceStartedAt);
   if(raceMode==='host')document.querySelector('#racePrompt').textContent='Teacher view — watch the racers move live.';
 }
+function startRaceCountdown(startAt){clearInterval(raceCountdownTimer);const overlay=document.querySelector('#raceCountdown'),label=document.querySelector('#raceCountdownText');const update=()=>{const left=startAt-Date.now();if(left<=0){label.textContent='GO!';raceCountdownDone=true;setTimeout(()=>{overlay.hidden=true},550);clearInterval(raceCountdownTimer);return}raceCountdownDone=false;overlay.hidden=false;label.textContent=String(Math.max(1,Math.ceil(left/1000)))};update();raceCountdownTimer=setInterval(update,180)}
 function renderRace(data){
   const players=[...(data.players||[])].sort((a,b)=>b.progress-a.progress||((a.finishedAt||Infinity)-(b.finishedAt||Infinity))||a.joinedAt-b.joinedAt);
-  const track=document.querySelector('#raceTrack');track.innerHTML='';
+  const track=document.querySelector('#raceTrack');track.innerHTML='';track.classList.toggle('density-medium',players.length>8&&players.length<=16);track.classList.toggle('density-compact',players.length>16);
   players.forEach((player,index)=>{
     const lane=document.createElement('div');lane.className='race-lane';
     const name=document.createElement('span');name.className='race-lane-name';name.textContent=`${index+1}. ${player.name}`;
-    const car=document.createElement('span');car.className='race-car';car.textContent=carColors[(player.color||0)%carColors.length];car.style.left=`${Math.min(91,(player.progress||0)*.91)}%`;
+    const car=document.createElement('span');car.className='race-car';car.innerHTML=raceCarGraphic(player.color||0);car.style.left=`${Math.min(88,(player.progress||0)*.88)}%`;
     const finish=document.createElement('span');finish.className='race-finish';lane.append(name,car,finish);track.appendChild(lane)
   });
   if(racePlayerId){
@@ -172,11 +186,15 @@ function renderRace(data){
   if(allFinished){
     document.querySelector('#raceStatusText').textContent='Race finished!';
     document.querySelector('#racePrompt').textContent=players[0]?`Winner: ${players[0].name}`:'Race finished';
+    renderRaceResults(players);
+    if(raceMode==='host'&&!raceFinishing&&data.status!=='finished'){raceFinishing=true;fb.update(roomRef(raceCode),{status:'finished'}).catch(()=>{raceFinishing=false})}
   }else document.querySelector('#raceStatusText').textContent='Race in progress';
 }
+function makePodiumPlace(player,place){const card=document.createElement('article');card.className=`podium-place place-${place}`;const medal=document.createElement('span');medal.className='podium-medal';medal.textContent=place===1?'🥇':place===2?'🥈':'🥉';const car=document.createElement('div');car.className='podium-car';car.innerHTML=raceCarGraphic(player.color||0);const name=document.createElement('strong');name.textContent=player.name;const stats=document.createElement('span');stats.textContent=`${Math.round(player.wpm||0)} WPM · ${Math.round(player.accuracy??100)}%`;const block=document.createElement('div');block.className='podium-block';block.dataset.place=place;block.append(name,stats);card.append(medal,car,block);return card}
+function renderRaceResults(players){if(!players.length)return;const podium=document.querySelector('#racePodium'),otherBox=document.querySelector('#raceOthers'),otherList=document.querySelector('#raceOtherList');podium.innerHTML='';otherList.innerHTML='';const order=[players[1]&&[players[1],2],players[0]&&[players[0],1],players[2]&&[players[2],3]].filter(Boolean);order.forEach(([player,place])=>podium.appendChild(makePodiumPlace(player,place)));players.slice(3).forEach((player,index)=>{const row=document.createElement('div');const place=document.createElement('b');place.textContent=`${index+4}.`;const name=document.createElement('span');name.textContent=player.name;const stats=document.createElement('span');stats.textContent=`${Math.round(player.wpm||0)} WPM · ${Math.round(player.accuracy??100)}%`;row.append(place,name,stats);otherList.appendChild(row)});otherBox.hidden=players.length<=3;document.querySelector('#raceResultActions').hidden=raceMode!=='host';raceLive.classList.add('show-results');raceResults.hidden=false}
 function raceExpected(){
   if(racePassageText[raceTyped.length]===' ')return{key:'Space',value:' ',shift:false};
-  return allMappings().find(item=>racePassageText.startsWith(item.value,raceTyped.length))||null
+  return allMappings(raceLanguage).find(item=>racePassageText.startsWith(item.value,raceTyped.length))||null
 }
 function renderRacePassage(){
   const box=document.querySelector('#racePassage');box.innerHTML='';
@@ -188,7 +206,7 @@ function renderRaceKeyboard(){
   const box=document.querySelector('#raceKeyboard');box.innerHTML='';const expected=raceExpected(),shifted=expected?.shift||false,instruction=document.querySelector('#raceKeyInstruction');
   instruction.textContent=expected?(expected.key==='Space'?'Press Space':shifted?`Hold Shift + press ${expected.key}`:`Press ${expected.key}`):'Finished!';
   instruction.classList.toggle('needs-shift',shifted);
-  rows.slice(1).forEach(row=>{
+  rowsForLanguage(raceLanguage).slice(1).forEach(row=>{
     const line=document.createElement('div');line.className='key-row';
     row.forEach(([key,normal,shift])=>{
       const button=document.createElement('button');button.type='button';button.className='key';button.innerHTML=`<small>${key}</small>${shifted?shift:normal}`;
@@ -202,7 +220,7 @@ function renderRaceKeyboard(){
   if(expected?.key==='Space')space.classList.add('expected');space.onclick=()=>acceptRaceInput(' ');line.append(leftShift,space,rightShift);box.appendChild(line)
 }
 function acceptRaceInput(value){
-  if(raceMode!=='player'||raceLive.hidden||raceTyped.length>=racePassageText.length)return;
+  if(raceMode!=='player'||raceLive.hidden||!raceCountdownDone||raceTyped.length>=racePassageText.length)return;
   const remaining=racePassageText.slice(raceTyped.length);
   if(remaining.startsWith(value)){
     raceTyped+=value;raceCorrect+=value.length;document.querySelector('#racePrompt').textContent='Keep going!';
@@ -227,7 +245,22 @@ async function sendRaceProgress(){
 document.addEventListener('keydown',e=>{
   if(raceStage.hidden||raceLive.hidden||raceMode!=='player'||e.ctrlKey||e.metaKey||e.altKey||e.key==='Shift')return;
   let value;if(e.code==='Space')value=' ';else{
-    const key=physicalKey(e),mapping=rows.flat().find(([mapped])=>mapped===key);if(!mapping)return;value=e.shiftKey?mapping[2]:mapping[1]
+    const key=physicalKey(e),mapping=rowsForLanguage(raceLanguage).flat().find(([mapped])=>mapped===key);if(!mapping)return;value=e.shiftKey?mapping[2]:mapping[1]
   }
   e.preventDefault();acceptRaceInput(value)
 });
+document.querySelector('#raceAgain').onclick=async()=>{
+  if(raceMode!=='host')return;
+  try{
+    const snap=await fb.get(roomRef(raceCode));if(!snap.exists())throw new Error('Room not found.');const room=snap.val(),updates={status:'waiting',startedAt:0};
+    Object.keys(room.players||{}).forEach(uid=>{updates[`players/${uid}/progress`]=0;updates[`players/${uid}/wpm`]=0;updates[`players/${uid}/accuracy`]=100;updates[`players/${uid}/finishedAt`]=0});
+    try{await fb.update(roomRef(raceCode),updates)}catch{await fb.update(roomRef(raceCode),{status:'waiting',startedAt:0})}
+  }catch(error){document.querySelector('#raceStatusText').textContent=error.message}
+};
+document.querySelector('#raceNewWords').onclick=()=>{if(raceMode==='host'){closeRace();openRace()}};
+const raceFullscreenButton=document.querySelector('#raceFullscreen');
+raceFullscreenButton.onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(raceStage.requestFullscreen)await raceStage.requestFullscreen()}catch{showToast('Full screen is not available on this browser')}};
+document.addEventListener('fullscreenchange',()=>{const active=document.fullscreenElement===raceStage;raceFullscreenButton.textContent=active?'✕ Exit Full Screen':'⛶ Full Screen';raceStage.classList.toggle('is-fullscreen',active)});
+function updateRaceLanguageInput(){const input=document.querySelector('#raceWordsInput'),english=typingLanguage==='en',pwo=typingLanguage==='pwo',name=languageName();input.lang=languageTag();input.placeholder=english?'family\nmother\nfather':pwo?'ဆ\nတ\nန\nမ':'မိၢ်\nပၢ်\nမိၢ်ပၢ်';document.querySelector('#createRaceForm p').textContent=`Paste the ${name} words your students will type.`;document.querySelector('.race-intro p').textContent=`Everyone types the same ${name} passage. Accurate typing moves your car toward the finish line.`}
+window.addEventListener('typinglanguagechange',()=>{if(raceJoin&&!raceJoin.hidden){raceLanguage=typingLanguage;updateRaceLanguageInput()}});
+updateRaceLanguageInput();

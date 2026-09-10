@@ -4,14 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#12213f" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>GLN Karen Typing Center</title>
   <meta name="description" content="Type, practice, play, and learn S'gaw Karen Unicode at GLN Karen Typing Center." />
   <link rel="icon" type="image/png" href="logo.png" />
-  <link rel="stylesheet" href="padauk.css" />
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="practice.css" />
-  <link rel="stylesheet" href="games.css" />
-  <link rel="stylesheet" href="race.css" />
+  <link rel="stylesheet" href="padauk.css?v=20260910-2" />
+  <link rel="stylesheet" href="styles.css?v=20260910-2" />
+  <link rel="stylesheet" href="practice.css?v=20260910-2" />
+  <link rel="stylesheet" href="games.css?v=20260910-2" />
+  <link rel="stylesheet" href="race.css?v=20260910-2" />
+  <link rel="stylesheet" href="mobile-keyboard.css?v=20260910-2" />
+  <link rel="stylesheet" href="race-modern.css?v=20260910-2" />
 </head>
 <body>
   <main class="app-shell">
@@ -25,12 +30,17 @@
         <button id="navPractice" type="button">Practice</button>
         <button id="navGames" type="button">Games</button>
       </nav>
+      <div class="language-switch" role="group" aria-label="Typing language">
+        <button class="active" id="languageKaren" type="button">S’gaw Karen</button>
+        <button id="languagePwo" type="button">Pwo Karen</button>
+        <button id="languageEnglish" type="button">English</button>
+      </div>
     </header>
 
     <section class="workspace" id="typeView" aria-labelledby="editor-title">
       <div class="workspace-heading">
-        <div><p class="eyebrow">S’GAW KAREN · ကညီကျိာ်</p><h1 id="editor-title">Type in Karen</h1></div>
-        <p class="hint">KarenKNU layout — use your English keyboard or tap below.</p>
+        <div><p class="eyebrow" id="typeEyebrow">S’GAW KAREN · ကညီကျိာ်</p><h1 id="editor-title">Type in Karen</h1></div>
+        <p class="hint" id="typeHint">KarenKNU layout — use your English keyboard or tap below.</p>
       </div>
 
       <div class="editor-card">
@@ -63,8 +73,8 @@
 
     <section class="workspace games-view" id="gamesView" aria-labelledby="games-title" hidden>
       <div class="games-heading">
-        <div><p class="eyebrow">KAREN TYPING GAMES</p><h1 id="games-title">Choose a challenge</h1></div>
-        <p class="hint">Practice Karen words while building speed and accuracy.</p>
+        <div><p class="eyebrow" id="gamesEyebrow">KAREN TYPING GAMES</p><h1 id="games-title">Choose a challenge</h1></div>
+        <p class="hint" id="gamesHint">Practice Karen words while building speed and accuracy.</p>
       </div>
       <div class="game-grid" id="gameGrid">
         <button class="game-card race-card" data-game="race" type="button"><span class="game-icon">🏁</span><span><strong>Classroom Car Race</strong><small>Create one room code. Students join with their names and race live.</small></span><em>Race →</em></button>
@@ -98,12 +108,24 @@
           <div class="player-chips" id="lobbyPlayers"></div>
         </div>
         <div class="race-live" id="raceLive" hidden>
-          <div class="race-status"><span id="raceStatusText">Race in progress</span><strong id="racePosition">—</strong></div>
+          <div class="race-countdown" id="raceCountdown" hidden><strong id="raceCountdownText">3</strong></div>
+          <div class="race-status"><span id="raceStatusText">Race in progress</span><strong id="racePosition">—</strong><button class="race-fullscreen" id="raceFullscreen" type="button" hidden>⛶ Full Screen</button></div>
           <div class="race-track" id="raceTrack"></div>
           <div class="race-passage" id="racePassage" lang="ksw"></div>
           <div class="race-key-instruction" id="raceKeyInstruction" aria-live="polite"></div>
           <p class="race-prompt" id="racePrompt">Start typing with your English keyboard.</p>
           <div class="race-keyboard keyboard" id="raceKeyboard"></div>
+          <section class="race-results" id="raceResults" hidden aria-labelledby="raceResultsTitle">
+            <div class="confetti" aria-hidden="true"></div>
+            <p class="results-eyebrow">🏁 RACE COMPLETE 🏁</p>
+            <h2 id="raceResultsTitle">Final Results</h2>
+            <div class="race-podium" id="racePodium"></div>
+            <div class="other-racers" id="raceOthers" hidden><h3>Other Racers</h3><div id="raceOtherList"></div></div>
+            <div class="results-actions" id="raceResultActions">
+              <button class="button primary" id="raceAgain" type="button">↻ Race Again</button>
+              <button class="button ghost" id="raceNewWords" type="button">New Word List</button>
+            </div>
+          </section>
         </div>
       </section>
       <p class="privacy"><span aria-hidden="true">●</span> Race rooms expire after four hours.</p>
@@ -111,7 +133,7 @@
 
     <section class="workspace practice-view" id="practiceView" aria-labelledby="practice-title" hidden>
       <div class="practice-head">
-        <div><p class="eyebrow">KAREN TYPING PRACTICE</p><h1 id="practice-title">Learn one key at a time</h1></div>
+        <div><p class="eyebrow" id="practiceEyebrow">KAREN TYPING PRACTICE</p><h1 id="practice-title">Learn one key at a time</h1></div>
         <label class="lesson-picker">Lesson
           <select id="lessonSelect" aria-label="Choose a typing lesson"></select>
         </label>
@@ -148,9 +170,9 @@
     </section>
   </main>
   <div class="toast" id="toast" role="status" aria-live="polite">Copied to clipboard</div>
-  <script src="app.js"></script>
-  <script src="practice.js"></script>
-  <script src="games.js"></script>
-  <script src="race.js"></script>
+  <script src="app.js?v=20260910-2"></script>
+  <script src="practice.js?v=20260910-2"></script>
+  <script src="games.js?v=20260910-2"></script>
+  <script src="race.js?v=20260910-2"></script>
 </body>
 </html>
