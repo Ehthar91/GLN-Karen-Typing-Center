@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="race.css?v=20260910-6" />
   <link rel="stylesheet" href="mobile-keyboard.css?v=20260910-6" />
   <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
-  <link rel="stylesheet" href="race-features.css?v=20260911-2" />
+  <link rel="stylesheet" href="race-features.css?v=20260911-8" />
   <link rel="stylesheet" href="creator-credit.css?v=20260910-6" />
   <link rel="stylesheet" href="quiz.css?v=20260910-6" />
   <link rel="stylesheet" href="quiz-classroom.css?v=20260910-8" />
@@ -87,7 +87,7 @@
         <p class="hint" id="gamesHint">Practice Karen words while building speed and accuracy.</p>
       </div>
       <div class="game-grid" id="gameGrid">
-        <button class="game-card race-card" data-game="race" type="button"><span class="game-icon">🏁</span><span><strong>Classroom Car Race</strong><small>Create one room code. Students join with their names and race live.</small></span><em>Race →</em></button>
+        <button class="game-card race-card" data-game="race" type="button"><span class="game-icon">🏁</span><span><strong>Classroom Car Race</strong><small>Create one room code. Players join with their names and race live.</small></span><em>Race →</em></button>
         <button class="game-card sprint-card" data-game="sprint" type="button"><span class="game-icon">⚡</span><span><strong>Word Sprint</strong><small>Type as many Karen words as you can in 45 seconds.</small></span><em>Play →</em></button>
         <button class="game-card rain-card" data-game="rain" type="button"><span class="game-icon">↓</span><span><strong>Falling Words</strong><small>Type each word before it reaches the bottom.</small></span><em>Play →</em></button>
       </div>
@@ -107,14 +107,14 @@
         <div class="race-join" id="raceJoin">
           <div class="race-intro"><span class="race-flag">🏁</span><h2>Race your classmates</h2><p>Everyone types the same Karen passage. Accurate typing moves your car toward the finish line.</p></div>
           <div class="race-options">
-            <form class="race-option" id="createRaceForm"><strong>Teacher</strong><p>Paste the Karen words your students will type.</p><label>Race words<textarea id="raceWordsInput" lang="ksw" rows="5" maxlength="800" placeholder="မိၢ်&#10;ပၢ်&#10;မိၢ်ပၢ်" required></textarea><small>Use one word per line, commas, or spaces.</small></label><button class="button primary" type="submit">Create a race</button></form>
-            <form class="race-option" id="joinRaceForm"><strong>Student</strong><p>Enter the shared code and your name.</p><label>Room code<input id="raceCodeInput" maxlength="5" autocomplete="off" placeholder="ABCDE" required /></label><label>Your name<input id="raceNameInput" maxlength="24" autocomplete="name" placeholder="Student name" required /></label><button class="button primary" type="submit">Join race</button></form>
+            <form class="race-option" id="createRaceForm"><strong>Host (Teacher)</strong><p>Paste the Karen words your players will type.</p><label>Race words<textarea id="raceWordsInput" lang="ksw" rows="5" maxlength="800" placeholder="မိၢ်&#10;ပၢ်&#10;မိၢ်ပၢ်" required></textarea><small>Use one word per line, commas, or spaces.</small></label><button class="button primary" type="submit">Create a race</button></form>
+            <form class="race-option" id="joinRaceForm"><strong>Player</strong><p>Enter the shared code and your name.</p><label>Room code<input id="raceCodeInput" maxlength="5" autocomplete="off" placeholder="ABCDE" required /></label><label>Your name<input id="raceNameInput" maxlength="24" autocomplete="name" placeholder="Player name" required /></label><button class="button primary" type="submit">Join race</button></form>
           </div>
           <p class="race-error" id="raceError" role="alert"></p>
         </div>
         <div class="race-lobby" id="raceLobby" hidden>
           <div class="room-code-card"><span>ROOM CODE</span><strong id="roomCode">—</strong><button class="button ghost" id="copyRaceCode" type="button">Copy code</button></div>
-          <div class="lobby-copy"><h2 id="lobbyTitle">Waiting for racers</h2><p id="lobbyHint">Students enter this code and their names.</p><button class="button primary" id="startRace" type="button" hidden>Start race</button></div>
+          <div class="lobby-copy"><h2 id="lobbyTitle">Waiting for players</h2><p id="lobbyHint">Players enter this code and their names.</p><strong id="racePlayerCount" class="race-player-count">Joined: 0 players</strong><button class="button primary" id="startRace" type="button" hidden>Start race</button></div>
           <div class="player-chips" id="lobbyPlayers"></div>
         </div>
         <div class="race-live" id="raceLive" hidden>
@@ -350,7 +350,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="practice.js?v=20260910-6"></script>
   <script src="games.js?v=20260910-6"></script>
   <script src="race.js?v=20260910-17"></script>
-  <script src="race-features.js?v=20260911-2"></script>
+  <script src="race-features.js?v=20260911-6"></script>
   <script src="quiz.js?v=20260910-9"></script>
   <script src="quiz-classroom.js?v=20260910-9"></script>
   <script src="calculator.js?v=20260910-19"></script>
