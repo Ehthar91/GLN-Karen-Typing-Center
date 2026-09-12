@@ -60,3 +60,32 @@
     font-size: 0.62rem;
   }
 }
+
+
+/* Dismissible creator badge — dismissal lasts only until page refresh */
+.creator-credit.is-dismissed{display:none!important}
+.creator-credit-close{
+  position:absolute;
+  top:1px;
+  right:1px;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  padding:0;
+  border:1px solid rgba(255,255,255,.48);
+  border-radius:999px;
+  background:rgba(7,24,50,.9);
+  color:#fff;
+  font:800 16px/1 Inter,ui-sans-serif,sans-serif;
+  cursor:pointer;
+  pointer-events:auto;
+  box-shadow:0 4px 12px rgba(0,0,0,.22);
+  opacity:.82;
+}
+.creator-credit-close:hover{opacity:1;background:rgba(20,55,102,.98)}
+.creator-credit-close:focus-visible{outline:2px solid #5cecff;outline-offset:2px}
+@media(max-width:700px){
+  .creator-credit-close{top:-2px;right:-2px;width:20px;height:20px;font-size:13px}
+}
