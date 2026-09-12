@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="mobile-keyboard.css?v=20260910-6" />
   <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
   <link rel="stylesheet" href="race-features.css?v=20260911-11" />
-  <link rel="stylesheet" href="creator-credit.css?v=20260910-6" />
+  <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
   <link rel="stylesheet" href="quiz.css?v=20260912-1" />
   <link rel="stylesheet" href="quiz-classroom.css?v=20260910-8" />
   <link rel="stylesheet" href="quiz-print.css?v=20260912-1" />
@@ -541,10 +541,19 @@ Taylor</textarea><small>Enter one student per line.</small></label>
       <p class="privacy"><span aria-hidden="true">●</span> Practice progress is saved on this device.</p>
     </section>
   </main>
-  <aside class="creator-credit" aria-label="Website creator">
+  <aside class="creator-credit" id="creatorCredit" aria-label="Website creator">
+    <button class="creator-credit-close" id="dismissCreatorCredit" type="button" aria-label="Hide creator badge" title="Hide creator badge">×</button>
     <img src="creator-ehthar.png?v=20260910-6" alt="Ehthar Htain" />
     <span>Created by<strong>Ehthar Htain</strong></span>
   </aside>
+  <script>
+    (()=>{
+      const badge=document.querySelector('#creatorCredit');
+      const closeButton=document.querySelector('#dismissCreatorCredit');
+      if(!badge||!closeButton)return;
+      closeButton.addEventListener('click',()=>badge.classList.add('is-dismissed'));
+    })();
+  </script>
   <div class="toast" id="toast" role="status" aria-live="polite">Copied to clipboard</div>
   <script src="app.js?v=20260911-1"></script>
   <script src="practice.js?v=20260910-6"></script>
