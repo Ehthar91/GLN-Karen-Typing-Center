@@ -39,7 +39,7 @@
 @media print{.room-resize-handle,.desk-resize,.smart-guide,.desk-selection-box{display:none!important}}
 
 /* Fixed classroom workspace */
-body.seating-workspace-active{overflow:hidden}
+body.seating-workspace-active{overflow-x:hidden;overflow-y:auto}
 body.seating-workspace-active .calculator-heading{display:none}
 body.seating-workspace-active .calculator-view{max-width:none;width:100%;padding:14px 18px 0}
 body.seating-workspace-active .calculator-mode-switch{margin:0 auto 10px}
