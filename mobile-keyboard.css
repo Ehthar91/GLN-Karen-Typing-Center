@@ -1,0 +1,59 @@
+/* Phone keyboard: fit every row on screen and keep rapid taps from zooming. */
+.keyboard,
+.keyboard button {
+  touch-action: manipulation;
+}
+
+@media (max-width: 720px) {
+  #editor[readonly] {
+    caret-color: #2563eb;
+  }
+
+  .keyboard-card {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .keyboard {
+    gap: 5px;
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .keyboard .key-row {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    gap: 3px;
+  }
+
+  .keyboard .key {
+    min-width: 0;
+    max-width: none;
+    height: 50px;
+    padding: 0 1px;
+    border-radius: 7px;
+    font-size: clamp(.82rem, 4.6vw, 1.25rem);
+  }
+
+  .keyboard .key small {
+    top: 2px;
+    left: 3px;
+    font-size: .48rem;
+  }
+
+  .keyboard .key.phone-control {
+    flex: 1.45;
+    background: #dce2e9;
+    font: 700 1.15rem Inter, sans-serif;
+  }
+
+  .keyboard .phone-bottom-row .key.wide {
+    max-width: none;
+  }
+
+  .keyboard .phone-bottom-row .key.space {
+    flex: 5;
+  }
+}

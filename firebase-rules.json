@@ -1,0 +1,64 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        "hostUid": {
+          ".write": "auth != null && (!data.exists() && newData.val() === auth.uid || data.val() === auth.uid && newData.val() === auth.uid)"
+        },
+        "passage": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "status": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "createdAt": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "expiresAt": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "startedAt": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($code).child('hostUid').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['id','name','progress','wpm','accuracy','color','joinedAt','finishedAt']) && newData.child('id').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 24 && newData.child('progress').isNumber() && newData.child('progress').val() >= 0 && newData.child('progress').val() <= 100"
+          }
+        }
+      }
+    },
+    "seatingCharts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "quizRooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() && newData.child('hostUid').val() === auth.uid || data.child('hostUid').val() === auth.uid)",
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('quizRooms').child($code).child('hostUid').val() === auth.uid)"
+          }
+        }
+      }
+    },
+    "tugRooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || data.child('hostUid').val() === auth.uid)",
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('tugRooms').child($code).child('hostUid').val() === auth.uid)",
+            ".validate": "!newData.exists() || (newData.hasChildren(['id','name','avatar','team','score','index','finished','joinedAt','finishedAt','correctChars','attemptedChars','errors','wpm','accuracy']) && newData.child('id').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 24 && newData.child('avatar').isNumber() && newData.child('avatar').val() >= 0 && newData.child('avatar').val() <= 11 && newData.child('team').isString() && (newData.child('team').val() === 'red' || newData.child('team').val() === 'blue' || newData.child('team').val() === 'unassigned') && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 100 && newData.child('index').isNumber() && newData.child('index').val() >= 0 && newData.child('index').val() <= 50 && newData.child('correctChars').isNumber() && newData.child('correctChars').val() >= 0 && newData.child('attemptedChars').isNumber() && newData.child('attemptedChars').val() >= 0 && newData.child('errors').isNumber() && newData.child('errors').val() >= 0 && newData.child('wpm').isNumber() && newData.child('wpm').val() >= 0 && newData.child('wpm').val() <= 500 && newData.child('accuracy').isNumber() && newData.child('accuracy').val() >= 0 && newData.child('accuracy').val() <= 100)"
+          }
+        }
+      }
+    }
+  }
+}
