@@ -43,7 +43,7 @@ function setCalculatorMode(mode){
   showWheel.classList.toggle('active',wheel);
   showEventSignup.classList.toggle('active',eventSignup);
   showSeating.classList.toggle('active',seating);
-  calculatorTitle.textContent=dashboard?'Classroom Dashboard':seating?'Seating Chart':eventSignup?'Event Sign Up':wheel?'Random Wheel':quiz?'Quiz':scheduleTimer?'Schedule Timer':numberGenerator?'Number Generator':'Graphing & Scientific Calculator';
+  calculatorTitle.textContent=dashboard?'Classroom Dashboard':seating?'Seating Chart':eventSignup?'Event Sign Up':wheel?'Name Picker':quiz?'Quiz':scheduleTimer?'Schedule Timer':numberGenerator?'Number Generator':'Graphing & Scientific Calculator';
   calculatorHint.textContent=dashboard?'Choose a class, see today’s schedule, and open your classroom tools from one place.':seating?'Create, arrange, and print a classroom seating plan.':eventSignup?'Create shareable signup events and link filled time slots to Special Schedules.':wheel?'Paste a list, spin, and select someone or something at random.':quiz?'Create, practice, and run classroom quizzes.':scheduleTimer?'Create multiple timers that start automatically at their scheduled times.':numberGenerator?'Generate classroom numbers from any range, with an optional no-repeat mode.':'Choose GLN TI-84 or GLN TI-30XS inside the calculator.';
   if(dashboard)setTimeout(()=>{refreshDashboardClasses();updateClassroomDashboard()},0);
   if(numberGenerator)setTimeout(()=>{numberGeneratorMin.focus();queueFitNumberGeneratorResult()},0);

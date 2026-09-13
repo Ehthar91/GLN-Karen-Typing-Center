@@ -318,13 +318,14 @@ body.schedule-fullscreen-open{overflow:hidden}
 .calculator-heading{width:100%;margin-bottom:18px}
 .calculator-mode-switch{
   display:grid;
-  grid-template-columns:repeat(8,minmax(0,1fr));
-  width:100%;
-  max-width:none;
-  margin:0 0 14px;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  width:min(1180px,100%);
+  max-width:1180px;
+  margin:0 auto 14px;
   gap:6px;
 }
 .calculator-mode-switch button{width:100%;min-width:0;padding:0 10px;white-space:nowrap}
+#showCalculator,.dashboard-tools-grid [data-dashboard-tool="calculator"]{display:none!important}
 .classroom-dashboard,
 .calculator-frame-card,
 .number-generator-card,
