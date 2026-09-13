@@ -130,3 +130,11 @@ body.theme-rgb .dashboard-mini-button{background:#10243c;border-color:#355777;co
 body.theme-rgb .dashboard-card-heading>strong{background:#163654;color:#9bd9ff}
 body.theme-rgb .dashboard-tools-grid button>span{background:#163654;color:#8cdbff}
 body.theme-rgb .dashboard-sync-dot{background:#758aa3}body.theme-rgb .dashboard-sync-dot.is-google{background:#4ad69c}
+
+/* Quiz keyboard language switch in Gaming RGB mode. */
+body.theme-rgb .quiz-keyboard-toolbar{background:#0d1a2d!important;border-color:#2c4566!important}
+body.theme-rgb .quiz-keyboard-toolbar>span{color:#9fb0c8}
+body.theme-rgb .quiz-keyboard-switch{background:#101f35;border-color:#385675}
+body.theme-rgb .quiz-keyboard-switch button{color:#b8c8dc}
+body.theme-rgb .quiz-keyboard-switch button:hover{color:#fff;background:#173a59}
+body.theme-rgb .quiz-keyboard-switch button.active{color:#fff;background:linear-gradient(135deg,#1c74c9,#9c2cb0);box-shadow:0 0 0 1px #5ce5ff,0 0 14px rgba(22,224,255,.2)}

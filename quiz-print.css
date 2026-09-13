@@ -1,14 +1,36 @@
 @media print {
-  body{background:#fff!important;color:#111!important}
-  body::before,body::after,.topbar,.creator-credit,.toast,.calculator-heading,.calculator-mode-switch,.classroom-account-bar,.calculator-frame-card,.number-generator-card,.schedule-timer-card,.wheel-card,.seating-card{display:none!important}
-  .calculator-view{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
-  .app-shell>main>section:not(.quiz-view),.quiz-heading,.quiz-builder,.quiz-player,.privacy{display:none!important}
-  .quiz-view{display:block!important;max-width:none!important;padding:0!important;margin:0!important}
-  .quiz-results,.quiz-classroom{display:block!important;box-shadow:none!important;border:0!important;margin:0!important;padding:0!important}
-  .quiz-classroom>.quiz-class-top,.quiz-lobby,.quiz-teacher-live,.quiz-class-error{display:none!important}
-  .quiz-class-results,.quiz-results{display:block!important;text-align:center!important}
-  .quiz-result-actions{display:none!important}
-  .quiz-review{max-width:none!important}
-  .quiz-class-list{max-width:650px!important;margin:1rem auto!important}
-  .print-date{color:#666!important}
+  body.print-quiz{background:#fff!important;color:#111!important}
+  body.print-quiz::before,body.print-quiz::after,
+  body.print-quiz .topbar,
+  body.print-quiz .creator-credit,
+  body.print-quiz .toast,
+  body.print-quiz .calculator-heading,
+  body.print-quiz .calculator-mode-switch,
+  body.print-quiz .classroom-account-bar,
+  body.print-quiz .calculator-frame-card,
+  body.print-quiz .number-generator-card,
+  body.print-quiz .schedule-timer-card,
+  body.print-quiz .wheel-card,
+  body.print-quiz .seating-card,
+  body.print-quiz .event-signup-card,
+  body.print-quiz .classroom-dashboard{display:none!important}
+  body.print-quiz .calculator-view{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+  body.print-quiz .calculator-view>.classroom-tool-panel:not(.quiz-view),
+  body.print-quiz .quiz-heading,
+  body.print-quiz .quiz-builder,
+  body.print-quiz .quiz-player,
+  body.print-quiz .privacy{display:none!important}
+  body.print-quiz .quiz-view{display:block!important;max-width:none!important;padding:0!important;margin:0!important}
+  body.print-quiz .quiz-results,
+  body.print-quiz .quiz-classroom{display:block!important;box-shadow:none!important;border:0!important;margin:0!important;padding:0!important}
+  body.print-quiz .quiz-classroom>.quiz-class-top,
+  body.print-quiz .quiz-lobby,
+  body.print-quiz .quiz-teacher-live,
+  body.print-quiz .quiz-class-error{display:none!important}
+  body.print-quiz .quiz-class-results,
+  body.print-quiz .quiz-results{display:block!important;text-align:center!important}
+  body.print-quiz .quiz-result-actions{display:none!important}
+  body.print-quiz .quiz-review{max-width:none!important}
+  body.print-quiz .quiz-class-list{max-width:650px!important;margin:1rem auto!important}
+  body.print-quiz .print-date{color:#666!important}
 }

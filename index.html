@@ -10,6 +10,8 @@
   <title>GLN Karen Typing Center</title>
   <meta name="description" content="Type, practice, play, and learn S'gaw Karen Unicode at GLN Karen Typing Center." />
   <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="manifest" href="manifest.webmanifest?v=20260913-1" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <link rel="stylesheet" href="padauk.css?v=20260910-6" />
   <link rel="stylesheet" href="styles.css?v=20260910-6" />
   <link rel="stylesheet" href="practice.css?v=20260910-6" />
@@ -20,13 +22,14 @@
   <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
   <link rel="stylesheet" href="race-features.css?v=20260911-11" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
-  <link rel="stylesheet" href="quiz.css?v=20260912-1" />
-  <link rel="stylesheet" href="quiz-classroom.css?v=20260910-8" />
-  <link rel="stylesheet" href="quiz-print.css?v=20260912-1" />
+  <link rel="stylesheet" href="quiz.css?v=20260913-3" />
+  <link rel="stylesheet" href="quiz-classroom.css?v=20260913-17" />
+  <link rel="stylesheet" href="quiz-kiosk.css?v=20260913-1" />
+  <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
   <link rel="stylesheet" href="calculator.css?v=20260912-12" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
-  <link rel="stylesheet" href="seating.css?v=20260913-42" />
-  <link rel="stylesheet" href="rgb-theme.css?v=20260912-2" />
+  <link rel="stylesheet" href="seating.css?v=20260913-43" />
+  <link rel="stylesheet" href="rgb-theme.css?v=20260913-3" />
 </head>
 <body>
   <main class="app-shell">
@@ -336,19 +339,30 @@ Fish = ညၣ်</textarea>
       </section>
 
       <section class="quiz-classroom" id="quizClassroom" hidden>
-        <div class="quiz-class-top"><button class="back-games" id="leaveClassQuiz" type="button">← Leave room</button><strong>Classroom Quiz</strong><span id="quizClassConnection">Online</span></div>
+        <div class="quiz-class-top"><button class="back-games" id="leaveClassQuiz" type="button">← Leave room</button><strong>Classroom Quiz</strong><span id="quizClassConnection">Online</span></div><div class="quiz-lock-notice" id="quizStudentLockNotice" hidden><span aria-hidden="true">🔒</span><div><strong>Quiz screen locked</strong><small>Fullscreen stays required until your teacher releases the class.</small></div></div>
         <div class="quiz-class-lobby" id="quizClassLobby">
           <div class="quiz-room-code"><span>ROOM CODE</span><strong id="quizRoomCode">—</strong><button class="button ghost" id="copyQuizCode" type="button">Copy code</button></div>
-          <div class="quiz-lobby-info"><h2 id="quizLobbyTitle">Waiting for students</h2><p id="quizLobbyHint">Share the room code with your class.</p><label id="quizPaceField">Quiz pace<select id="quizPace"><option value="teacher">Teacher-paced</option><option value="student">Student-paced</option></select></label><label id="quizAdvanceField">Question advance<select id="quizAdvance"><option value="manual">Teacher clicks next</option><option value="auto">Auto-next after everyone answers</option></select></label><button class="button primary" id="startClassQuiz" type="button">Start quiz</button></div>
+          <div class="quiz-lobby-info"><h2 id="quizLobbyTitle">Waiting for students</h2><p id="quizLobbyHint">Share the room code with your class.</p><label id="quizPaceField">Quiz pace<select id="quizPace"><option value="teacher">Teacher-paced</option><option value="student">Student-paced</option></select></label><label id="quizAdvanceField">Question advance<select id="quizAdvance"><option value="manual">Teacher clicks next</option><option value="auto">Auto-next after everyone answers</option></select></label><label id="quizLockField">Student screen<select id="quizLockMode"><option value="locked" selected>Lock during quiz</option><option value="normal">Normal</option></select><small>Locked students stay in the Classroom Quiz until you release them.</small></label><button class="button primary" id="startClassQuiz" type="button">Start quiz</button></div>
           <div class="quiz-student-chips" id="quizLobbyStudents"><span>No students yet</span></div>
         </div>
         <div class="quiz-teacher-live" id="quizTeacherLive" hidden>
-          <div class="quiz-live-status"><div><span id="quizLiveLabel">QUESTION 1 OF 2</span><h2 id="quizLiveQuestion">Question</h2><small id="quizLiveAnswer">Answer: —</small></div><button class="button primary" id="advanceClassQuiz" type="button">Next question →</button></div>
-          <div class="quiz-live-scoreboard"><div class="quiz-score-head"><span>Student</span><span>Progress</span><span>Score</span></div><div id="quizLiveStudents"></div></div>
+          <div class="quiz-live-status"><div><span id="quizLiveLabel">QUESTION 1 OF 2</span><h2 id="quizLiveQuestion">Question</h2><small id="quizLiveAnswer">Answer: —</small></div><div class="quiz-live-actions"><button class="button primary" id="advanceClassQuiz" type="button">Next question →</button><button class="button ghost" id="endClassQuiz" type="button">End quiz</button></div></div>
+          <div class="quiz-live-scoreboard"><div class="quiz-score-head"><span>Student</span><span>Progress</span><span>Score</span><span>Status</span></div><div id="quizLiveStudents"></div></div>
         </div>
-        <div class="quiz-class-results" id="quizClassResults" hidden><p class="eyebrow">CLASS RESULTS</p><h2>Quiz complete!</h2><p class="print-date" id="quizPrintDate"></p><div class="quiz-class-podium" id="quizClassPodium"></div><div class="quiz-class-list" id="quizClassList"></div><div class="quiz-result-actions"><button class="button primary" id="quizClassAgain" type="button">Use this quiz again</button><button class="button ghost print-quiz" id="printClassResults" type="button">Print results</button></div></div>
+        <div class="quiz-student-finished" id="quizStudentWaiting" hidden><span class="quiz-result-icon">✓</span><p class="eyebrow">ANSWERS SUBMITTED</p><h2>You’re finished!</h2><strong id="quizStudentDoneScore">0 out of 0</strong><p id="quizStudentDoneMessage">Waiting for the rest of the class…</p></div>
+        <div class="quiz-class-results" id="quizClassResults" hidden><p class="eyebrow">CLASS RESULTS</p><h2 id="quizClassResultsTitle">Quiz complete!</h2><p class="print-date" id="quizPrintDate"></p><div class="quiz-class-podium" id="quizClassPodium"></div><div class="quiz-class-list" id="quizClassList"></div><div class="quiz-result-actions"><button class="button primary" id="quizClassAgain" type="button">Use this quiz again</button><button class="button ghost" id="releaseQuizStudents" type="button">Release students</button><button class="button ghost print-quiz" id="printClassResults" type="button">Print results</button></div></div>
         <p class="quiz-class-error" id="quizClassError" role="alert"></p>
       </section>
+
+      <div class="quiz-fullscreen-guard" id="quizFullscreenGuard" hidden role="dialog" aria-modal="true" aria-labelledby="quizFullscreenGuardTitle">
+        <div class="quiz-fullscreen-guard-card">
+          <span class="quiz-fullscreen-lock-icon" aria-hidden="true">🔒</span>
+          <p class="eyebrow">QUIZ LOCK MODE</p>
+          <h2 id="quizFullscreenGuardTitle">Return to Full Screen</h2>
+          <p>Full screen is required while this classroom quiz is locked.</p>
+          <button class="button primary" id="quizReturnFullscreen" type="button">Return to Full Screen</button>
+        </div>
+      </div>
 
       <section class="quiz-player" id="quizPlayer" hidden aria-live="polite">
         <div class="quiz-player-top"><button class="back-games" id="editQuiz" type="button">← Edit quiz</button><strong id="quizProgress">Question 1 of 2</strong><span id="quizScore">Score: 0</span></div>
@@ -362,6 +376,14 @@ Fish = ညၣ်</textarea>
           <button class="button primary" id="checkQuizAnswer" type="button">Check answer</button>
           <button class="button primary" id="nextQuizQuestion" type="button" hidden>Next question →</button>
         </div>
+        <div class="quiz-keyboard-toolbar" id="quizKeyboardToolbar" hidden>
+          <span>Keyboard</span>
+          <div class="quiz-keyboard-switch" role="group" aria-label="Quiz keyboard language">
+            <button type="button" data-quiz-keyboard="ksw" aria-pressed="false">S’gaw Karen</button>
+            <button type="button" data-quiz-keyboard="pwo" aria-pressed="false">Pwo Karen</button>
+            <button type="button" data-quiz-keyboard="en" aria-pressed="false">English</button>
+          </div>
+        </div>
         <div class="quiz-keyboard keyboard" id="quizKeyboard"></div>
       </section>
 
@@ -370,7 +392,7 @@ Fish = ညၣ်</textarea>
         <div class="quiz-review" id="quizReview"></div>
     <div class="quiz-result-actions"><button class="button primary" id="retryQuiz" type="button">Try again</button><button class="button ghost" id="newQuiz" type="button">Edit word list</button><button class="button ghost print-quiz" id="printQuizResults" type="button">Print results</button></div>
       </section>
-      <p class="privacy"><span aria-hidden="true">●</span> Quiz lists and answers stay on this device.</p>
+      <p class="privacy"><span aria-hidden="true">●</span> Solo quiz lists stay on this device. Classroom Quiz uses the online classroom service so students can join and scores can sync.</p>
     </section>
 
       <div class="calculator-frame-card" id="calculatorPanel">
@@ -711,8 +733,9 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="custom-games.js?v=20260911-14"></script>
   <script src="race.js?v=20260911-8"></script>
   <script src="race-features.js?v=20260911-7"></script>
-  <script src="quiz.js?v=20260912-1"></script>
-  <script src="quiz-classroom.js?v=20260910-9"></script>
+  <script src="quiz.js?v=20260913-6"></script>
+  <script src="quiz-classroom.js?v=20260913-17"></script>
+  <script src="quiz-kiosk.js?v=20260913-1"></script>
   <script src="calculator.js?v=20260912-10"></script>
   <script src="event-signup.js?v=20260912-15"></script>
   <script src="seating.js?v=20260913-42"></script>

@@ -35,8 +35,41 @@
 .room-settings{padding:10px;border:1px solid #d5e0ed;border-radius:10px;background:#f8fbff}.room-settings>label,.room-settings>div label{display:flex;flex-direction:column;gap:5px;color:#344054;font-size:.72rem;font-weight:800}.room-settings>div{display:grid!important;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0 0!important}.room-settings input,.room-settings select{min-height:38px!important;padding:7px 8px!important}.shortcuts-button{width:calc(100% - 24px);margin:0 12px 5px}.shortcut-dialog{width:min(520px,calc(100vw - 28px));padding:0;border:0;border-radius:20px;box-shadow:0 24px 80px rgba(18,33,63,.3)}.shortcut-dialog::backdrop{background:rgba(10,20,40,.52);backdrop-filter:blur(3px)}.shortcut-dialog form{position:relative;padding:25px}.shortcut-dialog h2{margin:0 0 18px;color:#173868}.shortcut-close{position:absolute;right:15px;top:13px;width:34px;height:34px;border:0;border-radius:50%;background:#eef3f8;color:#526075;font-size:1.35rem;cursor:pointer}.shortcut-dialog form>.button{width:100%;margin-top:18px}.shortcut-dialog #deskShortcutList{display:grid;gap:1px;border:1px solid #dbe3ef;border-radius:12px;overflow:hidden}.shortcut-dialog #deskShortcutList>div{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:9px 12px;background:#f8fbff;color:#344054;font-size:.8rem}.shortcut-dialog kbd,.shortcut-tooltip kbd{padding:4px 7px;border:1px solid #cbd5e1;border-bottom-width:2px;border-radius:6px;background:#fff;color:#173868;font:800 .7rem Inter,sans-serif;white-space:nowrap}.shortcut-tooltip{position:fixed;z-index:9999;width:max-content;max-width:230px;padding:9px 10px;border-radius:9px;background:#12213f;color:#fff;box-shadow:0 8px 25px rgba(0,0,0,.28);font-size:.72rem;pointer-events:none}.shortcut-tooltip strong{font-weight:700}.shortcut-tooltip kbd{margin-left:8px}
 @media(max-width:850px){.seating-layout{grid-template-columns:1fr}.seating-setup{max-width:620px;width:100%;margin:auto}.seating-board-wrap{min-height:500px}}
 @media(max-width:620px){.seating-card{padding:18px 10px;border-radius:16px}.seating-toolbar{align-items:flex-start;flex-direction:column}.seating-toolbar>div:last-child{width:100%;flex-wrap:wrap}.seating-toolbar>div:last-child .button{flex:1}.seating-board-wrap{padding:13px}.seating-actions{grid-template-columns:1fr}.seating-board{min-width:500px}.student-seat{min-height:64px}}
-@media print{body.print-seating{background:#fff!important}body.print-seating::before,body.print-seating::after,body.print-seating .topbar,body.print-seating .creator-credit,body.print-seating .calculator-heading,body.print-seating .calculator-mode-switch,body.print-seating .classroom-account-bar,body.print-seating .calculator-frame-card,body.print-seating .converter-card,body.print-seating .wheel-card,body.print-seating .privacy,body.print-seating .seating-setup,body.print-seating .seating-toolbar>div:last-child{display:none!important}body.print-seating .calculator-view,body.print-seating .seating-card{display:block!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important}body.print-seating .seating-toolbar{display:block!important;border:0!important;text-align:center}body.print-seating .seating-layout{display:block!important}body.print-seating .seating-board-wrap{min-height:0!important;padding:10px!important;border:0!important;background:#fff!important;overflow:visible!important}body.print-seating .seating-board{min-width:0!important;min-height:0!important}body.print-seating .student-seat{break-inside:avoid;box-shadow:none!important}.seat-lock{display:none!important}}
-@media print{.room-resize-handle,.desk-resize,.smart-guide,.desk-selection-box{display:none!important}}
+@media print{
+  @page{size:landscape;margin:.35in}
+  body.print-seating{background:#fff!important}
+  body.print-seating::before,body.print-seating::after,
+  body.print-seating .topbar,
+  body.print-seating .creator-credit,
+  body.print-seating .calculator-heading,
+  body.print-seating .calculator-mode-switch,
+  body.print-seating .classroom-account-bar,
+  body.print-seating .calculator-frame-card,
+  body.print-seating .converter-card,
+  body.print-seating .wheel-card,
+  body.print-seating .privacy,
+  body.print-seating .seating-toolbar,
+  body.print-seating .seating-setup,
+  body.print-seating .seating-canvas-toolbar,
+  body.print-seating .seating-context-toolbar,
+  body.print-seating .room-resize-handle,
+  body.print-seating .desk-resize,
+  body.print-seating .smart-guide,
+  body.print-seating .desk-selection-box,
+  body.print-seating .desk-selection-frame,
+  body.print-seating .alignment-label,
+  body.print-seating .seat-lock{display:none!important}
+  body.print-seating .calculator-view,
+  body.print-seating .seating-card{display:block!important;width:100%!important;max-width:none!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+  body.print-seating .seating-layout{display:block!important;background:#fff!important}
+  body.print-seating .seating-board-wrap{display:flex!important;justify-content:center!important;align-items:flex-start!important;min-height:0!important;height:auto!important;padding:0!important;border:0!important;background:#fff!important;background-image:none!important;overflow:visible!important}
+  body.print-seating .seating-board{display:flex!important;flex-direction:column!important;min-width:0!important;min-height:0!important;width:max-content!important;zoom:1!important;transform:none!important}
+  body.print-seating .seating-board h3{display:block!important;order:0!important;margin:0 0 14px!important;text-align:center!important;color:#111!important;font-size:18pt!important}
+  body.print-seating .room-stage{order:1!important;margin:0 auto!important}
+  body.print-seating .seating-grid{box-shadow:none!important}
+  body.print-seating .student-seat{break-inside:avoid;box-shadow:none!important}
+  body.print-seating .custom-desk.selected{border-color:#c8d6e6!important;box-shadow:none!important}
+}
 
 /* Fixed classroom workspace */
 body.seating-workspace-active{overflow-x:hidden;overflow-y:auto}
