@@ -21,6 +21,7 @@ window.getSeatingClassLists=()=>{
   if(!classes.some(item=>item.id===live.id))classes.push(live);
   return classes.map(item=>({id:item.id,className:item.className,roster:[...item.roster]}));
 };
+window.selectSeatingClassById=id=>{if(!seatingClasses.some(item=>item.id===id))return false;switchSeatingClass(id);return true};
 function saveLocal(){upsert();localStorage.setItem('glnSeatingClasses',JSON.stringify(payload()));if(seatingStorageMode==='local'){seatingStorageStatus.textContent='Classroom Tools are saved locally on this device';seatingStorageStatus.classList.add('synced')}}
 function classroomCloudPayload(){return{...payload(),classroomTools:window.getClassroomToolsSyncData?.()||{version:1}}}
 async function saveCloud(){if(seatingStorageMode!=='google'||!currentUser||currentUser.isAnonymous)return;try{upsert();seatingStorageStatus.textContent='Syncing Classroom Tools…';seatingStorageStatus.classList.remove('synced');await fb.set(fb.ref(db,`seatingCharts/${currentUser.uid}`),classroomCloudPayload());seatingStorageStatus.textContent=`Classroom Tools synced with ${currentUser.email||'Google account'}`;seatingStorageStatus.classList.add('synced');updateClassroomAccountUI()}catch{seatingStorageStatus.textContent='Could not sync. Your local copies are still saved.';seatingStorageStatus.classList.remove('synced')}}

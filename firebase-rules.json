@@ -59,6 +59,78 @@
           }
         }
       }
+    },
+    "eventSignups": {
+      "$eventId": {
+        ".read": "auth != null && (data.child('ownerUid').val() === auth.uid || (data.child('editorAccess').child('active').val() === true && data.child('editorAccess').child('token').val() === data.child('editorSessions').child(auth.uid).child('token').val()))",
+        ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || data.child('ownerUid').val() === auth.uid)",
+        "title": {
+          ".read": "auth != null"
+        },
+        "date": {
+          ".read": "auth != null"
+        },
+        "description": {
+          ".read": "auth != null"
+        },
+        "status": {
+          ".read": "auth != null"
+        },
+        "allowMultiple": {
+          ".read": "auth != null"
+        },
+        "slots": {
+          ".read": "auth != null",
+          "$slotId": {
+            ".validate": "newData.hasChildren(['id','time','duration','capacity','spots']) && newData.child('id').val() === $slotId && newData.child('time').isString() && newData.child('time').val().length === 5 && newData.child('duration').isNumber() && newData.child('duration').val() >= 1 && newData.child('duration').val() <= 480 && newData.child('capacity').isNumber() && newData.child('capacity').val() >= 1 && newData.child('capacity').val() <= 100 && newData.child('spots').hasChildren() && (!newData.child('label').exists() || (newData.child('label').isString() && newData.child('label').val().length <= 50))",
+            "spots": {
+              "$spotId": {
+                ".validate": "newData.val() === true"
+              }
+            }
+          }
+        },
+        "availability": {
+          ".read": "auth != null",
+          "$slotId": {
+            "$spotId": {
+              ".write": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || (root.child('eventSignups').child($eventId).child('slots').child($slotId).child('spots').child($spotId).val() === true && ((newData.val() === true && root.child('eventSignups').child($eventId).child('claims').child($slotId).child($spotId).child('active').val() === true) || (newData.val() === false && root.child('eventSignups').child($eventId).child('claims').child($slotId).child($spotId).child('active').val() === false))))",
+              ".validate": "newData.isBoolean()"
+            }
+          }
+        },
+        "claims": {
+          "$slotId": {
+            "$spotId": {
+              ".read": "auth != null && root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid",
+              ".write": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || (root.child('eventSignups').child($eventId).child('editorAccess').child('active').val() === true && root.child('eventSignups').child($eventId).child('editorAccess').child('token').val() === root.child('eventSignups').child($eventId).child('editorSessions').child(auth.uid).child('token').val() && root.child('eventSignups').child($eventId).child('slots').child($slotId).child('spots').child($spotId).val() === true && (((!data.exists() || data.child('active').val() === false) && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('active').val() === true) || (data.child('active').val() === true && data.child('token').isString() && newData.child('token').val() === data.child('token').val() && newData.child('active').val() === false))) || (root.child('eventSignups').child($eventId).child('slots').child($slotId).child('spots').child($spotId).val() === true && (((!data.exists() || data.child('active').val() === false) && root.child('eventSignups').child($eventId).child('status').val() === 'open' && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('active').val() === true) || (data.child('active').val() === true && data.child('token').isString() && data.child('token').val().length === 64 && newData.child('token').val() === data.child('token').val() && newData.child('active').val() === false))))",
+              ".validate": "(root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid) || (newData.hasChildren(['token','active']) && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('active').isBoolean())"
+            }
+          }
+        },
+        "reservations": {
+          "$manageToken": {
+            ".read": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || $manageToken.length === 64)",
+            ".write": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || $manageToken.length === 64)",
+            "$reservationId": {
+              ".validate": "(root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid) || (newData.hasChildren(['manageToken','slotId','spotId','name','createdAt']) && newData.child('manageToken').val() === $manageToken && newData.child('slotId').isString() && newData.child('slotId').val().length > 0 && newData.child('slotId').val().length <= 128 && newData.child('spotId').isString() && newData.child('spotId').val().length <= 80 && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 60 && root.child('eventSignups').child($eventId).child('slots').child(newData.child('slotId').val()).child('spots').child(newData.child('spotId').val()).val() === true && root.child('eventSignups').child($eventId).child('claims').child(newData.child('slotId').val()).child(newData.child('spotId').val()).child('token').val() === $manageToken && root.child('eventSignups').child($eventId).child('claims').child(newData.child('slotId').val()).child(newData.child('spotId').val()).child('active').val() === true && (!newData.child('studentName').exists() || (newData.child('studentName').isString() && newData.child('studentName').val().length > 0 && newData.child('studentName').val().length <= 60)) && newData.child('parentName').isString() && newData.child('parentName').val().length > 0 && newData.child('parentName').val().length <= 60 && newData.child('email').isString() && newData.child('email').val().length > 2 && newData.child('email').val().length <= 120 && (!newData.child('phone').exists() || (newData.child('phone').isString() && newData.child('phone').val().length <= 30)))",
+              ".write": "auth != null && (root.child('eventSignups').child($eventId).child('editorAccess').child('active').val() === true && root.child('eventSignups').child($eventId).child('editorAccess').child('token').val() === root.child('eventSignups').child($eventId).child('editorSessions').child(auth.uid).child('token').val()) && !newData.exists()"
+            }
+          }
+        },
+        "editorAccess": {
+          ".read": "auth != null && root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid",
+          ".write": "auth != null && root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid",
+          ".validate": "!newData.exists() || (newData.hasChildren(['token','active']) && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('active').isBoolean())"
+        },
+        "editorSessions": {
+          "$uid": {
+            ".read": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || auth.uid === $uid)",
+            ".write": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || (auth.uid === $uid && root.child('eventSignups').child($eventId).child('editorAccess').child('active').val() === true && newData.child('token').val() === root.child('eventSignups').child($eventId).child('editorAccess').child('token').val()))",
+            ".validate": "!newData.exists() || (newData.hasChildren(['token','createdAt']) && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('createdAt').isNumber())"
+          }
+        }
+      }
     }
   }
 }

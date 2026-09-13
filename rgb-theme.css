@@ -118,3 +118,15 @@ body.theme-rgb .classroom-account-bar{border-color:#294966;background:linear-gra
 body.theme-rgb .classroom-account-copy>strong{color:#f3f8ff}body.theme-rgb .classroom-account-copy>small{color:#9fb4ca}
 body.theme-rgb .classroom-storage-switch{background:#0b1b2e}body.theme-rgb .classroom-storage-switch button{color:#a6b8cb}body.theme-rgb .classroom-storage-switch button.active{background:#1c3a5d;color:#fff;box-shadow:none}
 body.theme-rgb .classroom-account-controls>small{color:#9fb4ca}body.theme-rgb .classroom-account-controls>small.synced{color:#63e6b5}
+
+
+/* Classroom Dashboard - RGB */
+body.theme-rgb .dashboard-hero,body.theme-rgb .dashboard-card{background:linear-gradient(145deg,rgba(17,31,54,.98),rgba(11,22,40,.98));border-color:#2c4566;box-shadow:0 18px 44px rgba(0,0,0,.28)}
+body.theme-rgb .dashboard-hero h2,body.theme-rgb .dashboard-card-heading h3,body.theme-rgb .dashboard-date strong,body.theme-rgb .dashboard-student-result strong,body.theme-rgb .dashboard-schedule-now strong,body.theme-rgb .dashboard-schedule-now b,body.theme-rgb .dashboard-sync-text,body.theme-rgb .dashboard-tools-grid button>strong{color:#f2f7ff}
+body.theme-rgb .dashboard-hero p:not(.eyebrow),body.theme-rgb .dashboard-date span,body.theme-rgb .dashboard-date small,body.theme-rgb .dashboard-class-note,body.theme-rgb .dashboard-student-result span,body.theme-rgb .dashboard-account-card>p,body.theme-rgb .dashboard-tools-grid button>small,body.theme-rgb .dashboard-next-row strong,body.theme-rgb .dashboard-agenda-row span{color:#a9bdd4}
+body.theme-rgb .dashboard-date,body.theme-rgb .dashboard-student-result,body.theme-rgb .dashboard-schedule-now,body.theme-rgb .dashboard-next-row,body.theme-rgb .dashboard-agenda-row,body.theme-rgb .dashboard-tools-grid button{background:#10243c;border-color:#315271}
+body.theme-rgb .dashboard-class-picker{color:#b4c7dc}body.theme-rgb .dashboard-class-picker select{background:#0d2037;border-color:#355777;color:#f1f7ff}
+body.theme-rgb .dashboard-mini-button{background:#10243c;border-color:#355777;color:#dceaff}
+body.theme-rgb .dashboard-card-heading>strong{background:#163654;color:#9bd9ff}
+body.theme-rgb .dashboard-tools-grid button>span{background:#163654;color:#8cdbff}
+body.theme-rgb .dashboard-sync-dot{background:#758aa3}body.theme-rgb .dashboard-sync-dot.is-google{background:#4ad69c}
