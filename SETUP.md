@@ -47,3 +47,9 @@ This version uses Firebase Realtime Database for multiplayer **Typing Tug of War
 Each correct prompt earns one pull point. Fast, error-free typing can earn one bonus pull point. The rope uses each team's average pull contribution so slightly uneven team sizes stay fair.
 
 When updating this version, publish the included `firebase-rules.json` in **Firebase Console → Realtime Database → Rules** so the new `tugRooms` path is allowed.
+
+## Event Sign Up
+
+Event Sign Up uses Firebase Realtime Database for public signup links. Before testing the feature, publish the updated `firebase-rules.json` in Firebase Console → Realtime Database → Rules. See `EVENT-SIGN-UP-FIREBASE-SETUP.txt` for the short setup checklist.
+
+Public signup pages expose only the event title/date/instructions and slot details. Participant names are readable only by the event owner and by the participant who created that signup.
