@@ -1,0 +1,20 @@
+{
+  "name": "GLN Karen Typing Center — Classroom Quiz",
+  "short_name": "GLN Quiz",
+  "description": "Student classroom quiz mode for GLN Karen Typing Center.",
+  "id": "./?kiosk=quiz",
+  "start_url": "./?kiosk=quiz",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#07111f",
+  "theme_color": "#12213f",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

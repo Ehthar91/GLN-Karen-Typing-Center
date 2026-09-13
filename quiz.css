@@ -8,3 +8,14 @@
 .quiz-view.classroom-tool-panel .quiz-typed-answer{width:min(760px,100%)}
 .quiz-view.classroom-tool-panel .quiz-choices{width:min(980px,100%)}
 @media(max-width:900px){.quiz-view.classroom-tool-panel .quiz-builder-grid{grid-template-columns:1fr}}
+
+/* Quiz keyboard language switch: stays next to the keyboard for students. */
+.quiz-keyboard-toolbar[hidden]{display:none}
+.quiz-keyboard-toolbar{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 14px 8px;border-top:1px solid #e2e8f0;background:#fbfdff}
+.quiz-keyboard-toolbar>span{color:#667085;font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.quiz-keyboard-switch{display:inline-flex;gap:4px;padding:4px;border:1px solid #d7e0ec;border-radius:11px;background:#eef3f8}
+.quiz-keyboard-switch button{min-height:34px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:#64748b;font:800 .76rem Inter,ui-sans-serif,sans-serif;cursor:pointer}
+.quiz-keyboard-switch button:hover{color:#173868;background:#e4edf7}
+.quiz-keyboard-switch button.active{color:#fff;background:linear-gradient(135deg,#2563eb,#1687d6);box-shadow:0 3px 9px rgba(37,99,235,.2)}
+.quiz-keyboard-switch button:disabled{cursor:default;opacity:.65}
+@media(max-width:800px){.quiz-keyboard-toolbar{position:sticky;bottom:0;z-index:4;flex-wrap:wrap;padding:9px 8px 7px}.quiz-keyboard-toolbar>span{width:100%;text-align:center}.quiz-keyboard-switch{width:min(100%,420px);display:grid;grid-template-columns:repeat(3,1fr)}.quiz-keyboard-switch button{padding:0 7px;font-size:.7rem}}
