@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="quiz-print.css?v=20260912-1" />
   <link rel="stylesheet" href="calculator.css?v=20260912-12" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
-  <link rel="stylesheet" href="seating.css?v=20260912-31" />
+  <link rel="stylesheet" href="seating.css?v=20260913-42" />
   <link rel="stylesheet" href="rgb-theme.css?v=20260912-2" />
 </head>
 <body>
@@ -602,7 +602,7 @@ Fish = ညၣ်</textarea>
       <section class="seating-card" id="seatingPanel" aria-labelledby="seatingTitle" hidden>
         <div class="seating-toolbar">
           <div><button class="seating-mobile-panel" id="toggleClassPanel" type="button" aria-label="Show classes">☰</button><div><p class="eyebrow">CLASSROOM LAYOUT</p><h2 id="seatingTitle">Seating Chart</h2></div></div>
-          <div class="seating-view-tools"><button class="button ghost" id="fitSeatingRoom" type="button" data-tip="Fit the whole room in view|F">Fit room</button><div class="seating-zoom" role="group" aria-label="Classroom zoom"><button id="seatingZoomOut" type="button" aria-label="Zoom out">−</button><span id="seatingZoomLabel">100%</span><button id="seatingZoomIn" type="button" aria-label="Zoom in">＋</button></div><button class="button ghost" id="toggleSeatingPanels" type="button">View only</button><button class="button ghost" id="downloadSeating" type="button">Download</button><button class="button ghost" id="printSeating" type="button">Print</button><button class="button ghost" id="seatingFullscreen" type="button">⛶ Full screen</button><button class="seating-mobile-panel" id="toggleInspectorPanel" type="button">Tools</button></div>
+          <div class="seating-view-tools"><div class="seating-zoom" role="group" aria-label="Classroom zoom"><button id="seatingZoomOut" type="button" aria-label="Zoom out">−</button><span id="seatingZoomLabel">100%</span><button id="seatingZoomIn" type="button" aria-label="Zoom in">＋</button></div><button class="button ghost" id="toggleSeatingPanels" type="button">View only</button><button class="button ghost" id="downloadSeating" type="button">Download</button><button class="button ghost" id="printSeating" type="button">Print</button><button class="seating-mobile-panel" id="toggleInspectorPanel" type="button">Tools</button></div>
         </div>
         <div class="seating-layout">
           <aside class="seating-setup seating-class-panel" id="seatingClassPanel">
@@ -615,18 +615,33 @@ Saw Htoo
 Naw Paw
 Jordan
 Taylor</textarea><small>Enter one student per line.</small></label>
+            <button class="button primary" id="buildSeating" type="button">Build seating chart</button>
             <input id="seatingFileInput" type="file" accept=".csv,.txt" hidden /><button class="button ghost" id="importSeatingRoster" type="button">Upload CSV or text file</button>
-            <button class="button primary inspector-control" id="buildSeating" type="button">Build seating chart</button>
             <div class="seating-actions inspector-control"><button class="button ghost" id="shuffleSeating" type="button">Shuffle seats</button><button class="button ghost" id="flipSeating" type="button">Flip room</button></div>
-            <details class="layout-editor" open><summary>Desk layout editor</summary><div class="layout-mode-actions"><button class="button primary" id="editDeskLayout" type="button" data-tip="Enter or leave layout editing|E">Edit layout</button></div><div class="desk-edit-actions"><button class="button ghost" id="addDesk" type="button" data-tip="Add an empty desk">＋ Add desk</button><button class="button ghost" id="duplicateDesk" type="button" data-tip="Duplicate selected desk|mod+D">Duplicate</button><button class="button ghost" id="rotateDesk" type="button" data-tip="Rotate selected desks|R">↻ Rotate</button><button class="button ghost" id="applyDeskSizeAll" type="button" data-tip="Make every desk match the selected desk">Apply size to all</button><button class="button danger" id="deleteDesk" type="button" data-tip="Delete selected desks|Delete">Delete desk</button></div><div class="desk-history"><button class="button ghost" id="undoDesk" type="button" data-tip="Undo last layout change|mod+Z">↶ Undo</button><button class="button ghost" id="redoDesk" type="button" data-tip="Redo layout change|mod+Shift+Z">↷ Redo</button></div><div class="room-settings"><label>Room size<select id="roomPreset"><option value="small">Small</option><option value="medium" selected>Medium</option><option value="large">Large</option><option value="wide">Wide</option><option value="square">Square</option><option value="custom">Custom</option></select></label><div><label>Width<input id="roomWidth" type="number" min="500" max="2000" step="10" value="760" /></label><label>Height<input id="roomHeight" type="number" min="360" max="1400" step="10" value="520" /></label></div></div><label class="rule-check"><input id="snapDesks" type="checkbox" checked /> Snap movement</label><label class="rule-check"><input id="smartGuides" type="checkbox" checked /> Align desk edges</label><label class="rule-check"><input id="deskTooltips" type="checkbox" checked /> Show shortcut tooltips</label><button class="button ghost shortcuts-button" id="showDeskShortcuts" type="button">⌨ View keyboard shortcuts</button><small>Select a desk to reveal eight resize handles. Hold Shift to keep its proportions or Option/Alt to resize from the center.</small></details>
+            <details class="layout-editor" open><summary>Layout settings</summary><div class="room-settings"><label>Room size<select id="roomPreset"><option value="small">Small</option><option value="medium" selected>Medium</option><option value="large">Large</option><option value="wide">Wide</option><option value="square">Square</option><option value="custom">Custom</option></select></label><div><label>Width<input id="roomWidth" type="number" min="500" max="2000" step="10" value="760" /></label><label>Height<input id="roomHeight" type="number" min="360" max="1400" step="10" value="520" /></label></div></div><label class="rule-check"><input id="snapDesks" type="checkbox" checked /> Snap movement</label><label class="rule-check"><input id="smartGuides" type="checkbox" checked /> Align desk edges</label><label class="rule-check"><input id="deskTooltips" type="checkbox" checked /> Show shortcut tooltips</label><button class="button ghost shortcuts-button" id="showDeskShortcuts" type="button">⌨ View keyboard shortcuts</button><small>Select a desk to reveal eight resize handles. Hold Shift to keep its proportions or Option/Alt to resize from the center.</small></details>
             <details class="seating-rules"><summary>Classroom rules</summary><label>Keep apart<textarea id="seatingKeepApart" rows="3" placeholder="Alex, Jordan&#10;Maria, Taylor"></textarea><small>One pair per line, separated by a comma.</small></label><label>Place near front<textarea id="seatingNearFront" rows="2" placeholder="Saw Htoo&#10;Naw Paw"></textarea></label><label class="rule-check"><input id="seatingAlternateGender" type="checkbox" /> Alternate groups A and B when possible</label><label>Group A names<textarea id="seatingGroupA" rows="2"></textarea></label><label>Group B names<textarea id="seatingGroupB" rows="2"></textarea></label></details>
             <details class="seating-groups"><summary>Automatic groups</summary><label>Number of groups<select id="seatingGroupCount"></select></label><button class="button primary" id="makeSeatingGroups" type="button">Create groups</button><div id="seatingGroupResults"></div></details>
-            <p class="seating-help">Drag students to exchange seats in room view. Use the lock on a seat to keep that student in place when shuffling. Edit layout mode moves the desks instead.</p>
+            <p class="seating-help">Drag students to exchange seats in room view. Use Show locks to reveal the lock controls; locked seats stay marked and remain in place when shuffling. Edit layout mode moves the desks instead.</p>
           </aside>
           <div class="seating-board-wrap" id="seatingPrintArea">
-            <div class="seating-canvas-toolbar"><div><button class="button primary" id="quickBuildSeating" type="button">Build chart</button><button class="button ghost" id="quickShuffleSeating" type="button">Shuffle</button><button class="button ghost" id="quickEditLayout" type="button">Edit layout</button></div><span id="seatingSelectionStatus">Room view</span></div>
+            <div class="seating-canvas-toolbar"><div><button class="button primary" id="quickBuildSeating" type="button">Build chart</button><button class="button ghost" id="quickShuffleSeating" type="button">Shuffle</button><button class="button ghost" id="quickToggleLocks" type="button" aria-pressed="false">Show locks</button><button class="button ghost" id="quickEditLayout" type="button">Edit layout</button></div><span id="seatingSelectionStatus">Room view</span></div>
             <div class="seating-board" id="seatingBoard">
-              <div class="seating-front">FRONT OF ROOM</div>
+              <div class="seating-context-toolbar" id="seatingContextToolbar" aria-label="Seating chart quick tools">
+                <div class="seating-context-room" id="seatingContextRoom">
+                  <button class="button ghost" id="contextUndoDesk" type="button" data-tip="Undo last layout change|mod+Z">↶ Undo</button>
+                  <button class="button ghost" id="contextRedoDesk" type="button" data-tip="Redo layout change|mod+Shift+Z">↷ Redo</button>
+                  <button class="button ghost" id="contextFitRoom" type="button" data-tip="Fit the whole room in view|F">Fit room</button>
+                  <button class="button ghost" id="contextFullscreen" type="button">⛶ Full screen</button>
+                </div>
+                <div class="seating-context-edit" id="seatingContextEdit" hidden>
+                  <button class="button ghost" id="contextAddDesk" type="button">＋ Add desk</button>
+                  <button class="button ghost" id="contextDuplicateDesk" type="button">Duplicate</button>
+                  <button class="button ghost" id="contextRotateLeft" type="button">↺ Rotate left</button>
+                  <button class="button ghost" id="contextRotateRight" type="button">↻ Rotate right</button>
+                  <button class="button ghost" id="applyDeskSizeAll" type="button" data-tip="Make every desk match the selected desk">Match all sizes</button>
+                  <button class="button danger" id="contextDeleteDesk" type="button">Delete desk</button>
+                </div>
+              </div>
               <h3 id="seatingChartName">My Class</h3>
               <div class="room-stage" id="roomStage"><div class="seating-grid" id="seatingGrid"></div><button class="room-resize-handle" id="roomResizeHandle" type="button" aria-label="Resize classroom"></button></div>
             </div>
@@ -700,7 +715,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="quiz-classroom.js?v=20260910-9"></script>
   <script src="calculator.js?v=20260912-10"></script>
   <script src="event-signup.js?v=20260912-15"></script>
-  <script src="seating.js?v=20260912-3"></script>
+  <script src="seating.js?v=20260913-42"></script>
   <script src="rgb-theme.js?v=20260911-2"></script>
 </body>
 </html>
