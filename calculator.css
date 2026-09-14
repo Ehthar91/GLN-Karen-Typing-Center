@@ -396,3 +396,51 @@ body.schedule-fullscreen-open{overflow:hidden}
   .wheel-toolbar-actions .button{flex:1 1 auto}
   .wheel-card.controls-collapsed .wheel-stage{width:100%}
 }
+
+/* Lesson Plan Importer */
+.schedule-timer-toolbar-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.schedule-import-open{white-space:nowrap}
+.schedule-import-dialog{width:min(960px,calc(100vw - 28px));max-height:calc(100vh - 28px);padding:0;border:0;border-radius:20px;background:#fff;color:#26394f;box-shadow:0 28px 80px rgba(20,40,70,.24);overflow:hidden}
+.schedule-import-dialog::backdrop{background:rgba(12,24,42,.56);backdrop-filter:blur(3px)}
+.schedule-import-shell{display:flex;max-height:calc(100vh - 28px);flex-direction:column}
+.schedule-import-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px;border-bottom:1px solid #e2ebf3;background:#f7fbff}
+.schedule-import-heading>div{min-width:0}.schedule-import-heading h3{margin:2px 0 4px;color:#173868;font-size:1.35rem}.schedule-import-heading small{display:block;max-width:700px;color:#728195;line-height:1.45}
+.schedule-import-heading>button{flex:0 0 auto;width:38px;height:38px;border:1px solid #ccd9e6;border-radius:10px;background:#fff;color:#526075;font-size:1.35rem;cursor:pointer}
+.schedule-import-source,.schedule-import-preview{padding:18px 22px}
+.schedule-import-source{display:grid;gap:12px;border-bottom:1px solid #e7eef5}
+.schedule-import-file,.schedule-import-paste,.schedule-import-settings label{display:flex;flex-direction:column;gap:6px;color:#526075;font-size:.8rem;font-weight:800}
+.schedule-import-file input[type="file"]{width:100%;padding:10px;border:1px dashed #b9cbdc;border-radius:12px;background:#fbfdff;color:#344054;font:700 .8rem Inter,sans-serif}
+.schedule-import-file small,.schedule-import-settings small{color:#7a8798;font-size:.68rem;font-weight:700}
+.schedule-import-paste textarea{width:100%;min-height:110px;resize:vertical;padding:11px 12px;border:1px solid #c7d5e4;border-radius:10px;background:#fff;color:#26394f;font:700 .8rem/1.5 Inter,sans-serif}
+.schedule-import-paste textarea:focus,.schedule-import-settings input:focus,.schedule-import-table input:focus{outline:0;border-color:#258bd5;box-shadow:0 0 0 4px rgba(37,139,213,.12)}
+.schedule-import-or{display:flex;align-items:center;gap:10px;color:#8b98a8;font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em}.schedule-import-or::before,.schedule-import-or::after{content:"";height:1px;flex:1;background:#e2ebf3}
+.schedule-import-source>.button{justify-self:start}
+.schedule-import-status{margin:0;padding:10px 12px;border-radius:10px;background:#f5f8fb;color:#5f7084;font-size:.76rem;font-weight:750;line-height:1.45}
+.schedule-import-status.is-error{background:#fff1f0;color:#a23a30}.schedule-import-status.is-ok{background:#eefaf2;color:#287442}
+.schedule-import-preview{overflow:auto;display:grid;gap:14px}
+.schedule-import-preview[hidden]{display:none!important}
+.schedule-import-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.schedule-import-preview-heading>div{display:flex;flex-direction:column;gap:2px}.schedule-import-preview-heading strong{color:#173868}.schedule-import-preview-heading small{color:#728195;font-size:.72rem}.schedule-import-preview-heading button{min-height:36px;padding:0 10px;border:1px solid #c7d5e4;border-radius:9px;background:#fff;color:#173868;font:800 .72rem Inter,sans-serif;cursor:pointer}
+.schedule-import-settings{display:grid;grid-template-columns:minmax(180px,1.5fr) minmax(135px,1fr) minmax(125px,.8fr) minmax(110px,.7fr);gap:10px}
+.schedule-import-settings input{width:100%;min-height:44px;padding:0 11px;border:1px solid #c7d5e4;border-radius:10px;background:#fff;color:#173868;font:800 .82rem Inter,sans-serif}
+.schedule-import-fit{padding:11px 13px;border:1px solid #cdddea;border-radius:11px;background:#f7fbff;color:#41556d;font-size:.78rem;font-weight:800}
+.schedule-import-fit.is-exact{border-color:#a9d9b5;background:#eefaf2;color:#287442}.schedule-import-fit.is-over{border-color:#efc0bc;background:#fff1f0;color:#a23a30}.schedule-import-fit.is-under{border-color:#efd28b;background:#fff8e7;color:#8a6500}
+.schedule-import-table-wrap{overflow:auto;border:1px solid #d9e4ef;border-radius:12px;background:#fff}
+.schedule-import-table{width:100%;border-collapse:collapse;min-width:600px}.schedule-import-table th{padding:9px 10px;background:#f4f8fc;color:#65758a;text-align:left;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase}.schedule-import-table td{padding:8px 10px;border-top:1px solid #edf2f7;vertical-align:middle}.schedule-import-table td:first-child{width:110px;color:#173868;font:900 .76rem Inter,sans-serif;white-space:nowrap}.schedule-import-table td:nth-child(3){width:105px}.schedule-import-table td:last-child{width:48px;text-align:right}
+.schedule-import-table input{width:100%;min-height:38px;padding:0 9px;border:1px solid #c7d5e4;border-radius:8px;background:#fff;color:#344054;font:750 .78rem Inter,sans-serif}.schedule-import-table input[type="number"]{text-align:center}
+.schedule-import-remove{width:34px;height:34px;border:1px solid #efc6c2;border-radius:8px;background:#fff;color:#b42318;font-weight:900;cursor:pointer}
+.schedule-import-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.schedule-import-preview .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+@media(max-width:760px){.schedule-import-settings{grid-template-columns:1fr 1fr}.schedule-import-dialog{width:calc(100vw - 16px);max-height:calc(100vh - 16px)}.schedule-import-shell{max-height:calc(100vh - 16px)}.schedule-import-heading,.schedule-import-source,.schedule-import-preview{padding-left:14px;padding-right:14px}}
+@media(max-width:520px){.schedule-timer-toolbar-actions{width:100%;justify-content:stretch}.schedule-timer-toolbar-actions>.button{flex:1}.schedule-import-settings{grid-template-columns:1fr}.schedule-import-preview-heading{align-items:flex-start;flex-direction:column}.schedule-import-actions{justify-content:stretch}.schedule-import-actions .button{width:100%}}
+
+/* Lesson-plan importer: give the generated schedule room to breathe. */
+.schedule-import-source-editor{display:grid;gap:12px}
+.schedule-import-source-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.schedule-import-preview-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.schedule-import-dialog.is-previewing .schedule-import-shell{height:calc(100vh - 28px)}
+.schedule-import-dialog.is-previewing .schedule-import-source{padding-top:12px;padding-bottom:12px;gap:8px}
+.schedule-import-dialog.is-previewing .schedule-import-source-editor,.schedule-import-dialog.is-previewing .schedule-import-setup-help{display:none}
+.schedule-import-dialog.is-previewing .schedule-import-preview{flex:1 1 auto;min-height:0;overflow:auto}
+.schedule-import-dialog.is-previewing .schedule-import-status{padding:8px 10px}
+.schedule-import-dialog.is-previewing .schedule-import-table-wrap{overflow:auto}
+@media(max-width:760px){.schedule-import-dialog.is-previewing .schedule-import-shell{height:calc(100vh - 16px)}.schedule-import-preview-tools{width:100%;justify-content:stretch}.schedule-import-preview-tools button{flex:1}}
