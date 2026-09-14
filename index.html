@@ -26,10 +26,10 @@
   <link rel="stylesheet" href="quiz-classroom.css?v=20260913-17" />
   <link rel="stylesheet" href="quiz-kiosk.css?v=20260913-1" />
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
-  <link rel="stylesheet" href="calculator.css?v=20260912-12" />
+  <link rel="stylesheet" href="calculator.css?v=20260913-15" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
   <link rel="stylesheet" href="seating.css?v=20260913-43" />
-  <link rel="stylesheet" href="rgb-theme.css?v=20260913-3" />
+  <link rel="stylesheet" href="rgb-theme.css?v=20260913-4" />
 </head>
 <body>
   <main class="app-shell">
@@ -445,8 +445,70 @@ Fish = ညၣ်</textarea>
       <section class="schedule-timer-card" id="scheduleTimerPanel" aria-labelledby="scheduleTimerTitle" hidden>
         <div class="schedule-timer-toolbar">
           <div><p class="eyebrow">AUTOMATIC CLASSROOM TIMER</p><h2 id="scheduleTimerTitle">Schedule Timer</h2></div>
-          <div class="schedule-live-clock"><span>Local time</span><strong id="scheduleClock">--:--:--</strong></div>
+          <div class="schedule-timer-toolbar-actions">
+            <button class="button ghost schedule-import-open" id="scheduleImportLessonPlan" type="button">📄 Import lesson plan</button>
+            <div class="schedule-live-clock"><span>Local time</span><strong id="scheduleClock">--:--:--</strong></div>
+          </div>
         </div>
+        <dialog class="schedule-import-dialog" id="scheduleImportDialog" aria-labelledby="scheduleImportTitle">
+          <div class="schedule-import-shell">
+            <div class="schedule-import-heading">
+              <div><p class="eyebrow">LESSON PLAN → TIMER</p><h3 id="scheduleImportTitle">Import Lesson Plan</h3><small>Upload a TXT lesson plan or paste lesson plan text. GLN will find activities with durations or time ranges and turn them into a schedule.</small></div>
+              <button id="scheduleImportClose" type="button" aria-label="Close lesson plan importer">×</button>
+            </div>
+
+            <div class="schedule-import-source">
+              <div class="schedule-import-settings" aria-label="Class setup">
+                <label>Class starts<input id="scheduleImportStart" type="time" /></label>
+                <label>Class length<input id="scheduleImportLength" type="number" min="1" max="480" step="1" value="45" /><small>minutes</small></label>
+              </div>
+              <small class="schedule-import-setup-help">Set the class start time and class length before importing or analyzing a lesson plan.</small>
+              <div class="schedule-import-source-editor" id="scheduleImportSourceEditor">
+                <label class="schedule-import-file">
+                  <span>Lesson plan file</span>
+                  <input id="scheduleImportFile" type="file" accept=".txt,.text,text/plain" />
+                  <small>TXT files are read in your browser. Nothing is uploaded by this importer.</small>
+                </label>
+                <div class="schedule-import-or"><span>or</span></div>
+                <label class="schedule-import-paste">
+                  <span>Paste lesson plan text</span>
+                  <textarea id="scheduleImportText" rows="5" placeholder="Attendance & folders — 5 min&#10;Alphabet review — 8 min&#10;Guided practice — 10 min"></textarea>
+                </label>
+                <div class="schedule-import-source-actions">
+                  <button class="button ghost" id="scheduleImportAnalyze" type="button">Analyze pasted text</button>
+                  <button class="button ghost" id="scheduleImportClear" type="button">Clear</button>
+                  <button class="button ghost" id="scheduleImportReset" type="button">Reset importer</button>
+                </div>
+              </div>
+              <p class="schedule-import-status" id="scheduleImportStatus" role="status" aria-live="polite">Choose a lesson plan file or paste your lesson plan above.</p>
+            </div>
+
+            <section class="schedule-import-preview" id="scheduleImportPreview" hidden aria-labelledby="scheduleImportPreviewTitle">
+              <div class="schedule-import-preview-heading">
+                <div><strong id="scheduleImportPreviewTitle">Schedule preview</strong><small>Edit anything before creating the schedule.</small></div>
+                <div class="schedule-import-preview-tools">
+                  <button id="scheduleImportEditSource" type="button">✎ Edit lesson plan</button>
+                  <button id="scheduleImportAddActivity" type="button">+ Add activity</button>
+                </div>
+              </div>
+              <div class="schedule-import-settings">
+                <label>Schedule name<input id="scheduleImportName" type="text" maxlength="60" placeholder="Karen Language Lesson" /></label>
+                <label>Date<input id="scheduleImportDate" type="date" /></label>
+              </div>
+              <div class="schedule-import-fit" id="scheduleImportFit" aria-live="polite"></div>
+              <div class="schedule-import-table-wrap">
+                <table class="schedule-import-table">
+                  <thead><tr><th>Start</th><th>Activity</th><th>Minutes</th><th><span class="sr-only">Remove</span></th></tr></thead>
+                  <tbody id="scheduleImportRows"></tbody>
+                </table>
+              </div>
+              <div class="schedule-import-actions">
+                <button class="button ghost" id="scheduleImportDistribute" type="button">Distribute remaining time</button>
+                <button class="button primary" id="scheduleImportCreate" type="button">Create Special Schedule</button>
+              </div>
+            </section>
+          </div>
+        </dialog>
         <div class="schedule-timer-layout">
           <div class="schedule-timer-main">
             <section class="schedule-active-card" id="scheduleActiveCard" aria-live="polite" aria-atomic="true">
@@ -727,7 +789,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
     })();
   </script>
   <div class="toast" id="toast" role="status" aria-live="polite">Copied to clipboard</div>
-  <script src="app.js?v=20260911-1"></script>
+  <script src="app.js?v=20260914-chromeos-split-1"></script>
   <script src="practice.js?v=20260910-6"></script>
   <script src="games.js?v=20260911-1"></script>
   <script src="custom-games.js?v=20260911-14"></script>
@@ -736,7 +798,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="quiz.js?v=20260913-6"></script>
   <script src="quiz-classroom.js?v=20260913-17"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
-  <script src="calculator.js?v=20260912-10"></script>
+  <script src="calculator.js?v=20260913-17"></script>
   <script src="event-signup.js?v=20260912-15"></script>
   <script src="seating.js?v=20260913-42"></script>
   <script src="rgb-theme.js?v=20260911-2"></script>

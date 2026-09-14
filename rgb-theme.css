@@ -138,3 +138,16 @@ body.theme-rgb .quiz-keyboard-switch{background:#101f35;border-color:#385675}
 body.theme-rgb .quiz-keyboard-switch button{color:#b8c8dc}
 body.theme-rgb .quiz-keyboard-switch button:hover{color:#fff;background:#173a59}
 body.theme-rgb .quiz-keyboard-switch button.active{color:#fff;background:linear-gradient(135deg,#1c74c9,#9c2cb0);box-shadow:0 0 0 1px #5ce5ff,0 0 14px rgba(22,224,255,.2)}
+
+/* Lesson Plan Importer - RGB */
+body.theme-rgb .schedule-import-dialog{background:#0f2239;color:#eef5ff}
+body.theme-rgb .schedule-import-heading{background:#10263f;border-color:#294966}
+body.theme-rgb .schedule-import-heading h3,body.theme-rgb .schedule-import-preview-heading strong{color:#f2f7ff}
+body.theme-rgb .schedule-import-heading small,body.theme-rgb .schedule-import-file,body.theme-rgb .schedule-import-paste,body.theme-rgb .schedule-import-settings label,body.theme-rgb .schedule-import-preview-heading small{color:#a9bdd4}
+body.theme-rgb .schedule-import-heading>button,body.theme-rgb .schedule-import-preview-heading button,body.theme-rgb .schedule-import-table input,body.theme-rgb .schedule-import-file input[type="file"],body.theme-rgb .schedule-import-paste textarea,body.theme-rgb .schedule-import-settings input{background:#0b1c30;border-color:#355777;color:#eef5ff;color-scheme:dark}
+body.theme-rgb .schedule-import-source{border-color:#294966}
+body.theme-rgb .schedule-import-or{color:#7f96ae}body.theme-rgb .schedule-import-or::before,body.theme-rgb .schedule-import-or::after{background:#294966}
+body.theme-rgb .schedule-import-status{background:#10263f;color:#a9bdd4}.theme-rgb .schedule-import-status.is-ok{background:#143729;color:#7aefb4}.theme-rgb .schedule-import-status.is-error{background:#3b2026;color:#ffaaaa}
+body.theme-rgb .schedule-import-fit{background:#10263f;border-color:#355777;color:#c8d8e8}.theme-rgb .schedule-import-fit.is-exact{background:#143729;border-color:#2b7756;color:#7aefb4}.theme-rgb .schedule-import-fit.is-under{background:#3b3216;border-color:#8d7430;color:#ffe28b}.theme-rgb .schedule-import-fit.is-over{background:#3b2026;border-color:#7a3c47;color:#ffaaaa}
+body.theme-rgb .schedule-import-table-wrap,body.theme-rgb .schedule-import-table{background:#0b1c30;border-color:#294966}body.theme-rgb .schedule-import-table th{background:#10263f;color:#9fb4ca}body.theme-rgb .schedule-import-table td{border-color:#294966}body.theme-rgb .schedule-import-table td:first-child{color:#dceaff}
+body.theme-rgb .schedule-import-remove{background:#351d25;border-color:#6a3c46;color:#ff9b9b}

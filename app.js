@@ -22,7 +22,17 @@ const pwoRows=[
 function rowsForLanguage(language=typingLanguage){return language==='en'?englishRows:language==='pwo'?pwoRows:rows}
 function mappingsForLanguage(language=typingLanguage){return rowsForLanguage(language).flat().flatMap(([key,normal,shift])=>[{key,value:normal,shift:false},{key,value:shift,shift:true}]).sort((a,b)=>b.value.length-a.value.length)}
 const special=[['Backspace','Backspace','⌫'],[' ','Space','Space'],['Enter','Enter','↵ Enter']];
-function phoneKeyboard(){return window.matchMedia('(max-width:720px)').matches}
+function isChromeOS(){return /\bCrOS\b/i.test(navigator.userAgent)}
+function phoneKeyboard(){
+  // A narrow desktop/Chromebook window is not a phone. ChromeOS split-screen can
+  // easily fall below 720px wide, so never disable its hardware keyboard.
+  if(isChromeOS())return false;
+  const narrow=window.matchMedia('(max-width:720px)').matches;
+  const coarse=window.matchMedia('(pointer:coarse)').matches;
+  const ua=navigator.userAgent||'';
+  const mobileUA=/Android|iPhone|iPod|Mobile/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1);
+  return narrow&&(coarse||mobileUA)
+}
 function makePhoneControl(label,display,action){const b=document.createElement('button');b.type='button';b.className='key phone-control';b.dataset.code=label;b.innerHTML=`<small>${label}</small>${display}`;b.addEventListener('click',action);return b}
 function makeDesktopControl(label,display,action,className=''){const b=makePhoneControl(label,display,action);b.classList.remove('phone-control');b.classList.add('modifier',...className.split(' ').filter(Boolean));return b}
 function render(){keyboard.innerHTML='';const mobile=phoneKeyboard(),layout=rowsForLanguage();keyboard.classList.toggle('real-keyboard',!mobile);layout.forEach((row,rowIndex)=>{const el=document.createElement('div');el.className=`key-row keyboard-row-${rowIndex}`;if(!mobile&&rowIndex===1)el.appendChild(makeDesktopControl('Tab','Tab',()=>insert('\t'),'tab-key'));if(!mobile&&rowIndex===2)el.appendChild(makeDesktopControl('Caps Lock','Caps',()=>setShift(!shifted),'caps-key'));if(rowIndex===layout.length-1)el.appendChild((mobile?makePhoneControl:makeDesktopControl)('Shift','⇧ Shift',()=>setShift(!shifted),'shift-key'));row.forEach(([latin,normal,shift])=>el.appendChild(makeKey(latin,shifted?shift:normal)));if(!mobile&&rowIndex===0)el.appendChild(makeDesktopControl('Backspace','⌫ Backspace',()=>insert('Backspace'),'backspace-key'));if(!mobile&&rowIndex===2)el.appendChild(makeDesktopControl('Enter','↵ Enter',()=>insert('Enter'),'enter-key'));if(rowIndex===layout.length-1)el.appendChild(mobile?makePhoneControl('Backspace','⌫',()=>insert('Backspace')):makeDesktopControl('Shift','Shift ⇧',()=>setShift(!shifted),'shift-key'));keyboard.appendChild(el)});const bottom=document.createElement('div');bottom.className='key-row phone-bottom-row keyboard-row-bottom';if(!mobile){[['Ctrl','Ctrl'],['Alt','Alt']].forEach(([label,display])=>bottom.appendChild(makeDesktopControl(label,display,()=>{},'system-key')))}const space=makeKey('Space','Space',' ');space.classList.add('wide','space');bottom.appendChild(space);if(mobile){const enter=makePhoneControl('Enter','↵',()=>insert('Enter'));enter.classList.add('wide');bottom.appendChild(enter)}else{[['Alt','Alt'],['Ctrl','Ctrl']].forEach(([label,display])=>bottom.appendChild(makeDesktopControl(label,display,()=>{},'system-key')))}keyboard.appendChild(bottom)}
