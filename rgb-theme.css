@@ -151,3 +151,6 @@ body.theme-rgb .schedule-import-status{background:#10263f;color:#a9bdd4}.theme-r
 body.theme-rgb .schedule-import-fit{background:#10263f;border-color:#355777;color:#c8d8e8}.theme-rgb .schedule-import-fit.is-exact{background:#143729;border-color:#2b7756;color:#7aefb4}.theme-rgb .schedule-import-fit.is-under{background:#3b3216;border-color:#8d7430;color:#ffe28b}.theme-rgb .schedule-import-fit.is-over{background:#3b2026;border-color:#7a3c47;color:#ffaaaa}
 body.theme-rgb .schedule-import-table-wrap,body.theme-rgb .schedule-import-table{background:#0b1c30;border-color:#294966}body.theme-rgb .schedule-import-table th{background:#10263f;color:#9fb4ca}body.theme-rgb .schedule-import-table td{border-color:#294966}body.theme-rgb .schedule-import-table td:first-child{color:#dceaff}
 body.theme-rgb .schedule-import-remove{background:#351d25;border-color:#6a3c46;color:#ff9b9b}
+
+/* Desktop/Chromebook Shift-required learning hint. */
+body.theme-rgb .keyboard .key.desktop-shift-hint{border-color:var(--rgb-gold)!important;background:linear-gradient(155deg,#5a4712,#2f260c)!important;color:#fff4bd!important;box-shadow:0 0 0 2px rgba(255,216,77,.8),0 0 24px rgba(255,216,77,.72),inset 0 0 16px rgba(255,216,77,.13)!important}

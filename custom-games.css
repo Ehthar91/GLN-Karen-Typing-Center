@@ -801,3 +801,6 @@ body.theme-rgb #customGameKeyboard.real-keyboard .system-key{color:#9fb0c8}
   #customGameKeyboard.real-keyboard .key-row{justify-content:flex-start;min-width:680px}
   #customGameKeyboard.real-keyboard .key{height:56px}
 }
+
+/* Desktop/Chromebook learning hint: both Shift keys glow only when Shift is required. */
+.keyboard .key.desktop-shift-hint{border-color:#f0b429!important;background:#fff1b8!important;color:#6b4600!important;box-shadow:0 0 0 3px rgba(240,180,41,.24),0 0 18px rgba(240,180,41,.34)!important}
