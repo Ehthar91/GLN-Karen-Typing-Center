@@ -304,15 +304,18 @@ function renderMediumCustomKeyboard(box){
 }
 function renderEasyCustomKeyboard(box){
   box.classList.remove('real-keyboard');
-  const expected=customExpected(),needShift=expected?.shift||false;
-  rowsForLanguage(customGameLanguage()).forEach((row,rowIndex)=>{
+  const expected=customExpected(),needShift=expected?.shift||false,mobile=phoneKeyboard(),layout=rowsForLanguage(customGameLanguage()),lastRow=layout.length-1;
+  layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className='key-row';
+    if(!mobile&&rowIndex===lastRow){const leftShift=customControl('⇧ Shift',()=>{},needShift);if(needShift)leftShift.classList.add('desktop-shift-hint');line.appendChild(leftShift)}
     row.forEach(([key,normal,shift])=>{const b=document.createElement('button');b.type='button';b.className='key';b.dataset.code=key;b.innerHTML=`<small>${key}</small>${needShift?shift:normal}`;if(expected?.key===key)b.classList.add('expected');b.onclick=()=>acceptCustomInput(needShift?shift:normal);line.appendChild(b)});
-    if(rowIndex===0)line.appendChild(customControl('Backspace',customBackspace));box.appendChild(line);
+    if(!mobile&&rowIndex===lastRow){const rightShift=customControl('Shift ⇧',()=>{},needShift);if(needShift)rightShift.classList.add('desktop-shift-hint');line.appendChild(rightShift)}
+    if(rowIndex===0)line.appendChild(customControl('Backspace',customBackspace));box.appendChild(line)
   });
-  const bottom=document.createElement('div');bottom.className='key-row';bottom.appendChild(customControl('Shift',()=>{},needShift));
-  const space=customControl('Space',()=>acceptCustomInput(' '));space.classList.add('space');if(expected?.key==='Space')space.classList.add('expected');
-  bottom.append(space,customControl('Shift',()=>{},needShift));box.appendChild(bottom);
+  const bottom=document.createElement('div');bottom.className='key-row';
+  if(mobile)bottom.appendChild(customControl('Shift',()=>{},needShift));
+  const space=customControl('Space',()=>acceptCustomInput(' '));space.classList.add('space');if(expected?.key==='Space')space.classList.add('expected');bottom.appendChild(space);
+  if(mobile)bottom.appendChild(customControl('Shift',()=>{},needShift));box.appendChild(bottom)
 }
 function renderCustomKeyboard(){
   const box=cq('#customGameKeyboard');box.innerHTML='';

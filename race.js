@@ -240,7 +240,7 @@ function renderMediumRaceKeyboard(box,mobile,layout){
 }
 function renderRaceKeyboard(){
   const box=document.querySelector('#raceKeyboard');box.innerHTML='';
-  const instruction=document.querySelector('#raceKeyInstruction'),mobile=phoneKeyboard(),layout=rowsForLanguage(raceLanguage);
+  const instruction=document.querySelector('#raceKeyInstruction'),mobile=phoneKeyboard(),layout=rowsForLanguage(raceLanguage),lastRow=layout.length-1;
   const medium=raceDifficultyMode==='medium';
   instruction.hidden=medium;
   if(medium){renderMediumRaceKeyboard(box,mobile,layout);return}
@@ -251,20 +251,22 @@ function renderRaceKeyboard(){
   instruction.classList.toggle('needs-shift',shifted);
   layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className='key-row';
-    if(mobile&&rowIndex===layout.length-1){const shiftButton=document.createElement('button');shiftButton.type='button';shiftButton.className='key wide shift-key';shiftButton.textContent='Shift';if(shifted)shiftButton.classList.add('shift-required');line.appendChild(shiftButton)}
+    if(mobile&&rowIndex===lastRow){const shiftButton=document.createElement('button');shiftButton.type='button';shiftButton.className='key wide shift-key';shiftButton.textContent='Shift';if(shifted)shiftButton.classList.add('shift-required');line.appendChild(shiftButton)}
+    if(!mobile&&rowIndex===lastRow){const shiftButton=document.createElement('button');shiftButton.type='button';shiftButton.className='key wide shift-key';shiftButton.textContent='⇧ Shift';shiftButton.tabIndex=-1;if(shifted)shiftButton.classList.add('shift-required');line.appendChild(shiftButton)}
     row.forEach(([key,normal,shift])=>{
       const button=document.createElement('button');button.type='button';button.className='key';button.innerHTML=`<small>${key}</small>${shifted?shift:normal}`;
       if(expected&&expected.key===key)button.classList.add('expected');
       button.onclick=()=>acceptRaceInput(shifted?shift:normal);line.appendChild(button)
     });
-    if(mobile&&rowIndex===layout.length-1){const backspace=document.createElement('button');backspace.type='button';backspace.className='key wide';backspace.textContent='⌫';backspace.onclick=raceBackspace;line.appendChild(backspace)}
+    if(mobile&&rowIndex===lastRow){const backspace=document.createElement('button');backspace.type='button';backspace.className='key wide';backspace.textContent='⌫';backspace.onclick=raceBackspace;line.appendChild(backspace)}
+    if(!mobile&&rowIndex===lastRow){const shiftButton=document.createElement('button');shiftButton.type='button';shiftButton.className='key wide shift-key';shiftButton.textContent='Shift ⇧';shiftButton.tabIndex=-1;if(shifted)shiftButton.classList.add('shift-required');line.appendChild(shiftButton)}
     if(!mobile&&rowIndex===0){const backspace=document.createElement('button');backspace.type='button';backspace.className='key wide';backspace.textContent='Backspace';backspace.onclick=raceBackspace;line.appendChild(backspace)}
     if(!mobile&&rowIndex===2){const enter=document.createElement('button');enter.type='button';enter.className='key wide';enter.textContent='Enter';line.appendChild(enter)}box.appendChild(line)
   });
-  const line=document.createElement('div'),leftShift=document.createElement('button'),space=document.createElement('button'),rightShift=document.createElement('button');line.className='key-row';
-  [leftShift,rightShift].forEach(button=>{button.type='button';button.className='key wide shift-key';button.textContent='Shift';button.tabIndex=-1;if(shifted)button.classList.add('shift-required')});
-  space.type='button';space.className='key wide space';space.textContent='Space';
-  if(expected?.key==='Space')space.classList.add('expected');space.onclick=()=>acceptRaceInput(' ');if(!mobile)line.append(leftShift);line.appendChild(space);if(mobile){const enter=document.createElement('button');enter.type='button';enter.className='key wide';enter.textContent='Enter';line.appendChild(enter)}else line.appendChild(rightShift);box.appendChild(line)
+  const line=document.createElement('div'),space=document.createElement('button');line.className='key-row';space.type='button';space.className='key wide space';space.textContent='Space';
+  if(expected?.key==='Space')space.classList.add('expected');space.onclick=()=>acceptRaceInput(' ');line.appendChild(space);
+  if(mobile){const enter=document.createElement('button');enter.type='button';enter.className='key wide';enter.textContent='Enter';line.appendChild(enter)}
+  box.appendChild(line)
 }
 function raceBackspace(){if(raceMode!=='player'||!raceTyped)return;const next=previousTextBoundary(raceTyped,raceTyped.length),removed=raceTyped.length-next;raceTyped=raceTyped.slice(0,next);raceCorrect=Math.max(0,raceCorrect-removed);renderRacePassage();renderRaceKeyboard();scheduleRaceProgress()}
 function acceptRaceInput(value){
