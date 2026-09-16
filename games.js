@@ -23,26 +23,26 @@ function gameBackspace(){if(!gameRunning||!gameBuffer)return;gameBuffer=gameBuff
 function renderGameKeyboard(){
   const box=document.querySelector('#gameKeyboard');box.innerHTML='';
   const expected=gameExpected(),shifted=expected?.shift||false,mobile=phoneKeyboard(),layout=rowsForLanguage(),lastRow=layout.length-1;
+  if(!mobile){
+    renderUnifiedDesktopKeyboard(box,{language:typingLanguage,shifted,expected:activeGame==='match'?null:expected,hintShift:shifted,onKey:(value,key,isShifted)=>acceptGameInput(value,key,isShifted),onBackspace:gameBackspace});
+    return
+  }
+  box.classList.remove('real-keyboard');
   layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className='key-row';
-    if(mobile&&rowIndex===lastRow)line.appendChild(gameControl('Shift',()=>{},shifted));
-    if(!mobile&&rowIndex===lastRow){const leftShift=gameControl('⇧ Shift',()=>{},shifted);if(shifted)leftShift.classList.add('desktop-shift-hint');line.appendChild(leftShift)}
+    if(rowIndex===lastRow)line.appendChild(gameControl('Shift',()=>{},shifted));
     row.forEach(([key,normal,shift])=>{
       const b=document.createElement('button');b.type='button';b.className='key';b.dataset.code=key;b.innerHTML=`<small>${key}</small>${shifted?shift:normal}`;
       if(activeGame!=='match'&&expected&&expected.key===key)b.classList.add('expected');
       b.onclick=()=>acceptGameInput(shifted?shift:normal,key,shifted);line.appendChild(b)
     });
-    if(mobile&&rowIndex===lastRow)line.appendChild(gameControl('⌫',gameBackspace));
-    if(!mobile&&rowIndex===lastRow){const rightShift=gameControl('Shift ⇧',()=>{},shifted);if(shifted)rightShift.classList.add('desktop-shift-hint');line.appendChild(rightShift)}
-    if(!mobile&&rowIndex===0)line.appendChild(gameControl('Backspace',gameBackspace));
-    if(!mobile&&rowIndex===2)line.appendChild(gameControl('Enter',()=>{}));
+    if(rowIndex===lastRow)line.appendChild(gameControl('⌫',gameBackspace));
     box.appendChild(line)
   });
   if(activeGame!=='match'){
     const line=document.createElement('div');line.className='key-row phone-bottom-row';
     const space=gameControl('Space',()=>acceptGameInput(' ','Space',false));space.classList.add('space');if(expected?.key==='Space')space.classList.add('expected');line.appendChild(space);
-    if(mobile)line.appendChild(gameControl('Enter',()=>{}));
-    box.appendChild(line)
+    line.appendChild(gameControl('Enter',()=>{}));box.appendChild(line)
   }
 }
 function acceptGameInput(value,key,shifted){if(!gameRunning)return;if(activeGame==='match'){const valid=matchPool().some(item=>item.value===gameTarget&&item.key===key&&item.shift===shifted&&item.shift===matchTarget.shift);if(valid){gameScore++;gameStreak++;matchRounds++;gameSeconds=10-matchRounds;updateGameStats();nextMatch()}else{gameStreak=0;updateGameStats();flashWrong()}return}const next=gameTarget.slice(gameBuffer.length);if(next.startsWith(value)){gameBuffer+=value;document.querySelector('#typedAnswer').textContent=gameBuffer;document.querySelector('#typedAnswer').className='typed-answer';if(gameBuffer===gameTarget){gameScore++;gameStreak++;updateGameStats();if(activeGame==='rain'){cancelAnimationFrame(fallFrame);nextFallingWord()}else nextWord()}else renderGameKeyboard()}else{gameStreak=0;updateGameStats();flashWrong()}}

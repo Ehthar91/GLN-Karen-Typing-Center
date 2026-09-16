@@ -280,42 +280,34 @@ function makeCustomTypeKey(label,char,value=char){
 function setCustomKeyboardShift(on){customKeyboardShifted=!!on;renderCustomKeyboard()}
 function renderMediumCustomKeyboard(box){
   const mobile=phoneKeyboard(),layout=rowsForLanguage(customGameLanguage());
-  box.classList.toggle('real-keyboard',!mobile);
+  if(!mobile){
+    renderUnifiedDesktopKeyboard(box,{language:customGameLanguage(),shifted:customKeyboardShifted,onKey:value=>acceptCustomInput(value),onBackspace:customBackspace,onShift:on=>setCustomKeyboardShift(on),onCaps:on=>setCustomKeyboardShift(on)});return
+  }
+  box.classList.remove('real-keyboard');
   layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className=`key-row keyboard-row-${rowIndex}`;
-    if(!mobile&&rowIndex===1)line.appendChild(makeCustomTypeControl('Tab','Tab',()=>{},'tab-key'));
-    if(!mobile&&rowIndex===2)line.appendChild(makeCustomTypeControl('Caps Lock','Caps',()=>setCustomKeyboardShift(!customKeyboardShifted),'caps-key'));
-    if(rowIndex===layout.length-1)line.appendChild(makeCustomTypeControl('Shift',mobile?'Shift':'⇧ Shift',()=>setCustomKeyboardShift(!customKeyboardShifted),'shift-key'));
+    if(rowIndex===layout.length-1)line.appendChild(makeCustomTypeControl('Shift','Shift',()=>setCustomKeyboardShift(!customKeyboardShifted),'shift-key'));
     row.forEach(([key,normal,shift])=>line.appendChild(makeCustomTypeKey(key,customKeyboardShifted?shift:normal,customKeyboardShifted?shift:normal)));
-    if(!mobile&&rowIndex===0)line.appendChild(makeCustomTypeControl('Backspace','⌫ Backspace',customBackspace,'backspace-key'));
-    if(!mobile&&rowIndex===2)line.appendChild(makeCustomTypeControl('Enter','↵ Enter',()=>{},'enter-key'));
-    if(rowIndex===layout.length-1){
-      if(mobile)line.appendChild(makeCustomTypeControl('Backspace','⌫',customBackspace,'backspace-key'));
-      else line.appendChild(makeCustomTypeControl('Shift','Shift ⇧',()=>setCustomKeyboardShift(!customKeyboardShifted),'shift-key'));
-    }
-    box.appendChild(line)
+    if(rowIndex===layout.length-1)line.appendChild(makeCustomTypeControl('Backspace','⌫',customBackspace,'backspace-key'));box.appendChild(line)
   });
   const bottom=document.createElement('div');bottom.className='key-row phone-bottom-row keyboard-row-bottom';
-  if(!mobile){[['Ctrl','Ctrl'],['Alt','Alt']].forEach(([label,display])=>bottom.appendChild(makeCustomTypeControl(label,display,()=>{},'system-key')))}
   const space=makeCustomTypeKey('Space','Space',' ');space.classList.add('wide','space');bottom.appendChild(space);
-  if(mobile){const enter=makeCustomTypeControl('Enter','↵',()=>{},'enter-key');enter.classList.add('wide');bottom.appendChild(enter)}
-  else [['Alt','Alt'],['Ctrl','Ctrl']].forEach(([label,display])=>bottom.appendChild(makeCustomTypeControl(label,display,()=>{},'system-key')));
-  box.appendChild(bottom)
+  const enter=makeCustomTypeControl('Enter','↵',()=>{},'enter-key');enter.classList.add('wide');bottom.appendChild(enter);box.appendChild(bottom)
 }
 function renderEasyCustomKeyboard(box){
-  box.classList.remove('real-keyboard');
   const expected=customExpected(),needShift=expected?.shift||false,mobile=phoneKeyboard(),layout=rowsForLanguage(customGameLanguage()),lastRow=layout.length-1;
+  if(!mobile){
+    renderUnifiedDesktopKeyboard(box,{language:customGameLanguage(),shifted:needShift,expected,hintShift:needShift,onKey:value=>acceptCustomInput(value),onBackspace:customBackspace});return
+  }
+  box.classList.remove('real-keyboard');
   layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className='key-row';
-    if(!mobile&&rowIndex===lastRow){const leftShift=customControl('⇧ Shift',()=>{},needShift);if(needShift)leftShift.classList.add('desktop-shift-hint');line.appendChild(leftShift)}
     row.forEach(([key,normal,shift])=>{const b=document.createElement('button');b.type='button';b.className='key';b.dataset.code=key;b.innerHTML=`<small>${key}</small>${needShift?shift:normal}`;if(expected?.key===key)b.classList.add('expected');b.onclick=()=>acceptCustomInput(needShift?shift:normal);line.appendChild(b)});
-    if(!mobile&&rowIndex===lastRow){const rightShift=customControl('Shift ⇧',()=>{},needShift);if(needShift)rightShift.classList.add('desktop-shift-hint');line.appendChild(rightShift)}
-    if(rowIndex===0)line.appendChild(customControl('Backspace',customBackspace));box.appendChild(line)
+    box.appendChild(line)
   });
-  const bottom=document.createElement('div');bottom.className='key-row';
-  if(mobile)bottom.appendChild(customControl('Shift',()=>{},needShift));
+  const bottom=document.createElement('div');bottom.className='key-row';bottom.appendChild(customControl('Shift',()=>{},needShift));
   const space=customControl('Space',()=>acceptCustomInput(' '));space.classList.add('space');if(expected?.key==='Space')space.classList.add('expected');bottom.appendChild(space);
-  if(mobile)bottom.appendChild(customControl('Shift',()=>{},needShift));box.appendChild(bottom)
+  bottom.appendChild(customControl('Shift',()=>{},needShift));box.appendChild(bottom)
 }
 function renderCustomKeyboard(){
   const box=cq('#customGameKeyboard');box.innerHTML='';

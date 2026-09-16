@@ -40,13 +40,16 @@ function renderTarget(){const text=lessons[lessonIndex].text;const expected=expe
 function renderPracticeKeyboard(){
   practiceKeyboard.innerHTML='';
   const mobile=phoneKeyboard(),layout=rowsForLanguage(),lastRow=layout.length-1;
-  const needShift=position<lessons[lessonIndex].text.length&&expectedMapping().shift;
+  const expected=position<lessons[lessonIndex].text.length?expectedMapping():null,needShift=!!expected?.shift;
+  if(!mobile){
+    renderUnifiedDesktopKeyboard(practiceKeyboard,{language:typingLanguage,shifted:practiceShifted,expected,hintShift:needShift,onKey:value=>handlePractice(value),onShift:on=>setPracticeShift(on),onCaps:on=>setPracticeShift(on)});
+    highlightExpected();return
+  }
+  practiceKeyboard.classList.remove('real-keyboard');
   const shiftKey=label=>{const b=document.createElement('button');b.type='button';b.className='key wide shift-key';b.textContent=label;if(needShift)b.classList.add('shift-required','desktop-shift-hint');b.onclick=()=>setPracticeShift(!practiceShifted);return b};
   layout.forEach((row,rowIndex)=>{
     const el=document.createElement('div');el.className='key-row';
-    if(!mobile&&rowIndex===lastRow)el.appendChild(shiftKey('⇧ Shift'));
     row.forEach(([key,normal,shift])=>{const b=document.createElement('button');b.type='button';b.className='key';b.dataset.code=key;b.innerHTML=`<small>${key}</small>${practiceShifted?shift:normal}`;b.onclick=()=>handlePractice(practiceShifted?shift:normal);el.appendChild(b)});
-    if(!mobile&&rowIndex===lastRow)el.appendChild(shiftKey('Shift ⇧'));
     practiceKeyboard.appendChild(el)
   });
   const bottom=document.createElement('div');bottom.className='key-row';const space=document.createElement('button');space.type='button';space.className='key wide space';space.dataset.code='Space';space.textContent='Space';space.onclick=()=>handlePractice(' ');bottom.appendChild(space);practiceKeyboard.appendChild(bottom);highlightExpected()

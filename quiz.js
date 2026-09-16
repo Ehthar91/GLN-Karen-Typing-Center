@@ -53,20 +53,21 @@ function renderQuizKeyboard(){
   const item=currentQuiz();if(!item||item.mode!=='typing'){box.hidden=true;if(toolbar)toolbar.hidden=true;return}
   box.hidden=false;if(toolbar){toolbar.hidden=false;toolbar.querySelectorAll('[data-quiz-keyboard]').forEach(button=>{const active=button.dataset.quizKeyboard===quizKeyboardLanguage;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));button.disabled=quizLocked})}
   const expected=quizExpected(),useShift=expected?.shift||false,mobile=phoneKeyboard(),layout=quizRows(),lastRow=layout.length-1;
+  if(!mobile){
+    renderUnifiedDesktopKeyboard(box,{language:quizKeyboardLanguage,shifted:useShift,expected,hintShift:useShift,onKey:value=>addQuizCharacter(value),onBackspace:quizBackspace,onEnter:()=>quizLocked?document.querySelector('#nextQuizQuestion').click():submitQuizAnswer()});
+    return
+  }
+  box.classList.remove('real-keyboard');
   layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className='key-row';
-    if(mobile&&rowIndex===lastRow)line.appendChild(quizControl('Shift',()=>{},useShift));
-    if(!mobile&&rowIndex===lastRow)line.appendChild(quizControl('⇧ Shift',()=>{},useShift));
+    if(rowIndex===lastRow)line.appendChild(quizControl('Shift',()=>{},useShift));
     row.forEach(([key,normal,shift])=>{const button=document.createElement('button');button.type='button';button.className='key';button.dataset.code=key;button.innerHTML=`<small>${key}</small>${useShift?shift:normal}`;if(expected?.key===key)button.classList.add('expected');button.onclick=()=>addQuizCharacter(useShift?shift:normal);line.appendChild(button)});
-    if(rowIndex===0&&!mobile)line.appendChild(quizControl('Backspace',quizBackspace));
-    if(rowIndex===lastRow&&mobile)line.appendChild(quizControl('⌫',quizBackspace));
-    if(rowIndex===lastRow&&!mobile)line.appendChild(quizControl('Shift ⇧',()=>{},useShift));
-    box.appendChild(line)
+    if(rowIndex===lastRow)line.appendChild(quizControl('⌫',quizBackspace));box.appendChild(line)
   });
   const bottom=document.createElement('div');bottom.className='key-row phone-bottom-row';
   const space=quizControl('Space',()=>addQuizCharacter(' '),expected?.key==='Space');space.classList.add('space');bottom.appendChild(space);
   bottom.appendChild(quizControl('Enter',()=>quizLocked?document.querySelector('#nextQuizQuestion').click():submitQuizAnswer()));box.appendChild(bottom)
 }
-document.addEventListener('keydown',event=>{if(quizView.hidden||quizPlayer.hidden||currentQuiz()?.mode!=='typing'||event.ctrlKey||event.metaKey||event.altKey)return;if(event.key==='Enter'){event.preventDefault();quizLocked?document.querySelector('#nextQuizQuestion').click():submitQuizAnswer();return}if(quizLocked)return;if(event.key==='Backspace'){event.preventDefault();quizBackspace();return}if(quizKeyboardLanguage!=='en'){if(event.key==='Shift')return;const key=physicalKey(event),match=rowsForLanguage(quizKeyboardLanguage).flat().find(([mapped])=>mapped===key);if(match){event.preventDefault();addQuizCharacter(event.shiftKey?match[2]:match[1])}}else if(event.key.length===1){event.preventDefault();addQuizCharacter(event.key)}});
+document.addEventListener('keydown' ,event=>{if(quizView.hidden||quizPlayer.hidden||currentQuiz()?.mode!=='typing'||event.ctrlKey||event.metaKey||event.altKey)return;if(event.key==='Enter'){event.preventDefault();quizLocked?document.querySelector('#nextQuizQuestion').click():submitQuizAnswer();return}if(quizLocked)return;if(event.key==='Backspace'){event.preventDefault();quizBackspace();return}if(quizKeyboardLanguage!=='en'){if(event.key==='Shift')return;const key=physicalKey(event),match=rowsForLanguage(quizKeyboardLanguage).flat().find(([mapped])=>mapped===key);if(match){event.preventDefault();addQuizCharacter(event.shiftKey?match[2]:match[1])}}else if(event.key.length===1){event.preventDefault();addQuizCharacter(event.key)}});
 window.addEventListener('typinglanguagechange',()=>{const inClassroom=typeof quizClassRole!=='undefined'&&quizClassRole==='student'&&quizClassCode;if(!inClassroom&&!quizView.hidden&&generatedQuiz.length)generateQuestions();if(!quizPlayer.hidden)showQuizQuestion()});
 generateQuestions();

@@ -216,57 +216,40 @@ function makeRaceTypeKey(label,char,value=char){
 }
 function setRaceKeyboardShift(on){raceKeyboardShifted=!!on;renderRaceKeyboard()}
 function renderMediumRaceKeyboard(box,mobile,layout){
-  box.classList.toggle('real-keyboard',!mobile);
+  if(!mobile){
+    renderUnifiedDesktopKeyboard(box,{language:raceLanguage,shifted:raceKeyboardShifted,onKey:value=>acceptRaceInput(value),onBackspace:raceBackspace,onShift:on=>setRaceKeyboardShift(on),onCaps:on=>setRaceKeyboardShift(on)});return
+  }
+  box.classList.remove('real-keyboard');
   layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className=`key-row keyboard-row-${rowIndex}`;
-    if(!mobile&&rowIndex===1)line.appendChild(makeRaceTypeControl('Tab','Tab',()=>{},'tab-key'));
-    if(!mobile&&rowIndex===2)line.appendChild(makeRaceTypeControl('Caps Lock','Caps',()=>setRaceKeyboardShift(!raceKeyboardShifted),'caps-key'));
-    if(rowIndex===layout.length-1)line.appendChild(makeRaceTypeControl('Shift',mobile?'Shift':'⇧ Shift',()=>setRaceKeyboardShift(!raceKeyboardShifted),'shift-key'));
+    if(rowIndex===layout.length-1)line.appendChild(makeRaceTypeControl('Shift','Shift',()=>setRaceKeyboardShift(!raceKeyboardShifted),'shift-key'));
     row.forEach(([key,normal,shift])=>line.appendChild(makeRaceTypeKey(key,raceKeyboardShifted?shift:normal,raceKeyboardShifted?shift:normal)));
-    if(!mobile&&rowIndex===0)line.appendChild(makeRaceTypeControl('Backspace','⌫ Backspace',raceBackspace,'backspace-key'));
-    if(!mobile&&rowIndex===2)line.appendChild(makeRaceTypeControl('Enter','↵ Enter',()=>{},'enter-key'));
-    if(rowIndex===layout.length-1){
-      if(mobile)line.appendChild(makeRaceTypeControl('Backspace','⌫',raceBackspace,'backspace-key'));
-      else line.appendChild(makeRaceTypeControl('Shift','Shift ⇧',()=>setRaceKeyboardShift(!raceKeyboardShifted),'shift-key'));
-    }
+    if(rowIndex===layout.length-1)line.appendChild(makeRaceTypeControl('Backspace','⌫',raceBackspace,'backspace-key'));
     box.appendChild(line)
   });
   const bottom=document.createElement('div');bottom.className='key-row phone-bottom-row keyboard-row-bottom';
-  if(!mobile){[['Ctrl','Ctrl'],['Alt','Alt']].forEach(([label,display])=>bottom.appendChild(makeRaceTypeControl(label,display,()=>{},'system-key')))}
   const space=makeRaceTypeKey('Space','Space',' ');space.classList.add('wide','space');bottom.appendChild(space);
-  if(mobile){const enter=makeRaceTypeControl('Enter','↵',()=>{},'enter-key');enter.classList.add('wide');bottom.appendChild(enter)}
-  else [['Alt','Alt'],['Ctrl','Ctrl']].forEach(([label,display])=>bottom.appendChild(makeRaceTypeControl(label,display,()=>{},'system-key')));
-  box.appendChild(bottom)
+  const enter=makeRaceTypeControl('Enter','↵',()=>{},'enter-key');enter.classList.add('wide');bottom.appendChild(enter);box.appendChild(bottom)
 }
 function renderRaceKeyboard(){
   const box=document.querySelector('#raceKeyboard');box.innerHTML='';
   const instruction=document.querySelector('#raceKeyInstruction'),mobile=phoneKeyboard(),layout=rowsForLanguage(raceLanguage),lastRow=layout.length-1;
-  const medium=raceDifficultyMode==='medium';
-  instruction.hidden=medium;
+  const medium=raceDifficultyMode==='medium';instruction.hidden=medium;
   if(medium){renderMediumRaceKeyboard(box,mobile,layout);return}
-  box.classList.remove('real-keyboard');
   const expected=raceExpected(),shifted=expected?.shift||false;
-  instruction.hidden=false;
-  instruction.textContent=expected?(expected.key==='Space'?'Press Space':shifted?`Hold Shift + press ${expected.key}`:`Press ${expected.key}`):'Finished!';
-  instruction.classList.toggle('needs-shift',shifted);
+  instruction.hidden=false;instruction.textContent=expected?(expected.key==='Space'?'Press Space':shifted?`Hold Shift + press ${expected.key}`:`Press ${expected.key}`):'Finished!';instruction.classList.toggle('needs-shift',shifted);
+  if(!mobile){
+    renderUnifiedDesktopKeyboard(box,{language:raceLanguage,shifted,expected,hintShift:shifted,onKey:value=>acceptRaceInput(value),onBackspace:raceBackspace});return
+  }
+  box.classList.remove('real-keyboard');
   layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className='key-row';
-    if(mobile&&rowIndex===lastRow){const shiftButton=document.createElement('button');shiftButton.type='button';shiftButton.className='key wide shift-key';shiftButton.textContent='Shift';if(shifted)shiftButton.classList.add('shift-required');line.appendChild(shiftButton)}
-    if(!mobile&&rowIndex===lastRow){const shiftButton=document.createElement('button');shiftButton.type='button';shiftButton.className='key wide shift-key';shiftButton.textContent='⇧ Shift';shiftButton.tabIndex=-1;if(shifted)shiftButton.classList.add('shift-required');line.appendChild(shiftButton)}
-    row.forEach(([key,normal,shift])=>{
-      const button=document.createElement('button');button.type='button';button.className='key';button.innerHTML=`<small>${key}</small>${shifted?shift:normal}`;
-      if(expected&&expected.key===key)button.classList.add('expected');
-      button.onclick=()=>acceptRaceInput(shifted?shift:normal);line.appendChild(button)
-    });
-    if(mobile&&rowIndex===lastRow){const backspace=document.createElement('button');backspace.type='button';backspace.className='key wide';backspace.textContent='⌫';backspace.onclick=raceBackspace;line.appendChild(backspace)}
-    if(!mobile&&rowIndex===lastRow){const shiftButton=document.createElement('button');shiftButton.type='button';shiftButton.className='key wide shift-key';shiftButton.textContent='Shift ⇧';shiftButton.tabIndex=-1;if(shifted)shiftButton.classList.add('shift-required');line.appendChild(shiftButton)}
-    if(!mobile&&rowIndex===0){const backspace=document.createElement('button');backspace.type='button';backspace.className='key wide';backspace.textContent='Backspace';backspace.onclick=raceBackspace;line.appendChild(backspace)}
-    if(!mobile&&rowIndex===2){const enter=document.createElement('button');enter.type='button';enter.className='key wide';enter.textContent='Enter';line.appendChild(enter)}box.appendChild(line)
+    if(rowIndex===lastRow){const shiftButton=document.createElement('button');shiftButton.type='button';shiftButton.className='key wide shift-key';shiftButton.textContent='Shift';if(shifted)shiftButton.classList.add('shift-required');line.appendChild(shiftButton)}
+    row.forEach(([key,normal,shift])=>{const button=document.createElement('button');button.type='button';button.className='key';button.innerHTML=`<small>${key}</small>${shifted?shift:normal}`;if(expected&&expected.key===key)button.classList.add('expected');button.onclick=()=>acceptRaceInput(shifted?shift:normal);line.appendChild(button)});
+    if(rowIndex===lastRow){const backspace=document.createElement('button');backspace.type='button';backspace.className='key wide';backspace.textContent='⌫';backspace.onclick=raceBackspace;line.appendChild(backspace)}box.appendChild(line)
   });
-  const line=document.createElement('div'),space=document.createElement('button');line.className='key-row';space.type='button';space.className='key wide space';space.textContent='Space';
-  if(expected?.key==='Space')space.classList.add('expected');space.onclick=()=>acceptRaceInput(' ');line.appendChild(space);
-  if(mobile){const enter=document.createElement('button');enter.type='button';enter.className='key wide';enter.textContent='Enter';line.appendChild(enter)}
-  box.appendChild(line)
+  const line=document.createElement('div'),space=document.createElement('button');line.className='key-row';space.type='button';space.className='key wide space';space.textContent='Space';if(expected?.key==='Space')space.classList.add('expected');space.onclick=()=>acceptRaceInput(' ');line.appendChild(space);
+  const enter=document.createElement('button');enter.type='button';enter.className='key wide';enter.textContent='Enter';line.appendChild(enter);box.appendChild(line)
 }
 function raceBackspace(){if(raceMode!=='player'||!raceTyped)return;const next=previousTextBoundary(raceTyped,raceTyped.length),removed=raceTyped.length-next;raceTyped=raceTyped.slice(0,next);raceCorrect=Math.max(0,raceCorrect-removed);renderRacePassage();renderRaceKeyboard();scheduleRaceProgress()}
 function acceptRaceInput(value){
