@@ -19,3 +19,29 @@
 .quiz-keyboard-switch button.active{color:#fff;background:linear-gradient(135deg,#2563eb,#1687d6);box-shadow:0 3px 9px rgba(37,99,235,.2)}
 .quiz-keyboard-switch button:disabled{cursor:default;opacity:.65}
 @media(max-width:800px){.quiz-keyboard-toolbar{position:sticky;bottom:0;z-index:4;flex-wrap:wrap;padding:9px 8px 7px}.quiz-keyboard-toolbar>span{width:100%;text-align:center}.quiz-keyboard-switch{width:min(100%,420px);display:grid;grid-template-columns:repeat(3,1fr)}.quiz-keyboard-switch button{padding:0 7px;font-size:.7rem}}
+
+/* Quiz paste-text importer */
+.quiz-source-tabs{display:inline-flex;gap:4px;margin:0 0 18px;padding:4px;border:1px solid #d7e0ec;border-radius:12px;background:#eef3f8}
+.quiz-source-tabs button{min-height:38px;padding:0 15px;border:0;border-radius:9px;background:transparent;color:#64748b;font:800 .8rem Inter,sans-serif;cursor:pointer}
+.quiz-source-tabs button:hover{background:#e4edf7;color:#173868}
+.quiz-source-tabs button.active{background:#fff;color:#173868;box-shadow:0 2px 8px rgba(23,56,104,.12)}
+.quiz-paste-panel[hidden]{display:none}
+.quiz-paste-panel{display:grid;gap:12px}
+.quiz-paste-panel textarea{min-height:320px;padding:17px 18px;border:1px solid #cbd5e1;border-radius:12px;background:#fbfdff;color:#17233b;font:500 1rem/1.65 "Padauk","Noto Sans Myanmar",Inter,sans-serif;resize:vertical}
+.quiz-paste-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+#quizImportStatus{color:#667085;font-size:.82rem;font-weight:700}
+.quiz-import-question{padding:12px 6px 14px!important;border-bottom:1px solid #dbe8f3}
+.quiz-import-question:last-child{border-bottom:0}
+.quiz-import-question>strong{display:block;color:#17233b;font-size:.95rem;line-height:1.45}
+.quiz-import-answer-title{display:block;margin:9px 0 6px;color:#667085;font-size:.72rem;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
+.quiz-import-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;list-style:none;margin:0;padding:0}
+.quiz-import-choice{display:flex;align-items:center;gap:9px;min-height:42px;padding:7px 10px;border:1px solid #d6dfeb;border-radius:9px;background:#fff;color:#344054;text-align:left;font:600 .86rem/1.35 "Padauk","Noto Sans Myanmar",Inter,sans-serif;cursor:pointer}
+.quiz-import-choice:hover{border-color:#78aee0;background:#f3f9ff}
+.quiz-import-choice.is-answer{border-color:#24a36b;background:#ecfdf3;color:#087344;box-shadow:0 0 0 2px rgba(36,163,107,.08)}
+.quiz-import-choice b{display:grid;place-items:center;flex:0 0 24px;width:24px;height:24px;border-radius:6px;background:#edf2f7;color:#475467;font:900 .72rem Inter,sans-serif}
+.quiz-import-choice.is-answer b{background:#24a36b;color:#fff}
+.quiz-import-question.needs-answer{background:linear-gradient(90deg,rgba(255,247,237,.8),rgba(255,255,255,0))}
+.quiz-import-question.needs-answer .quiz-import-answer-title{color:#b54708}
+.quiz-preview-ready{color:#087344!important}
+.quiz-preview-needs-answer{color:#b54708!important}
+@media(max-width:800px){.quiz-source-tabs{display:grid;grid-template-columns:1fr 1fr;width:100%}.quiz-source-tabs button{padding:0 8px}.quiz-paste-panel textarea{min-height:260px}.quiz-import-choices{grid-template-columns:1fr}}
