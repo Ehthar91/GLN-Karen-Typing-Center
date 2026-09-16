@@ -35,7 +35,48 @@ function phoneKeyboard(){
 }
 function makePhoneControl(label,display,action){const b=document.createElement('button');b.type='button';b.className='key phone-control';b.dataset.code=label;b.innerHTML=`<small>${label}</small>${display}`;b.addEventListener('click',action);return b}
 function makeDesktopControl(label,display,action,className=''){const b=makePhoneControl(label,display,action);b.classList.remove('phone-control');b.classList.add('modifier',...className.split(' ').filter(Boolean));return b}
-function render(){keyboard.innerHTML='';const mobile=phoneKeyboard(),layout=rowsForLanguage();keyboard.classList.toggle('real-keyboard',!mobile);layout.forEach((row,rowIndex)=>{const el=document.createElement('div');el.className=`key-row keyboard-row-${rowIndex}`;if(!mobile&&rowIndex===1)el.appendChild(makeDesktopControl('Tab','Tab',()=>insert('\t'),'tab-key'));if(!mobile&&rowIndex===2)el.appendChild(makeDesktopControl('Caps Lock','Caps',()=>setShift(!shifted),'caps-key'));if(rowIndex===layout.length-1)el.appendChild((mobile?makePhoneControl:makeDesktopControl)('Shift','⇧ Shift',()=>setShift(!shifted),'shift-key'));row.forEach(([latin,normal,shift])=>el.appendChild(makeKey(latin,shifted?shift:normal)));if(!mobile&&rowIndex===0)el.appendChild(makeDesktopControl('Backspace','⌫ Backspace',()=>insert('Backspace'),'backspace-key'));if(!mobile&&rowIndex===2)el.appendChild(makeDesktopControl('Enter','↵ Enter',()=>insert('Enter'),'enter-key'));if(rowIndex===layout.length-1)el.appendChild(mobile?makePhoneControl('Backspace','⌫',()=>insert('Backspace')):makeDesktopControl('Shift','Shift ⇧',()=>setShift(!shifted),'shift-key'));keyboard.appendChild(el)});const bottom=document.createElement('div');bottom.className='key-row phone-bottom-row keyboard-row-bottom';if(!mobile){[['Ctrl','Ctrl'],['Alt','Alt']].forEach(([label,display])=>bottom.appendChild(makeDesktopControl(label,display,()=>{},'system-key')))}const space=makeKey('Space','Space',' ');space.classList.add('wide','space');bottom.appendChild(space);if(mobile){const enter=makePhoneControl('Enter','↵',()=>insert('Enter'));enter.classList.add('wide');bottom.appendChild(enter)}else{[['Alt','Alt'],['Ctrl','Ctrl']].forEach(([label,display])=>bottom.appendChild(makeDesktopControl(label,display,()=>{},'system-key')))}keyboard.appendChild(bottom)}
+function unifiedDesktopControl(label,display,action,className=''){
+  const b=document.createElement('button');b.type='button';b.className='key modifier';
+  if(className)b.classList.add(...className.split(' ').filter(Boolean));
+  b.dataset.code=label;b.innerHTML=`<small>${label}</small>${display}`;b.addEventListener('click',action||(()=>{}));return b
+}
+function unifiedDesktopKey(label,char,value,onKey,expected){
+  const b=document.createElement('button');b.type='button';b.className='key';b.dataset.code=label;b.dataset.value=value;
+  b.innerHTML=`<small>${label==='Space'?'':label}</small>${char}`;
+  if(expected?.key===label)b.classList.add('expected');
+  b.addEventListener('click',()=>onKey?.(value,label));return b
+}
+function renderUnifiedDesktopKeyboard(box,{language=typingLanguage,shifted=false,expected=null,hintShift=false,onKey=()=>{},onBackspace=()=>{},onEnter=()=>{},onShift=null,onCaps=null,onTab=()=>{}}={}){
+  const layout=rowsForLanguage(language);box.classList.add('real-keyboard');
+  const shiftAction=onShift?()=>onShift(!shifted):()=>{};
+  const capsAction=onCaps?()=>onCaps(!shifted):shiftAction;
+  layout.forEach((row,rowIndex)=>{
+    const line=document.createElement('div');line.className=`key-row keyboard-row-${rowIndex}`;
+    if(rowIndex===1)line.appendChild(unifiedDesktopControl('Tab','Tab',onTab,'tab-key'));
+    if(rowIndex===2)line.appendChild(unifiedDesktopControl('Caps Lock','Caps',capsAction,'caps-key'));
+    if(rowIndex===layout.length-1){const shift=unifiedDesktopControl('Shift','⇧ Shift',shiftAction,'shift-key');if(hintShift)shift.classList.add('shift-required','desktop-shift-hint');line.appendChild(shift)}
+    row.forEach(([key,normal,shift])=>line.appendChild(unifiedDesktopKey(key,shifted?shift:normal,shifted?shift:normal,(value,mapped)=>onKey(value,mapped,shifted),expected)));
+    if(rowIndex===0)line.appendChild(unifiedDesktopControl('Backspace','⌫ Backspace',onBackspace,'backspace-key'));
+    if(rowIndex===2)line.appendChild(unifiedDesktopControl('Enter','↵ Enter',onEnter,'enter-key'));
+    if(rowIndex===layout.length-1){const shift=unifiedDesktopControl('Shift','Shift ⇧',shiftAction,'shift-key');if(hintShift)shift.classList.add('shift-required','desktop-shift-hint');line.appendChild(shift)}
+    box.appendChild(line)
+  });
+  const bottom=document.createElement('div');bottom.className='key-row phone-bottom-row keyboard-row-bottom';
+  [['Ctrl','Ctrl'],['Alt','Alt']].forEach(([label,display])=>bottom.appendChild(unifiedDesktopControl(label,display,()=>{},'system-key')));
+  const space=unifiedDesktopKey('Space','Space',' ',(value,mapped)=>onKey(value,mapped,false),expected);space.classList.add('wide','space');bottom.appendChild(space);
+  [['Alt','Alt'],['Ctrl','Ctrl']].forEach(([label,display])=>bottom.appendChild(unifiedDesktopControl(label,display,()=>{},'system-key')));
+  box.appendChild(bottom)
+}
+function render(){
+  keyboard.innerHTML='';const mobile=phoneKeyboard(),layout=rowsForLanguage();
+  if(!mobile){
+    renderUnifiedDesktopKeyboard(keyboard,{language:typingLanguage,shifted,onKey:value=>insert(value),onBackspace:()=>insert('Backspace'),onEnter:()=>insert('Enter'),onShift:on=>setShift(on),onCaps:on=>setShift(on),onTab:()=>insert('	')});
+    return
+  }
+  keyboard.classList.remove('real-keyboard');
+  layout.forEach((row,rowIndex)=>{const el=document.createElement('div');el.className=`key-row keyboard-row-${rowIndex}`;if(rowIndex===layout.length-1)el.appendChild(makePhoneControl('Shift','⇧ Shift',()=>setShift(!shifted)));row.forEach(([latin,normal,shift])=>el.appendChild(makeKey(latin,shifted?shift:normal)));if(rowIndex===layout.length-1)el.appendChild(makePhoneControl('Backspace','⌫',()=>insert('Backspace')));keyboard.appendChild(el)});
+  const bottom=document.createElement('div');bottom.className='key-row phone-bottom-row keyboard-row-bottom';const space=makeKey('Space','Space',' ');space.classList.add('wide','space');bottom.appendChild(space);const enter=makePhoneControl('Enter','↵',()=>insert('Enter'));enter.classList.add('wide');bottom.appendChild(enter);keyboard.appendChild(bottom)
+}
 function makeKey(label,char,value=char){const b=document.createElement('button');b.type='button';b.className='key';b.dataset.value=value;b.dataset.code=label;b.innerHTML=`<small>${label==='Space'?'':label}</small>${char}`;b.addEventListener('click',()=>insert(value));return b}
 function previousTextBoundary(text,index){if(!index)return 0;if(typeof Intl.Segmenter==='function'){const segments=[...new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(text.slice(0,index))];return segments.length?segments[segments.length-1].index:0}const points=Array.from(text.slice(0,index));return index-(points.pop()||'').length}
 function insert(value){if(!editor.readOnly)editor.focus();if(!editor.readOnly){if(value==='Backspace'){document.execCommand('delete');}else if(value==='Enter'){document.execCommand('insertText',false,'\n');}else{document.execCommand('insertText',false,value)}updateCount();return}const start=editor.selectionStart??editor.value.length,end=editor.selectionEnd??start;let replacement=value==='Enter'?'\n':value,next=start;if(value==='Backspace'){const from=start===end?previousTextBoundary(editor.value,start):start;editor.value=editor.value.slice(0,from)+editor.value.slice(end);next=from}else{editor.value=editor.value.slice(0,start)+replacement+editor.value.slice(end);next=start+replacement.length}editor.setSelectionRange(next,next);editor.dispatchEvent(new Event('input',{bubbles:true}))}
@@ -52,6 +93,6 @@ function languageName(){return typingLanguage==='en'?'English':typingLanguage===
 function languageTag(){return typingLanguage==='en'?'en':typingLanguage==='pwo'?'kjp':'ksw'}
 function updateLanguageInterface(){const english=typingLanguage==='en',pwo=typingLanguage==='pwo',name=languageName();document.querySelector('#languageKaren').classList.toggle('active',typingLanguage==='ksw');document.querySelector('#languagePwo').classList.toggle('active',pwo);document.querySelector('#languageEnglish').classList.toggle('active',english);document.querySelector('#typeEyebrow').textContent=english?'ENGLISH · QWERTY':pwo?'PWO KAREN · EASTERN PWO':'S’GAW KAREN · ကညီကျိာ်';document.querySelector('#editor-title').textContent=`Type in ${name}`;document.querySelector('#typeHint').textContent=english?'Standard QWERTY layout — use your keyboard or tap below.':pwo?'Keyman Eastern Pwo Karen layout — use your English keyboard or tap below.':'KarenKNU layout — use your English keyboard or tap below.';document.querySelector('#guide').textContent=english?'This is the standard English QWERTY layout. Press Shift for capital letters and symbols.':pwo?'This is the Keyman Eastern Pwo Karen 1.1 layout. Each key shows its English shortcut. Press Shift for the second layer.':'This is the KarenKNU S’gaw Karen layout. Each key shows its English shortcut. Press Shift for the second layer.';document.querySelector('#gamesEyebrow').textContent=`${name.toUpperCase()} TYPING GAMES`;document.querySelector('#gamesHint').textContent=`Practice ${name} while building speed and accuracy.`;document.querySelector('#practiceEyebrow').textContent=`${name.toUpperCase()} TYPING PRACTICE`;document.querySelector('[data-game="sprint"] small').textContent=`Type as many ${name} words as you can in 45 seconds.`;document.querySelector('[data-game="rain"] small').textContent=`Type each ${name} word before it reaches the bottom.`;editor.lang=languageTag();editor.placeholder=english?'Type here…':pwo?'Type Pwo Karen here…':'တီၢ်လံာ်ဖဲအံၤ…';setShift(false);render()}
 function setTypingLanguage(language){typingLanguage=['ksw','pwo','en'].includes(language)?language:'ksw';localStorage.setItem('typingLanguage',typingLanguage);updateLanguageInterface();window.dispatchEvent(new CustomEvent('typinglanguagechange',{detail:{language:typingLanguage}}));if(!document.querySelector('#typeView').hidden)editor.focus()}
-function configurePhoneEditor(){const mobile=phoneKeyboard();editor.readOnly=mobile;editor.inputMode=mobile?'none':'text';editor.setAttribute('aria-label',mobile?'Text editor. Use the on-screen keyboard below.':'Typing text editor')}
+function configurePhoneEditor(){const mobile=phoneKeyboard();document.body.classList.toggle('desktop-keyboard-ui',!mobile);editor.readOnly=mobile;editor.inputMode=mobile?'none':'text';editor.setAttribute('aria-label',mobile?'Text editor. Use the on-screen keyboard below.':'Typing text editor')}
 document.querySelector('#languageKaren').onclick=()=>setTypingLanguage('ksw');document.querySelector('#languagePwo').onclick=()=>setTypingLanguage('pwo');document.querySelector('#languageEnglish').onclick=()=>setTypingLanguage('en');configurePhoneEditor();updateLanguageInterface();updateCount();
 window.addEventListener('resize',()=>{configurePhoneEditor();render()});

@@ -26,10 +26,11 @@
   <link rel="stylesheet" href="quiz-classroom.css?v=20260913-17" />
   <link rel="stylesheet" href="quiz-kiosk.css?v=20260913-1" />
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
-  <link rel="stylesheet" href="calculator.css?v=20260913-15" />
+  <link rel="stylesheet" href="calculator.css?v=20260915-wheel-colors-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
   <link rel="stylesheet" href="seating.css?v=20260913-43" />
   <link rel="stylesheet" href="rgb-theme.css?v=20260915-shift-hint-1" />
+  <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
 </head>
 <body>
   <main class="app-shell">
@@ -599,9 +600,31 @@ Fish = ညၣ်</textarea>
               <div class="wheel-class-source-actions"><select id="wheelSeatingClass" aria-label="Choose a seating chart class"><option value="">Choose a class…</option></select><button class="button primary" id="loadWheelSeatingClass" type="button">Load Names</button></div>
               <small class="wheel-class-source-status" id="wheelClassSourceStatus">Your manual list will stay available until you load a class.</small>
             </div>
+            <div class="wheel-mode-switch" role="group" aria-label="Name picker mode">
+              <button id="wheelModePicker" class="active" type="button" aria-pressed="true">Name Picker</button>
+              <button id="wheelModeProbability" type="button" aria-pressed="false">Probability Mode</button>
+            </div>
             <label class="wheel-entry-label">Names, words, or topics<textarea id="wheelEntries" rows="12" spellcheck="false" placeholder="Enter one item per line"></textarea><small>Enter one item per line.</small></label>
             <div class="wheel-actions"><button class="button ghost" id="shuffleWheel" type="button">Shuffle</button><button class="button ghost" id="clearWheel" type="button">Clear</button></div>
+            <section class="wheel-color-panel" id="wheelColorPanel" aria-labelledby="wheelColorTitle">
+              <div class="wheel-color-heading">
+                <div><strong id="wheelColorTitle">Wheel colors</strong><small>Use automatic colors or choose a color for each name.</small></div>
+                <div class="wheel-color-mode-switch" role="group" aria-label="Wheel color mode">
+                  <button id="wheelColorAuto" class="active" type="button" aria-pressed="true">Auto Colors</button>
+                  <button id="wheelColorManual" type="button" aria-pressed="false">Manual Colors</button>
+                </div>
+              </div>
+              <div class="wheel-manual-colors" id="wheelManualColors" hidden aria-label="Manual wheel colors"></div>
+            </section>
             <div class="wheel-options"><label class="wheel-check"><input id="wheelNoDuplicates" type="checkbox" checked /> Remove duplicate entries</label><label class="wheel-time">Spin time<select id="wheelSpinTime" aria-label="Wheel spin time"><option value="1" selected>1 second</option><option value="2">2 seconds</option><option value="3">3 seconds</option><option value="4">4 seconds</option><option value="5">5 seconds</option><option value="6">6 seconds</option><option value="7">7 seconds</option><option value="8">8 seconds</option><option value="9">9 seconds</option><option value="10">10 seconds</option></select></label></div>
+            <section class="wheel-probability-panel" id="wheelProbabilityPanel" hidden aria-labelledby="wheelProbabilityTitle">
+              <div class="wheel-probability-heading">
+                <div><strong id="wheelProbabilityTitle">Probability setup</strong><small>Change each weight to control its theoretical chance.</small></div>
+                <div><button id="wheelEqualWeights" type="button">Equal weights</button><button id="wheelResetExperiment" type="button">Reset experiment</button></div>
+              </div>
+              <div class="wheel-probability-formula"><span>Theoretical probability</span><strong>P(name) = weight ÷ total weight</strong><b id="wheelTotalSpins">0 spins</b></div>
+              <div class="wheel-probability-table" id="wheelProbabilityRows" role="table" aria-label="Probability weights and results"></div>
+            </section>
             <div class="wheel-history"><div><strong>Results</strong><button id="clearWheelResults" type="button">Clear results</button></div><ol id="wheelResults"><li>No results yet</li></ol></div>
           </div>
         </div>
@@ -789,16 +812,16 @@ Taylor</textarea><small>Enter one student per line.</small></label>
     })();
   </script>
   <div class="toast" id="toast" role="status" aria-live="polite">Copied to clipboard</div>
-  <script src="app.js?v=20260914-chromeos-split-1"></script>
-  <script src="practice.js?v=20260915-shift-hint-1"></script>
-  <script src="games.js?v=20260915-shift-hint-1"></script>
-  <script src="custom-games.js?v=20260915-shift-hint-1"></script>
-  <script src="race.js?v=20260915-dual-shift-1"></script>
+  <script src="app.js?v=20260915-unified-keyboard-1"></script>
+  <script src="practice.js?v=20260915-unified-keyboard-1"></script>
+  <script src="games.js?v=20260915-unified-keyboard-1"></script>
+  <script src="custom-games.js?v=20260915-unified-keyboard-1"></script>
+  <script src="race.js?v=20260915-unified-keyboard-1"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>
-  <script src="quiz.js?v=20260915-dual-shift-1"></script>
+  <script src="quiz.js?v=20260915-unified-keyboard-1"></script>
   <script src="quiz-classroom.js?v=20260913-17"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
-  <script src="calculator.js?v=20260913-17"></script>
+  <script src="calculator.js?v=20260915-probability-popup-1"></script>
   <script src="event-signup.js?v=20260912-15"></script>
   <script src="seating.js?v=20260913-42"></script>
   <script src="rgb-theme.js?v=20260911-2"></script>
