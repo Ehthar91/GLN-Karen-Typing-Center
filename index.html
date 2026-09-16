@@ -22,14 +22,14 @@
   <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
   <link rel="stylesheet" href="race-features.css?v=20260911-11" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
-  <link rel="stylesheet" href="quiz.css?v=20260913-3" />
+  <link rel="stylesheet" href="quiz.css?v=20260916-paste-import-1" />
   <link rel="stylesheet" href="quiz-classroom.css?v=20260913-17" />
   <link rel="stylesheet" href="quiz-kiosk.css?v=20260913-1" />
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
   <link rel="stylesheet" href="calculator.css?v=20260915-wheel-colors-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
   <link rel="stylesheet" href="seating.css?v=20260913-43" />
-  <link rel="stylesheet" href="rgb-theme.css?v=20260915-shift-hint-1" />
+  <link rel="stylesheet" href="rgb-theme.css?v=20260916-quiz-preview-contrast-1" />
   <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
 </head>
 <body>
@@ -297,12 +297,17 @@
       </section>
     <section class="quiz-view classroom-tool-panel" id="quizView" aria-labelledby="quiz-title" hidden>
       <div class="quiz-heading">
-        <div><p class="eyebrow">TEACHER QUIZ MAKER</p><h1 id="quiz-title">Create a quiz from your list</h1></div>
-        <p class="hint">Paste pairs, generate questions, and let students answer.</p>
+        <div><p class="eyebrow">TEACHER QUIZ MAKER</p><h1 id="quiz-title">Create or import a quiz</h1></div>
+        <p class="hint">Build from a word list or paste a complete multiple-choice quiz.</p>
       </div>
 
       <section class="quiz-builder" id="quizBuilder">
-        <div class="quiz-builder-grid">
+        <div class="quiz-source-tabs" role="tablist" aria-label="Quiz source">
+          <button id="quizSourcePairs" class="active" type="button" role="tab" aria-selected="true">Word list</button>
+          <button id="quizSourcePaste" type="button" role="tab" aria-selected="false">Paste quiz text</button>
+        </div>
+
+        <div class="quiz-builder-grid" id="quizPairsPanel">
           <label class="quiz-list-field">Words and answers
             <textarea id="quizPairs" rows="8" spellcheck="false" placeholder="Meat = တၢ်ညၣ်&#10;Fish = ညၣ်">Meat = တၢ်ညၣ်
 Fish = ညၣ်</textarea>
@@ -328,9 +333,22 @@ Fish = ညၣ်</textarea>
             <button class="button primary quiz-generate" id="generateQuiz" type="button">✦ Generate questions</button>
           </div>
         </div>
+
+        <div class="quiz-paste-panel" id="quizPastePanel" hidden>
+          <label class="quiz-list-field">Paste ready-made quiz text
+            <textarea id="quizPasteText" rows="14" spellcheck="false" placeholder="1. What is Black in Karen?&#10;&#10;A. အဝါ&#10;B. အသူ&#10;C. အဘီ&#10;D. အဃး&#10;&#10;Answer: B"></textarea>
+            <small>Supports numbered questions, A–D choices, ChatGPT **bold** formatting, optional <b>Answer: B</b>, and an answer key at the end.</small>
+          </label>
+          <div class="quiz-paste-actions">
+            <button class="button primary" id="importQuizText" type="button">Import quiz text</button>
+            <button class="button ghost" id="clearQuizText" type="button">Clear</button>
+            <span id="quizImportStatus" aria-live="polite"></span>
+          </div>
+        </div>
+
         <p class="quiz-error" id="quizError" role="alert"></p>
         <div class="quiz-preview" id="quizPreview" hidden>
-          <div class="quiz-preview-head"><div><span>QUESTION PREVIEW</span><strong id="quizPreviewCount">0 questions</strong></div><div class="quiz-preview-actions"><button class="button ghost" id="startQuiz" type="button">Practice solo</button><button class="button ghost" id="exportGoogleQuiz" type="button">Export Google Quiz</button><button class="button primary" id="createClassQuiz" type="button">Create classroom quiz →</button></div></div>
+          <div class="quiz-preview-head"><div><span>QUESTION PREVIEW</span><strong id="quizPreviewCount">0 questions</strong></div><div class="quiz-preview-actions"><button class="button ghost" id="startQuiz" type="button">Practice solo</button><button class="button ghost" id="exportGoogleQuiz" type="button">Export to Google Forms</button><button class="button primary" id="createClassQuiz" type="button">Create classroom quiz →</button></div></div>
           <ol id="quizPreviewList"></ol>
         </div>
         <div class="quiz-join-card">
@@ -818,8 +836,8 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="custom-games.js?v=20260915-unified-keyboard-1"></script>
   <script src="race.js?v=20260915-unified-keyboard-1"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>
-  <script src="quiz.js?v=20260915-unified-keyboard-1"></script>
-  <script src="quiz-classroom.js?v=20260913-17"></script>
+  <script src="quiz.js?v=20260916-paste-import-1"></script>
+  <script src="quiz-classroom.js?v=20260916-paste-import-1"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
   <script src="calculator.js?v=20260915-probability-popup-1"></script>
   <script src="event-signup.js?v=20260912-15"></script>

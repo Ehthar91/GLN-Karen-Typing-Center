@@ -154,3 +154,18 @@ body.theme-rgb .schedule-import-remove{background:#351d25;border-color:#6a3c46;c
 
 /* Desktop/Chromebook Shift-required learning hint. */
 body.theme-rgb .keyboard .key.desktop-shift-hint{border-color:var(--rgb-gold)!important;background:linear-gradient(155deg,#5a4712,#2f260c)!important;color:#fff4bd!important;box-shadow:0 0 0 2px rgba(255,216,77,.8),0 0 24px rgba(255,216,77,.72),inset 0 0 16px rgba(255,216,77,.13)!important}
+
+/* Quiz paste-text preview: readable question text in Gaming RGB mode. */
+body.theme-rgb .quiz-preview{background:#0c1a2e!important;border-color:#315271!important}
+body.theme-rgb .quiz-preview-head{border-color:#315271!important}
+body.theme-rgb .quiz-preview-head strong{color:#f4f8ff!important}
+body.theme-rgb .quiz-preview ol{color:#eaf2ff!important}
+body.theme-rgb .quiz-preview li{color:#dce9f7!important}
+body.theme-rgb .quiz-import-question{border-bottom-color:#294966!important}
+body.theme-rgb .quiz-import-question::marker{color:#65e9ff!important;font-weight:900}
+body.theme-rgb .quiz-import-question>strong{color:#f8fbff!important;text-shadow:0 0 12px rgba(22,224,255,.08)}
+body.theme-rgb .quiz-import-answer-title{color:#a9bdd4!important}
+body.theme-rgb .quiz-import-question.needs-answer{background:linear-gradient(90deg,rgba(125,91,20,.22),rgba(12,26,46,0))!important}
+body.theme-rgb .quiz-import-question.needs-answer .quiz-import-answer-title{color:#ffe28b!important}
+body.theme-rgb .quiz-preview-ready{color:#63e6b5!important}
+body.theme-rgb .quiz-preview-needs-answer{color:#ffe28b!important}
