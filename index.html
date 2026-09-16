@@ -22,14 +22,14 @@
   <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
   <link rel="stylesheet" href="race-features.css?v=20260911-11" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
-  <link rel="stylesheet" href="quiz.css?v=20260916-paste-import-1" />
+  <link rel="stylesheet" href="quiz.css?v=20260916-all-points-1" />
   <link rel="stylesheet" href="quiz-classroom.css?v=20260913-17" />
   <link rel="stylesheet" href="quiz-kiosk.css?v=20260913-1" />
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
   <link rel="stylesheet" href="calculator.css?v=20260915-wheel-colors-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
   <link rel="stylesheet" href="seating.css?v=20260913-43" />
-  <link rel="stylesheet" href="rgb-theme.css?v=20260916-quiz-preview-contrast-1" />
+  <link rel="stylesheet" href="rgb-theme.css?v=20260916-all-points-1" />
   <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
 </head>
 <body>
@@ -348,7 +348,7 @@ Fish = ညၣ်</textarea>
 
         <p class="quiz-error" id="quizError" role="alert"></p>
         <div class="quiz-preview" id="quizPreview" hidden>
-          <div class="quiz-preview-head"><div><span>QUESTION PREVIEW</span><strong id="quizPreviewCount">0 questions</strong></div><div class="quiz-preview-actions"><button class="button ghost" id="startQuiz" type="button">Practice solo</button><button class="button ghost" id="exportGoogleQuiz" type="button">Export to Google Forms</button><button class="button primary" id="createClassQuiz" type="button">Create classroom quiz →</button></div></div>
+          <div class="quiz-preview-head"><div><span>QUESTION PREVIEW</span><strong id="quizPreviewCount">0 questions</strong></div><div class="quiz-preview-actions"><div class="quiz-bulk-points" role="group" aria-label="Set points for all questions"><label>Points each<input id="quizAllPoints" type="number" min="0" max="100" step="1" inputmode="numeric" value="1" aria-label="Points for every question" /></label><button class="button ghost" id="applyQuizAllPoints" type="button">Set all</button></div><button class="button ghost" id="startQuiz" type="button">Practice solo</button><button class="button ghost" id="exportGoogleQuiz" type="button">Export to Google Forms</button><button class="button primary" id="createClassQuiz" type="button">Create classroom quiz →</button></div></div>
           <ol id="quizPreviewList"></ol>
         </div>
         <div class="quiz-join-card">
@@ -836,7 +836,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="custom-games.js?v=20260915-unified-keyboard-1"></script>
   <script src="race.js?v=20260915-unified-keyboard-1"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>
-  <script src="quiz.js?v=20260916-paste-import-1"></script>
+  <script src="quiz.js?v=20260916-all-points-1"></script>
   <script src="quiz-classroom.js?v=20260916-paste-import-1"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
   <script src="calculator.js?v=20260915-probability-popup-1"></script>
