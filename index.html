@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
   <link rel="stylesheet" href="calculator.css?v=20260915-wheel-colors-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
-  <link rel="stylesheet" href="seating.css?v=20260913-43" />
+  <link rel="stylesheet" href="seating.css?v=20260916-quiz-disabled-desks-1" />
   <link rel="stylesheet" href="rgb-theme.css?v=20260916-all-points-1" />
   <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
 </head>
@@ -727,12 +727,13 @@ Fish = ညၣ်</textarea>
       <section class="seating-card" id="seatingPanel" aria-labelledby="seatingTitle" hidden>
         <div class="seating-toolbar">
           <div><button class="seating-mobile-panel" id="toggleClassPanel" type="button" aria-label="Show classes">☰</button><div><p class="eyebrow">CLASSROOM LAYOUT</p><h2 id="seatingTitle">Seating Chart</h2></div></div>
-          <div class="seating-view-tools"><div class="seating-zoom" role="group" aria-label="Classroom zoom"><button id="seatingZoomOut" type="button" aria-label="Zoom out">−</button><span id="seatingZoomLabel">100%</span><button id="seatingZoomIn" type="button" aria-label="Zoom in">＋</button></div><button class="button ghost" id="toggleSeatingPanels" type="button">View only</button><button class="button ghost" id="downloadSeating" type="button">Download</button><button class="button ghost" id="printSeating" type="button">Print</button><button class="seating-mobile-panel" id="toggleInspectorPanel" type="button">Tools</button></div>
+          <div class="seating-view-tools"><div class="seating-zoom" role="group" aria-label="Classroom zoom"><button id="seatingZoomOut" type="button" aria-label="Zoom out">−</button><span id="seatingZoomLabel">100%</span><button id="seatingZoomIn" type="button" aria-label="Zoom in">＋</button></div><button class="button primary" id="openGoogleClassroomSync" type="button" aria-haspopup="dialog" aria-controls="googleClassroomDialog" onclick="var d=document.getElementById('googleClassroomDialog');if(d){if(typeof d.showModal==='function'&&!d.open)d.showModal();else d.setAttribute('open','');}">Google Classroom</button><button class="button ghost" id="toggleSeatingPanels" type="button">View only</button><button class="button ghost" id="downloadSeating" type="button">Download</button><button class="button ghost" id="printSeating" type="button">Print</button><button class="seating-mobile-panel" id="toggleInspectorPanel" type="button">Tools</button></div>
         </div>
         <div class="seating-layout">
           <aside class="seating-setup seating-class-panel" id="seatingClassPanel">
             <div class="panel-heading"><strong>Classes</strong><button id="closeClassPanel" type="button" aria-label="Close classes">×</button></div>
             <div class="class-manager"><label class="select-class-fallback">Saved class<select id="seatingClassSelect" aria-label="Choose a saved class"></select></label><div class="seating-class-list" id="seatingClassList" aria-label="Saved classes"></div><div><button class="button primary" id="newSeatingClass" type="button">＋ New class</button><button class="button ghost" id="duplicateSeatingClass" type="button">Duplicate</button><button class="button danger" id="deleteSeatingClass" type="button">Delete</button></div><div class="reuse-layout"><label>Use layout from<select id="seatingLayoutSource" aria-label="Choose a class layout to copy"></select></label><button class="button ghost" id="useClassLayout" type="button">Use this layout</button><small>Names in this class will not change.</small></div></div>
+            <button class="button google-classroom-side-launch" id="openGoogleClassroomSyncSide" type="button" aria-haspopup="dialog" aria-controls="googleClassroomDialog" onclick="var d=document.getElementById('googleClassroomDialog');if(d){if(typeof d.showModal==='function'&&!d.open)d.showModal();else d.setAttribute('open','');}">Google Classroom roster sync</button>
             <label>Class name<input id="seatingClassName" value="My Class" maxlength="50" /></label>
             <label class="roster-field">Student names <span id="seatingRosterCount">6 students</span><textarea id="seatingRoster" rows="11" spellcheck="false" placeholder="Enter one student per line">Alex
 Maria
@@ -743,10 +744,10 @@ Taylor</textarea><small>Enter one student per line.</small></label>
             <button class="button primary" id="buildSeating" type="button">Build seating chart</button>
             <input id="seatingFileInput" type="file" accept=".csv,.txt" hidden /><button class="button ghost" id="importSeatingRoster" type="button">Upload CSV or text file</button>
             <div class="seating-actions inspector-control"><button class="button ghost" id="shuffleSeating" type="button">Shuffle seats</button><button class="button ghost" id="flipSeating" type="button">Flip room</button></div>
-            <details class="layout-editor" open><summary>Layout settings</summary><div class="room-settings"><label>Room size<select id="roomPreset"><option value="small">Small</option><option value="medium" selected>Medium</option><option value="large">Large</option><option value="wide">Wide</option><option value="square">Square</option><option value="custom">Custom</option></select></label><div><label>Width<input id="roomWidth" type="number" min="500" max="2000" step="10" value="760" /></label><label>Height<input id="roomHeight" type="number" min="360" max="1400" step="10" value="520" /></label></div></div><label class="rule-check"><input id="snapDesks" type="checkbox" checked /> Snap movement</label><label class="rule-check"><input id="smartGuides" type="checkbox" checked /> Align desk edges</label><label class="rule-check"><input id="deskTooltips" type="checkbox" checked /> Show shortcut tooltips</label><button class="button ghost shortcuts-button" id="showDeskShortcuts" type="button">⌨ View keyboard shortcuts</button><small>Select a desk to reveal eight resize handles. Hold Shift to keep its proportions or Option/Alt to resize from the center.</small></details>
+            <details class="layout-editor" open><summary>Layout settings</summary><div class="room-settings"><label>Room size<select id="roomPreset"><option value="small">Small</option><option value="medium" selected>Medium</option><option value="large">Large</option><option value="wide">Wide</option><option value="square">Square</option><option value="custom">Custom</option></select></label><div><label>Width<input id="roomWidth" type="number" min="500" max="2000" step="10" value="760" /></label><label>Height<input id="roomHeight" type="number" min="360" max="1400" step="10" value="520" /></label></div></div><label class="rule-check"><input id="snapDesks" type="checkbox" checked /> Snap movement</label><label class="rule-check"><input id="smartGuides" type="checkbox" checked /> Align desk edges</label><label class="rule-check"><input id="deskTooltips" type="checkbox" checked /> Show shortcut tooltips</label><button class="button ghost shortcuts-button" id="showDeskShortcuts" type="button">⌨ View keyboard shortcuts</button><button class="button ghost" id="enableAllDesks" type="button">Enable all desks</button><small>Select a desk to reveal eight resize handles. For quiz seating, select one or more desks and use Disable desk so Shuffle will leave them empty.</small></details>
             <details class="seating-rules"><summary>Classroom rules</summary><label>Keep apart<textarea id="seatingKeepApart" rows="3" placeholder="Alex, Jordan&#10;Maria, Taylor"></textarea><small>One pair per line, separated by a comma.</small></label><label>Place near front<textarea id="seatingNearFront" rows="2" placeholder="Saw Htoo&#10;Naw Paw"></textarea></label><label class="rule-check"><input id="seatingAlternateGender" type="checkbox" /> Alternate groups A and B when possible</label><label>Group A names<textarea id="seatingGroupA" rows="2"></textarea></label><label>Group B names<textarea id="seatingGroupB" rows="2"></textarea></label></details>
             <details class="seating-groups"><summary>Automatic groups</summary><label>Number of groups<select id="seatingGroupCount"></select></label><button class="button primary" id="makeSeatingGroups" type="button">Create groups</button><div id="seatingGroupResults"></div></details>
-            <p class="seating-help">Drag students to exchange seats in room view. Use Show locks to reveal the lock controls; locked seats stay marked and remain in place when shuffling. Edit layout mode moves the desks instead.</p>
+            <p class="seating-help">Drag students to exchange seats in room view. Use Show locks to keep a student in place. For quiz spacing, choose Edit layout, select desks you do not want used, then click Disable desk; disabled desks stay empty during Shuffle.</p>
           </aside>
           <div class="seating-board-wrap" id="seatingPrintArea">
             <div class="seating-canvas-toolbar"><div><button class="button primary" id="quickBuildSeating" type="button">Build chart</button><button class="button ghost" id="quickShuffleSeating" type="button">Shuffle</button><button class="button ghost" id="quickToggleLocks" type="button" aria-pressed="false">Show locks</button><button class="button ghost" id="quickEditLayout" type="button">Edit layout</button></div><span id="seatingSelectionStatus">Room view</span></div>
@@ -764,6 +765,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
                   <button class="button ghost" id="contextRotateLeft" type="button">↺ Rotate left</button>
                   <button class="button ghost" id="contextRotateRight" type="button">↻ Rotate right</button>
                   <button class="button ghost" id="applyDeskSizeAll" type="button" data-tip="Make every desk match the selected desk">Match all sizes</button>
+                  <button class="button ghost desk-disable-toggle" id="contextToggleDeskDisabled" type="button" disabled data-tip="Exclude selected desks from seating and shuffling">Disable desk</button>
                   <button class="button danger" id="contextDeleteDesk" type="button">Delete desk</button>
                 </div>
               </div>
@@ -774,6 +776,20 @@ Taylor</textarea><small>Enter one student per line.</small></label>
           <aside class="seating-setup seating-inspector" id="seatingInspector"><div class="panel-heading"><strong>Layout tools</strong><button id="closeInspectorPanel" type="button" aria-label="Close tools">×</button></div><div class="inspector-context"><span>SELECTED</span><strong id="deskInspectorTitle">Room</strong><small id="deskInspectorHint">Choose a desk to edit it.</small></div></aside>
         </div>
       </section>
+      <dialog class="google-classroom-dialog" id="googleClassroomDialog" aria-labelledby="googleClassroomDialogTitle">
+        <div class="google-classroom-dialog-head"><div><p class="eyebrow">ROSTER SYNC</p><h2 id="googleClassroomDialogTitle">Google Classroom</h2></div><button class="google-classroom-dialog-close" id="googleClassroomDialogClose" type="button" aria-label="Close Google Classroom sync" onclick="this.closest('dialog').close()">×</button></div>
+        <div class="google-classroom-sync-body">
+          <p>Import the classes you teach and keep their student rosters synced. GLN only reads Classroom data; it never changes your Google Classroom.</p>
+          <div class="google-classroom-link-line"><span>Connection</span><b id="googleClassroomLinkBadge">Not linked</b></div>
+          <button class="button google-classroom-connect" id="googleClassroomConnect" type="button" onclick="if(typeof loadGoogleClassroomCourses==='function'){loadGoogleClassroomCourses();}else{var s=document.getElementById('googleClassroomStatus');if(s)s.textContent='Classroom sync script did not load. Refresh the page and try again.';}">Connect &amp; load classes</button>
+          <button class="button ghost" id="googleClassroomSyncCurrent" type="button" hidden onclick="if(typeof syncCurrentGoogleClassroom==='function')syncCurrentGoogleClassroom();">↻ Sync this class roster</button>
+          <div class="google-classroom-course-tools" id="googleClassroomCourseTools" hidden><button type="button" id="googleClassroomSelectAll">Select all</button><button type="button" id="googleClassroomSelectNone">None</button></div>
+          <div class="google-classroom-course-list" id="googleClassroomCourseList" hidden aria-label="Google Classroom classes"></div>
+          <button class="button primary" id="googleClassroomImportSelected" type="button" hidden onclick="if(typeof importGoogleClassroomSelected==='function')importGoogleClassroomSelected();">Import selected classes</button>
+          <small id="googleClassroomStatus">Connect your school Google account to load your active classes.</small>
+          <small class="google-classroom-privacy">Read-only roster sync · desk positions and locked seats stay in GLN. <a href="GOOGLE-CLASSROOM-SETUP.md" target="_blank" rel="noopener">Setup guide</a></small>
+        </div>
+      </dialog>
       <dialog class="shortcut-dialog" id="deskShortcutDialog"><form method="dialog"><button class="shortcut-close" aria-label="Close">×</button><h2>Desk layout shortcuts</h2><div id="deskShortcutList"></div><button class="button primary" value="close">Done</button></form></dialog><div class="shortcut-tooltip" id="deskTooltip" role="tooltip" hidden></div>
       <p class="privacy"><span aria-hidden="true">●</span> Classroom Tools can save on this device or sync through your Google account.</p>
     </section>
@@ -841,7 +857,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
   <script src="calculator.js?v=20260915-probability-popup-1"></script>
   <script src="event-signup.js?v=20260912-15"></script>
-  <script src="seating.js?v=20260913-42"></script>
+  <script src="seating.js?v=20260916-quiz-disabled-desks-1"></script>
   <script src="rgb-theme.js?v=20260911-2"></script>
 </body>
 </html>

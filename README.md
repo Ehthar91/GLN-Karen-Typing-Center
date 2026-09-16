@@ -30,3 +30,6 @@ Live classroom games use Firebase Realtime Database with anonymous authenticatio
 ## Build
 
 Run `npm run build` for the Worker build used by the project tooling. For GitHub Pages, upload the static project files to the repository root.
+
+## Google Classroom roster sync
+Seating Chart can import active Google Classroom classes and read-only student rosters. See `GOOGLE-CLASSROOM-SETUP.md` for the one-time Google Cloud / school-admin setup.
