@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
   <link rel="stylesheet" href="calculator.css?v=20260915-wheel-colors-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
-  <link rel="stylesheet" href="bus-call.css?v=20260917-fullscreen" />
+  <link rel="stylesheet" href="bus-call.css?v=20260917-all-clear" />
   <link rel="stylesheet" href="seating.css?v=20260916-quiz-disabled-desks-1" />
   <link rel="stylesheet" href="rgb-theme.css?v=20260916-all-points-1" />
   <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
@@ -668,13 +668,14 @@ Fish = ညၣ်</textarea>
         <div class="bus-call-setup" id="busCallSetup">
           <section class="bus-call-role-card bus-call-caller-card">
             <div class="bus-call-role-icon" aria-hidden="true">📣</div>
-            <div><p class="eyebrow">BUS CALLER</p><h3>Start or reopen your room</h3><p>Choose a PIN or use your Google account to reopen your room from any browser. For a new room, choose a code or leave it blank.</p></div>
-            <label>Room code <input id="busCallerCodeInput" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Example: GLN25" /></label>
+            <div><p class="eyebrow">BUS CALLER</p><h3>Start or reopen your room</h3><p>Your last caller room is remembered on this device, so normally you only need your PIN to reopen it.</p></div>
+            <div class="bus-caller-saved-room" id="busCallerSavedRoom" hidden><div><span>RESERVED ROOM ON THIS DEVICE</span><strong id="busCallerSavedRoomCode">—</strong><small>Enter your caller PIN below to reopen this room.</small></div><button class="button ghost" id="busCallerRoomChoice" type="button">Use a different room code</button></div>
+            <label id="busCallerCodeField">Room code <input id="busCallerCodeInput" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Example: GLN25" /></label>
             <button class="button primary" id="startBusGoogle" type="button">Continue with Google — no PIN</button>
             <p>Or use a caller PIN</p>
-            <p>Editing this field does not delete a reservation. Your code stays reserved when you close the room. It becomes available to another caller after 30 days without caller activity.</p>
+            <p>Your last room code stays remembered on this browser and remains reserved for its caller for 30 days after caller activity. If the caller browser closes, the live dismissal session expires after 1 hour.</p>
             <label>Caller PIN <input id="busCallerPinInput" type="password" inputmode="numeric" minlength="8" maxlength="12" pattern="[0-9]{8,12}" autocomplete="off" aria-describedby="busCallerPinHelp" placeholder="8–12 digits" /></label>
-            <p id="busCallerPinHelp">Choose a PIN for a new room, or enter the original PIN to reopen it. Keep it private; classroom teachers only need the room code. Older rooms must first set a PIN from the original caller browser.</p>
+            <p id="busCallerPinHelp">Choose a PIN for a new room, or enter the original PIN to reopen it. Keep it private; classroom teachers only need the room code.</p>
             <button class="button primary" id="startBusCaller" type="button">Start / Reopen Caller Room</button>
           </section>
 
@@ -689,13 +690,49 @@ Fish = ညၣ်</textarea>
             <p id="busCodeReservation" role="status"></p>
             <p id="busCallerAccount" role="status">Caller PIN access</p>
             <button class="button ghost" id="connectBusGoogle" type="button">Connect Google account — replace PIN access</button>
-            <label for="busNumberInput">Bus number</label>
-            <div class="bus-call-entry-row"><input id="busNumberInput" maxlength="18" inputmode="text" autocomplete="off" placeholder="123" aria-label="Bus number" /><button class="bus-call-send" id="sendBusCall" type="button">Call Bus</button></div>
+            <section class="bus-school-roster" id="busSchoolRosterPanel" aria-labelledby="busSchoolRosterTitle">
+              <div class="bus-school-roster-heading"><div><span>SCHOOL BUS LINEUP</span><strong id="busSchoolRosterTitle">Track buses still waiting to be called</strong><small>Enter the complete school bus list once. Use spaces between bus numbers.</small></div><div class="bus-roster-count"><strong id="busRosterRemainingCount">Bus list not set</strong><span id="busRosterProgressText">Add your bus list to track dismissal.</span></div></div>
+              <div class="bus-school-roster-entry"><input id="busSchoolRosterInput" maxlength="1200" autocomplete="off" spellcheck="false" placeholder="12 24 31 45 87" aria-label="All school bus numbers separated by spaces" /><button class="button primary" id="saveBusSchoolRoster" type="button">Save bus list</button><button class="button ghost" id="clearBusSchoolRoster" type="button" hidden>Clear list</button></div>
+              <div class="bus-roster-target-help">Click the <strong>Main Bus</strong> or <strong>Add-On Bus</strong> number box, then click lineup numbers below. Typing still works too. <span>Adding to: <b id="busRosterTargetLabel">Main Bus</b></span></div><div class="bus-roster-remaining"><span>NOT CALLED YET</span><div class="bus-roster-chip-list" id="busRosterRemainingList"><span class="bus-roster-empty">No school bus lineup saved yet.</span></div></div>
+            </section>
+            <fieldset class="bus-call-stage-group">
+              <legend>Call type</legend>
+              <div class="bus-call-stage-options" role="group" aria-label="Bus call type">
+                <button type="button" class="bus-stage-option first active" data-bus-call-stage="first" aria-pressed="true">First Call</button>
+                <button type="button" class="bus-stage-option second" data-bus-call-stage="second" aria-pressed="false">Second Call</button>
+                <button type="button" class="bus-stage-option last" data-bus-call-stage="last" aria-pressed="false">Last Call</button>
+              </div>
+            </fieldset>
+            <label for="busNumberInput">Main bus number(s)</label>
+            <div class="bus-call-entry-row"><input id="busNumberInput" maxlength="120" inputmode="text" autocomplete="off" placeholder="125 87 54" aria-label="Main bus numbers separated by spaces" /><button class="bus-call-send" id="sendBusCall" type="button">Call Bus</button></div>
+            <small class="bus-main-number-help">Enter one bus or several buses separated by spaces, for example: <strong>125 87 54</strong>. Each bus appears as its own full-size active tile.</small>
             <label class="bus-note-field">Optional note <input id="busCallNoteInput" maxlength="80" autocomplete="off" placeholder="Front doors, Door 3, loading now…" /></label>
-            <div class="bus-caller-actions"><button class="button ghost" id="clearBusCall" type="button">Clear current call</button><button class="button ghost" id="leaveBusCaller" type="button">Leave caller mode</button><button class="button ghost" id="closeBusRoom" type="button">End session — keep code reserved</button></div>
+            <div class="bus-addon-launch"><button class="button ghost bus-addon-toggle" id="toggleBusAddOn" type="button" aria-expanded="false" aria-controls="busAddOnPanel">＋ Add-On Buses</button><span>Use this when an extra bus shows up after the regular lineup.</span></div>
+            <section class="bus-addon-panel" id="busAddOnPanel" hidden aria-label="Add-On Bus caller">
+              <div class="bus-addon-heading"><div><span>ADD-ON BUSES</span><strong>Call an extra bus immediately</strong></div><small>Choose one call option. Combination buttons send multiple stages together.</small></div>
+              <fieldset class="bus-call-stage-group bus-addon-stage-group">
+                <legend>Add-on call option</legend>
+                <div class="bus-call-stage-options bus-addon-preset-options" role="group" aria-label="Add-on bus call option">
+                  <button type="button" class="bus-stage-option first active" data-bus-addon-preset="first" aria-pressed="true">First Call</button>
+                  <button type="button" class="bus-stage-option second" data-bus-addon-preset="second" aria-pressed="false">Second Call</button>
+                  <button type="button" class="bus-stage-option last" data-bus-addon-preset="last" aria-pressed="false">Last Call</button>
+                  <button type="button" class="bus-stage-option combo" data-bus-addon-preset="first,second" aria-pressed="false">First + Second</button>
+                  <button type="button" class="bus-stage-option combo" data-bus-addon-preset="second,last" aria-pressed="false">Second + Last</button>
+                  <button type="button" class="bus-stage-option combo" data-bus-addon-preset="first,second,last" aria-pressed="false">First + Second + Last</button>
+                </div>
+              </fieldset>
+              <label for="busAddOnNumberInput">Add-on bus number(s)</label>
+              <div class="bus-call-entry-row"><input id="busAddOnNumberInput" maxlength="120" inputmode="text" autocomplete="off" placeholder="125 87 54" aria-label="Add-on bus numbers separated by spaces" /><button class="bus-call-send bus-addon-send" id="sendBusAddOn" type="button">Send Add-On • First Call</button></div><small class="bus-addon-number-help">Enter several buses with spaces, for example: <strong>125 87 54</strong>. Every bus stays active as its own large classroom tile.</small>
+              <label class="bus-note-field">Optional note <input id="busAddOnNoteInput" maxlength="80" autocomplete="off" placeholder="Just arrived, front doors, loading now…" /></label>
+              <p class="bus-addon-layer-note">Add-on buses stay separate from the regular bus call, so the regular bus remains on classroom screens.</p>
+              <div class="bus-caller-addon-summary" id="busCallerAddOnSummary" hidden><div><span>ACTIVE ADD-ON BUSES</span><strong id="busCallerAddOnSummaryText">—</strong></div><button class="button primary" id="newBusAddOn" type="button">＋ Add another add-on bus</button></div>
+              <div class="bus-addon-actions"><button class="button ghost" id="clearBusAddOns" type="button">Clear active add-on buses</button><button class="button ghost" id="cancelBusAddOn" type="button">Hide Add-On Buses</button></div>
+            </section>
+            <section class="bus-bulk-call-panel" id="busBulkCallPanel" hidden aria-label="Call all active buses together"><div class="bus-bulk-call-copy"><span>MAIN + ALL ADD-ONS</span><strong>Call every active bus together</strong><small id="busBulkCallSummary">—</small></div><div class="bus-bulk-call-actions"><button type="button" class="bus-bulk-call-button second" id="busCallAllSecond">Second Call — All Active Buses</button><button type="button" class="bus-bulk-call-button last" id="busCallAllLast">Last Call — All Active Buses</button></div></section>
+            <section class="bus-all-clear-launch" aria-label="Dismissal all clear"><div><span>DISMISSAL COMPLETE</span><strong>Announce ALL CLEAR to every classroom</strong><small>The school lineup is checked for Last Call before this is sent.</small></div><button class="bus-all-clear-button" id="sendBusAllClear" type="button">✓ ALL CLEAR</button></section><div class="bus-caller-actions"><button class="button ghost" id="clearBusCall" type="button">Clear main bus</button><button class="button danger" id="clearAllBuses" type="button">Clear ALL buses</button><button class="button ghost" id="leaveBusCaller" type="button">Leave caller mode</button><button class="button ghost" id="closeBusRoom" type="button">End session — keep code reserved</button></div>
             <p class="bus-call-status" id="busCallerStatus">Ready to call a bus.</p>
           </div>
-          <section class="bus-history-card"><div class="bus-history-heading"><div><span>RECENT CALLS</span><strong>Today in this room</strong></div><button id="clearBusHistory" type="button">Clear history</button></div><div class="bus-history-list" id="busCallHistory"><p>No buses called yet.</p></div></section>
+          <section class="bus-history-card"><div class="bus-history-heading"><div><span>RECENT CALLS</span><strong>Automatically clears after 1 hour</strong></div><button id="clearBusHistory" type="button">Clear history</button></div><div class="bus-history-list" id="busCallHistory"><p>No buses called yet.</p></div></section>
         </section>
 
         </div>
@@ -703,7 +740,7 @@ Fish = ညၣ်</textarea>
         <div class="bus-call-setup" id="busTeacherSetup">
           <section class="bus-call-role-card bus-call-classroom-card">
             <div class="bus-call-role-icon" aria-hidden="true">🏫</div>
-            <div><p class="eyebrow">CLASSROOM TEACHER</p><h3>Join the dismissal room</h3><p>Enter the same room code. Keep this site open and new bus calls will pop up automatically.</p></div>
+            <div><p class="eyebrow">CLASSROOM TEACHER</p><h3>Join the dismissal room</h3><p>Enter the same room code anytime — even before the caller starts. Keep this site open; it will wait for the caller and connect automatically when dismissal begins.</p></div>
             <label>Room code <input id="busTeacherCodeInput" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter room code" /></label>
             <label>Classroom name <input id="busTeacherNameInput" maxlength="32" autocomplete="off" placeholder="Optional — Room 214" /></label>
             <button class="button primary" id="joinBusRoom" type="button">Join Bus Calls</button>
@@ -717,21 +754,23 @@ Fish = ညၣ်</textarea>
           </div>
           <div class="bus-classroom-waiting">
             <div class="bus-waiting-icon" aria-hidden="true">🚌</div><p class="eyebrow">BUS CALLS ARE ON</p><h3 id="busWaitingTitle">Waiting for the next bus</h3><p id="busWaitingDetail">A large alert will appear on this screen when the caller sends a bus number.</p>
-            <div class="bus-board-current" aria-live="polite" aria-atomic="true"><span id="busBoardLabel">WAITING FOR THE NEXT BUS</span><strong id="busBoardNumber">—</strong></div>
-            <div class="bus-classroom-options"><label class="bus-sound-toggle"><input id="busSoundEnabled" type="checkbox" checked /><span>Play alert sound</span></label><button class="button ghost" id="testBusAlert" type="button">Test popup</button><button class="button ghost" id="leaveBusRoom" type="button">Leave room</button></div>
+            <div class="bus-active-call-grid" id="busActiveCallGrid" data-count="1" aria-live="polite">
+              <div class="bus-board-current bus-display-call-card" id="busRegularCallCard" aria-atomic="true"><span id="busBoardLabel">WAITING FOR THE NEXT BUS</span><strong id="busBoardNumber">—</strong><p class="bus-display-call-note" id="busBoardNote" hidden></p></div>
+              <section class="bus-active-addons" id="busActiveAddOns" hidden aria-label="Active add-on buses"><div class="bus-active-addons-heading"><span>ADD-ON BUSES</span><strong>Also active</strong></div><div class="bus-active-addon-list" id="busActiveAddOnList"></div></section>
+            </div>
+            <div class="bus-teacher-roster" id="busTeacherRosterPanel" hidden><div class="bus-teacher-roster-heading"><span>Not Called Yet</span><strong id="busTeacherRosterCount">0 buses</strong></div><div class="bus-teacher-roster-list" id="busTeacherRosterList"></div></div><div class="bus-classroom-options"><label class="bus-sound-toggle"><input id="busSoundEnabled" type="checkbox" checked /><span>Play alert sound</span></label><button class="button ghost" id="testBusAlert" type="button">Test popup</button><button class="button ghost" id="leaveBusRoom" type="button">Leave room</button></div>
           </div>
         </section>
         </div>
         <p class="bus-call-error" id="busCallError" role="alert"></p>
       </section>
 
-      <div class="bus-call-popup" id="busCallPopup" hidden role="dialog" aria-modal="true" aria-labelledby="busPopupNumber">
+      <div class="bus-call-popup" id="busCallPopup" hidden role="dialog" aria-modal="true" aria-labelledby="busPopupHeading">
         <div class="bus-popup-card">
-          <div class="bus-popup-top"><span>🚌 BUS CALL</span><button id="dismissBusPopup" type="button" aria-label="Dismiss bus call">×</button></div>
-          <div class="bus-popup-label">BUS</div>
-          <strong id="busPopupNumber">—</strong>
-          <p id="busPopupNote" hidden></p>
-          <time id="busPopupTime">Called just now</time>
+          <div class="bus-popup-top"><span id="busPopupHeading">🚌 ACTIVE BUS CALLS</span><button id="dismissBusPopup" type="button" aria-label="Dismiss bus call">×</button></div>
+          <div class="bus-popup-status-row"><div class="bus-popup-stage active-board" id="busPopupStage">ACTIVE BUSES</div><time id="busPopupTime">Called just now</time></div>
+          <div class="bus-popup-roster" id="busPopupRoster" hidden aria-label="School buses not called yet"><div class="bus-popup-roster-heading"><span>NOT CALLED YET</span><strong id="busPopupRosterCount"></strong></div><div class="bus-popup-roster-list" id="busPopupRosterList"></div></div>
+          <div class="bus-popup-active-grid" id="busPopupActiveGrid" aria-live="assertive" aria-atomic="true"></div>
           <button class="bus-popup-dismiss" id="dismissBusPopupMain" type="button">Dismiss</button>
         </div>
       </div>
@@ -936,7 +975,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="games.js?v=20260915-unified-keyboard-1"></script>
   <script src="custom-games.js?v=20260915-unified-keyboard-1"></script>
   <script src="race.js?v=20260915-unified-keyboard-1"></script>
-  <script src="bus-call.js?v=20260917-fullscreen"></script>
+  <script src="bus-call.js?v=20260917-all-clear"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>
   <script src="quiz.js?v=20260916-all-points-1"></script>
   <script src="quiz-classroom.js?v=20260916-paste-import-1"></script>
