@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
   <link rel="stylesheet" href="calculator.css?v=20260915-wheel-colors-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
-  <link rel="stylesheet" href="bus-call.css?v=20260916-2" />
+  <link rel="stylesheet" href="bus-call.css?v=20260917-fullscreen" />
   <link rel="stylesheet" href="seating.css?v=20260916-quiz-disabled-desks-1" />
   <link rel="stylesheet" href="rgb-theme.css?v=20260916-all-points-1" />
   <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
@@ -656,18 +656,51 @@ Fish = ညၣ်</textarea>
       </section>
       <section class="bus-call-panel classroom-tool-panel" id="busCallPanel" aria-labelledby="busCallTitle" hidden>
         <div class="bus-call-toolbar">
-          <div><p class="eyebrow">SCHOOL DISMISSAL</p><h2 id="busCallTitle">Bus Call</h2><p>Use one shared room code. No Google sign-in or staff account is required.</p></div>
-          <span class="bus-call-connection" id="busCallConnection">Not connected</span>
+          <div><p class="eyebrow">SCHOOL DISMISSAL</p><h2 id="busCallTitle">Bus Call</h2><p>Callers can use a PIN or Google account. Classroom teachers only need the shared room code.</p></div>
+          <div class="bus-view-actions"><span class="bus-call-connection" id="busCallConnection">Not connected</span><button class="button primary" id="busFullscreen" type="button" aria-pressed="false">Full screen</button></div>
         </div>
 
+        <div class="bus-role-tabs" role="tablist" aria-label="Bus Call role">
+          <button id="busCallerTab" type="button" role="tab" aria-selected="true" aria-controls="busCallerTabPanel" data-bus-role="caller">📣 Bus Caller</button>
+          <button id="busTeacherTab" type="button" role="tab" aria-selected="false" aria-controls="busTeacherTabPanel" tabindex="-1" data-bus-role="teacher">🏫 Classroom Teacher</button>
+        </div>
+        <div id="busCallerTabPanel" role="tabpanel" aria-labelledby="busCallerTab">
         <div class="bus-call-setup" id="busCallSetup">
           <section class="bus-call-role-card bus-call-caller-card">
             <div class="bus-call-role-icon" aria-hidden="true">📣</div>
-            <div><p class="eyebrow">BUS CALLER</p><h3>Start the dismissal room</h3><p>Use a code your school can share, or leave it blank and a code will be generated.</p></div>
+            <div><p class="eyebrow">BUS CALLER</p><h3>Start or reopen your room</h3><p>Choose a PIN or use your Google account to reopen your room from any browser. For a new room, choose a code or leave it blank.</p></div>
             <label>Room code <input id="busCallerCodeInput" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Example: GLN25" /></label>
-            <button class="button primary" id="startBusCaller" type="button">Start Caller Mode</button>
+            <button class="button primary" id="startBusGoogle" type="button">Continue with Google — no PIN</button>
+            <p>Or use a caller PIN</p>
+            <p>Editing this field does not delete a reservation. Your code stays reserved when you close the room. It becomes available to another caller after 30 days without caller activity.</p>
+            <label>Caller PIN <input id="busCallerPinInput" type="password" inputmode="numeric" minlength="8" maxlength="12" pattern="[0-9]{8,12}" autocomplete="off" aria-describedby="busCallerPinHelp" placeholder="8–12 digits" /></label>
+            <p id="busCallerPinHelp">Choose a PIN for a new room, or enter the original PIN to reopen it. Keep it private; classroom teachers only need the room code. Older rooms must first set a PIN from the original caller browser.</p>
+            <button class="button primary" id="startBusCaller" type="button">Start / Reopen Caller Room</button>
           </section>
 
+        </div>
+
+        <section class="bus-caller-console" id="busCallerConsole" hidden>
+          <div class="bus-room-banner">
+            <div><span>ROOM CODE</span><strong id="busCallerRoomCode">—</strong><button class="button ghost" id="copyBusRoomCode" type="button">Copy</button><button class="button ghost" id="changeBusRoomCode" type="button">Change room code</button></div>
+            <div class="bus-listener-count"><span class="bus-live-dot" aria-hidden="true"></span><strong id="busListenerCount">0 classrooms online</strong></div>
+          </div>
+          <div class="bus-call-entry-card">
+            <p id="busCodeReservation" role="status"></p>
+            <p id="busCallerAccount" role="status">Caller PIN access</p>
+            <button class="button ghost" id="connectBusGoogle" type="button">Connect Google account — replace PIN access</button>
+            <label for="busNumberInput">Bus number</label>
+            <div class="bus-call-entry-row"><input id="busNumberInput" maxlength="18" inputmode="text" autocomplete="off" placeholder="123" aria-label="Bus number" /><button class="bus-call-send" id="sendBusCall" type="button">Call Bus</button></div>
+            <label class="bus-note-field">Optional note <input id="busCallNoteInput" maxlength="80" autocomplete="off" placeholder="Front doors, Door 3, loading now…" /></label>
+            <div class="bus-caller-actions"><button class="button ghost" id="clearBusCall" type="button">Clear current call</button><button class="button ghost" id="leaveBusCaller" type="button">Leave caller mode</button><button class="button ghost" id="closeBusRoom" type="button">End session — keep code reserved</button></div>
+            <p class="bus-call-status" id="busCallerStatus">Ready to call a bus.</p>
+          </div>
+          <section class="bus-history-card"><div class="bus-history-heading"><div><span>RECENT CALLS</span><strong>Today in this room</strong></div><button id="clearBusHistory" type="button">Clear history</button></div><div class="bus-history-list" id="busCallHistory"><p>No buses called yet.</p></div></section>
+        </section>
+
+        </div>
+        <div id="busTeacherTabPanel" role="tabpanel" aria-labelledby="busTeacherTab" hidden>
+        <div class="bus-call-setup" id="busTeacherSetup">
           <section class="bus-call-role-card bus-call-classroom-card">
             <div class="bus-call-role-icon" aria-hidden="true">🏫</div>
             <div><p class="eyebrow">CLASSROOM TEACHER</p><h3>Join the dismissal room</h3><p>Enter the same room code. Keep this site open and new bus calls will pop up automatically.</p></div>
@@ -677,21 +710,6 @@ Fish = ညၣ်</textarea>
           </section>
         </div>
 
-        <section class="bus-caller-console" id="busCallerConsole" hidden>
-          <div class="bus-room-banner">
-            <div><span>ROOM CODE</span><strong id="busCallerRoomCode">—</strong><button class="button ghost" id="copyBusRoomCode" type="button">Copy</button></div>
-            <div class="bus-listener-count"><span class="bus-live-dot" aria-hidden="true"></span><strong id="busListenerCount">0 classrooms online</strong></div>
-          </div>
-          <div class="bus-call-entry-card">
-            <label for="busNumberInput">Bus number</label>
-            <div class="bus-call-entry-row"><input id="busNumberInput" maxlength="18" inputmode="text" autocomplete="off" placeholder="123" aria-label="Bus number" /><button class="bus-call-send" id="sendBusCall" type="button">Call Bus</button></div>
-            <label class="bus-note-field">Optional note <input id="busCallNoteInput" maxlength="80" autocomplete="off" placeholder="Front doors, Door 3, loading now…" /></label>
-            <div class="bus-caller-actions"><button class="button ghost" id="clearBusCall" type="button">Clear current call</button><button class="button ghost" id="closeBusRoom" type="button">Close room</button></div>
-            <p class="bus-call-status" id="busCallerStatus">Ready to call a bus.</p>
-          </div>
-          <section class="bus-history-card"><div class="bus-history-heading"><div><span>RECENT CALLS</span><strong>Today in this room</strong></div><button id="clearBusHistory" type="button">Clear history</button></div><div class="bus-history-list" id="busCallHistory"><p>No buses called yet.</p></div></section>
-        </section>
-
         <section class="bus-classroom-console" id="busClassroomConsole" hidden>
           <div class="bus-room-banner">
             <div><span>LISTENING TO ROOM</span><strong id="busTeacherRoomCode">—</strong></div>
@@ -699,9 +717,11 @@ Fish = ညၣ်</textarea>
           </div>
           <div class="bus-classroom-waiting">
             <div class="bus-waiting-icon" aria-hidden="true">🚌</div><p class="eyebrow">BUS CALLS ARE ON</p><h3 id="busWaitingTitle">Waiting for the next bus</h3><p id="busWaitingDetail">A large alert will appear on this screen when the caller sends a bus number.</p>
+            <div class="bus-board-current" aria-live="polite" aria-atomic="true"><span id="busBoardLabel">WAITING FOR THE NEXT BUS</span><strong id="busBoardNumber">—</strong></div>
             <div class="bus-classroom-options"><label class="bus-sound-toggle"><input id="busSoundEnabled" type="checkbox" checked /><span>Play alert sound</span></label><button class="button ghost" id="testBusAlert" type="button">Test popup</button><button class="button ghost" id="leaveBusRoom" type="button">Leave room</button></div>
           </div>
         </section>
+        </div>
         <p class="bus-call-error" id="busCallError" role="alert"></p>
       </section>
 
@@ -916,7 +936,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="games.js?v=20260915-unified-keyboard-1"></script>
   <script src="custom-games.js?v=20260915-unified-keyboard-1"></script>
   <script src="race.js?v=20260915-unified-keyboard-1"></script>
-  <script src="bus-call.js?v=20260916-2"></script>
+  <script src="bus-call.js?v=20260917-fullscreen"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>
   <script src="quiz.js?v=20260916-all-points-1"></script>
   <script src="quiz-classroom.js?v=20260916-paste-import-1"></script>
