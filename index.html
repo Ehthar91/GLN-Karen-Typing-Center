@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
   <link rel="stylesheet" href="calculator.css?v=20260915-wheel-colors-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
+  <link rel="stylesheet" href="bus-call.css?v=20260916-1" />
   <link rel="stylesheet" href="seating.css?v=20260916-quiz-disabled-desks-1" />
   <link rel="stylesheet" href="rgb-theme.css?v=20260916-all-points-1" />
   <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
@@ -220,6 +221,7 @@
         <button id="showNumberGenerator" type="button">Number Generator</button>
         <button id="showCalculator" type="button" hidden aria-hidden="true">Calculator</button>
         <button id="showEventSignup" type="button">Event Sign Up</button>
+        <button id="showBusCall" type="button">Bus Call</button>
       </div>
       <section class="classroom-account-bar" id="classroomAccountBar" aria-label="Classroom Tools account">
         <div class="classroom-account-copy">
@@ -291,6 +293,7 @@
               <button type="button" data-dashboard-tool="number-generator"><span>#</span><strong>Number Generator</strong><small>Random classroom numbers</small></button>
               <button type="button" data-dashboard-tool="calculator" hidden aria-hidden="true"><span>⌗</span><strong>Calculator</strong><small>Graphing &amp; scientific</small></button>
               <button type="button" data-dashboard-tool="event-signup"><span>✓</span><strong>Event Sign Up</strong><small>Share appointment slots</small></button>
+              <button type="button" data-dashboard-tool="bus-call"><span>🚌</span><strong>Bus Call</strong><small>Send bus numbers live</small></button>
             </div>
           </section>
         </div>
@@ -651,6 +654,68 @@ Fish = ညၣ်</textarea>
           <div class="wheel-winner-card"><span>Selected</span><strong id="wheelWinnerName">—</strong><div><button class="button ghost" id="keepWheelWinner" type="button">Keep</button><button class="button primary" id="removeWheelWinner" type="button">Remove</button></div></div>
         </div>
       </section>
+      <section class="bus-call-panel classroom-tool-panel" id="busCallPanel" aria-labelledby="busCallTitle" hidden>
+        <div class="bus-call-toolbar">
+          <div><p class="eyebrow">SCHOOL DISMISSAL</p><h2 id="busCallTitle">Bus Call</h2><p>Use one shared room code. No Google sign-in or staff account is required.</p></div>
+          <span class="bus-call-connection" id="busCallConnection">Not connected</span>
+        </div>
+
+        <div class="bus-call-setup" id="busCallSetup">
+          <section class="bus-call-role-card bus-call-caller-card">
+            <div class="bus-call-role-icon" aria-hidden="true">📣</div>
+            <div><p class="eyebrow">BUS CALLER</p><h3>Start the dismissal room</h3><p>Use a code your school can share, or leave it blank and a code will be generated.</p></div>
+            <label>Room code <input id="busCallerCodeInput" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Example: GLN25" /></label>
+            <button class="button primary" id="startBusCaller" type="button">Start Caller Mode</button>
+          </section>
+
+          <section class="bus-call-role-card bus-call-classroom-card">
+            <div class="bus-call-role-icon" aria-hidden="true">🏫</div>
+            <div><p class="eyebrow">CLASSROOM TEACHER</p><h3>Join the dismissal room</h3><p>Enter the same room code. Keep this site open and new bus calls will pop up automatically.</p></div>
+            <label>Room code <input id="busTeacherCodeInput" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter room code" /></label>
+            <label>Classroom name <input id="busTeacherNameInput" maxlength="32" autocomplete="off" placeholder="Optional — Room 214" /></label>
+            <button class="button primary" id="joinBusRoom" type="button">Join Bus Calls</button>
+          </section>
+        </div>
+
+        <section class="bus-caller-console" id="busCallerConsole" hidden>
+          <div class="bus-room-banner">
+            <div><span>ROOM CODE</span><strong id="busCallerRoomCode">—</strong><button class="button ghost" id="copyBusRoomCode" type="button">Copy</button></div>
+            <div class="bus-listener-count"><span class="bus-live-dot" aria-hidden="true"></span><strong id="busListenerCount">0 classrooms online</strong></div>
+          </div>
+          <div class="bus-call-entry-card">
+            <label for="busNumberInput">Bus number</label>
+            <div class="bus-call-entry-row"><input id="busNumberInput" maxlength="18" inputmode="text" autocomplete="off" placeholder="123" aria-label="Bus number" /><button class="bus-call-send" id="sendBusCall" type="button">Call Bus</button></div>
+            <label class="bus-note-field">Optional note <input id="busCallNoteInput" maxlength="80" autocomplete="off" placeholder="Front doors, Door 3, loading now…" /></label>
+            <div class="bus-caller-actions"><button class="button ghost" id="clearBusCall" type="button">Clear current call</button><button class="button ghost" id="closeBusRoom" type="button">Close room</button></div>
+            <p class="bus-call-status" id="busCallerStatus">Ready to call a bus.</p>
+          </div>
+          <section class="bus-history-card"><div class="bus-history-heading"><div><span>RECENT CALLS</span><strong>Today in this room</strong></div><button id="clearBusHistory" type="button">Clear history</button></div><div class="bus-history-list" id="busCallHistory"><p>No buses called yet.</p></div></section>
+        </section>
+
+        <section class="bus-classroom-console" id="busClassroomConsole" hidden>
+          <div class="bus-room-banner">
+            <div><span>LISTENING TO ROOM</span><strong id="busTeacherRoomCode">—</strong></div>
+            <div class="bus-listener-count"><span class="bus-live-dot" aria-hidden="true"></span><strong id="busTeacherConnectionText">Connected</strong></div>
+          </div>
+          <div class="bus-classroom-waiting">
+            <div class="bus-waiting-icon" aria-hidden="true">🚌</div><p class="eyebrow">BUS CALLS ARE ON</p><h3 id="busWaitingTitle">Waiting for the next bus</h3><p id="busWaitingDetail">A large alert will appear on this screen when the caller sends a bus number.</p>
+            <div class="bus-classroom-options"><label class="bus-sound-toggle"><input id="busSoundEnabled" type="checkbox" checked /><span>Play alert sound</span></label><button class="button ghost" id="testBusAlert" type="button">Test popup</button><button class="button ghost" id="leaveBusRoom" type="button">Leave room</button></div>
+          </div>
+        </section>
+        <p class="bus-call-error" id="busCallError" role="alert"></p>
+      </section>
+
+      <div class="bus-call-popup" id="busCallPopup" hidden role="dialog" aria-modal="true" aria-labelledby="busPopupNumber">
+        <div class="bus-popup-card">
+          <div class="bus-popup-top"><span>🚌 BUS CALL</span><button id="dismissBusPopup" type="button" aria-label="Dismiss bus call">×</button></div>
+          <div class="bus-popup-label">BUS</div>
+          <strong id="busPopupNumber">—</strong>
+          <p id="busPopupNote" hidden></p>
+          <time id="busPopupTime">Called just now</time>
+          <button class="bus-popup-dismiss" id="dismissBusPopupMain" type="button">Dismiss</button>
+        </div>
+      </div>
+
       <section class="event-signup-card" id="eventSignupPanel" aria-labelledby="eventSignupTitle" hidden>
         <div class="event-signup-toolbar">
           <div><p class="eyebrow">CLASSROOM APPOINTMENTS &amp; EVENTS</p><h2 id="eventSignupTitle">Event Sign Up</h2></div>
@@ -851,6 +916,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="games.js?v=20260915-unified-keyboard-1"></script>
   <script src="custom-games.js?v=20260915-unified-keyboard-1"></script>
   <script src="race.js?v=20260915-unified-keyboard-1"></script>
+  <script src="bus-call.js?v=20260916-1"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>
   <script src="quiz.js?v=20260916-all-points-1"></script>
   <script src="quiz-classroom.js?v=20260916-paste-import-1"></script>
