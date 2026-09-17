@@ -1,26 +1,16 @@
-BUS CALL - ONE-TIME FIREBASE RULES UPDATE
-=========================================
+BUS CALL - FIREBASE NOTE (v1.1)
+================================
 
-The Bus Call feature uses the same Firebase Realtime Database and anonymous sign-in already used by Classroom Race/Quiz.
-Teachers and the bus caller do NOT need to connect a Google account.
+Bus Call now reuses the same authenticated Realtime Database namespace already used by Classroom Quiz.
+Its internal Firebase room key is prefixed with BUS_, so a visible room code such as GLN25 is stored separately from normal quiz rooms.
 
-IMPORTANT: GitHub Pages cannot deploy Firebase Realtime Database rules.
-After uploading this website build, update your Firebase Realtime Database rules once.
+NO NEW BUS-CALL DATABASE RULE IS REQUIRED.
 
-Option A - Firebase Console
-1. Open Firebase Console for project: gln-karen-typing-center
-2. Open Realtime Database > Rules.
-3. Replace the rules with the contents of firebase-rules.json from this ZIP.
-4. Click Publish.
+If Classroom Quiz / Car Race already connects on your website, Bus Call should connect using the same anonymous Firebase session. Staff do not need to sign in to a Google or staff account.
 
-The new rules add the /busCallRooms path. Without that rules update, Bus Call will show a permission error.
+If Bus Call still says it cannot connect:
+1. Test whether Classroom Quiz can create a live room.
+2. In Firebase Console > Authentication > Sign-in method, make sure Anonymous authentication is enabled.
+3. Make sure firebase-config.js still points to the gln-karen-typing-center Firebase project.
 
-How staff use it
-----------------
-1. Bus caller: Classroom Tools > Bus Call > Start Caller Mode.
-2. Share the displayed room code with classroom teachers.
-3. Teachers: Classroom Tools > Bus Call > enter the same code > Join Bus Calls.
-4. Caller enters a bus number and presses Call Bus.
-5. The bus number immediately appears as a large popup on every connected classroom screen.
-
-Room codes are the access key. Use a school-specific code that is not easy for students to guess, or use the generated random code.
+The firebase-rules.json file can still contain the older busCallRooms rule; Bus Call v1.1 does not depend on that path.
