@@ -1,16 +1,81 @@
-BUS CALL - FIREBASE NOTE (v1.1)
-================================
+BUS CALL — 30-DAY ROOM CODE RESERVATIONS
 
-Bus Call now reuses the same authenticated Realtime Database namespace already used by Classroom Quiz.
-Its internal Firebase room key is prefixed with BUS_, so a visible room code such as GLN25 is stored separately from normal quiz rooms.
+REQUIRED FIREBASE UPDATE
+In Realtime Database > Rules, replace only the quizRooms section with the
+quizRooms object from firebase-bus-call-reservation-section.json. Keep all
+other rules as they are, then Publish. firebase-rules.json contains the
+complete rules shipped with this project, including the updated section.
+Do not replace unrelated customized live rules with an older copy.
 
-NO NEW BUS-CALL DATABASE RULE IS REQUIRED.
+This release DOES require a rules update, unlike the previous PIN/Google
+release. Until published, reclaiming a code after 30 days may be denied,
+and older clients can still delete reservations.
 
-If Classroom Quiz / Car Race already connects on your website, Bus Call should connect using the same anonymous Firebase session. Staff do not need to sign in to a Google or staff account.
+BEHAVIOR
+Every created or reopened room code is automatically reserved for its caller.
+Close room ends the session and clears calls/listeners but keeps ownership.
+The code becomes claimable after 30 days (2,592,000,000 milliseconds) without
+caller activity. Opening/reopening, calling a bus, clearing calls/history,
+connecting Google, closing a room, or leaving caller mode renews the period.
+Merely leaving a browser tab open does not renew it. Classroom joins do not
+renew it. The caller console shows the reserved-until date.
 
-If Bus Call still says it cannot connect:
-1. Test whether Classroom Quiz can create a live room.
-2. In Firebase Console > Authentication > Sign-in method, make sure Anonymous authentication is enabled.
-3. Make sure firebase-config.js still points to the gln-karen-typing-center Firebase project.
+After 30 days, a new caller can claim the code. The server checks expiration
+using server time. A transaction rechecks ownership so a concurrent owner
+renewal prevents a stale claim. New ownership starts with no previous calls
+or listeners. Live sessions still expire after 18 hours; session expiration
+is separate from the 30-day code reservation.
 
-The firebase-rules.json file can still contain the older busCallRooms rule; Bus Call v1.1 does not depend on that path.
+Existing rooms gain the reservation activity field the next time their owner
+uses this updated version. For legacy rooms, the last activity timestamp is
+used, falling back to creation time. Already-deleted rooms cannot be reserved
+retroactively. Records without any timestamp cannot be automatically claimed.
+
+AUTHENTICATION
+Keep Google, Email/Password, and Anonymous enabled. Email-link sign-in is not
+needed. Google caller rooms need only the same account and room code to return.
+PIN callers need the same code and 8–12 digit PIN. To move a PIN room to Google,
+reopen with its PIN and choose Connect Google account. That replaces PIN
+access for the current reservation. Classroom teachers need only a room code.
+For Google sign-in, authorize the site's hostname in Firebase Authentication
+Settings > Authorized domains, including your local preview hostname.
+
+New PIN reservations use a unique internal Firebase Email/Password account
+identifier, stored as pinAccountKey on the room. Legacy PIN accounts remain
+supported. A released code can therefore receive a new PIN without access to
+the old PIN account. PINs never go into Realtime Database or localStorage.
+Unused Firebase Auth accounts are not automatically deleted by this release.
+Caller authentication remains isolated from other classroom tools.
+
+VALIDATION
+Syntax checks, 21 simulated authentication/room-flow checks, and 25 evaluations
+of the shipped rule expressions passed. These cover closed-room retention,
+expiry boundaries, renewal races, forbidden deletions, teacher access, and
+unaffected ordinary quiz rooms. These are not Firebase Emulator tests: Java
+is unavailable on this machine. Live Firebase deployment and end-to-end
+cross-browser authentication have not been tested by these checks.
+
+CHANGE ROOM CODE
+In the caller console choose Change room code, enter 4–8 letters/numbers,
+and explicitly confirm. Canceling or choosing an unavailable code makes no
+change. The destination starts a new session; teachers must join the new code.
+The same Google account or PIN works for the new code. The old session closes,
+but its reservation and saved history remain. Its existing reservation clock
+is not reset by this change. No room record is deleted.
+If creating the destination succeeds but closing the source fails, both are
+kept and the caller is told how to reopen the destination. Existing reserved
+destinations are not overwritten, even if owned by the same caller.
+The End session — keep code reserved button retains code ownership.
+No additional rules changes beyond the 30-day reservation rules are needed.
+11 additional simulated change-code checks passed, including cancellation,
+reserved targets, PIN continuity, expired targets, and partial network failure.
+
+FULLSCREEN DISPLAY
+Both roles have a Full screen button at the top of Bus Call. Exit using the
+button or Escape. If browser fullscreen is unavailable, an expanded view is
+used. Caller controls are enlarged, with recent calls alongside on wide
+screens. Classroom fullscreen shows a large latest-bus number and enlarged
+alerts; dismissing an alert keeps the latest number visible until cleared.
+Fullscreen needs no additional Firebase changes. Verified with simulated
+room data in the browser: caller fullscreen, Escape exit, classroom alert
+visibility, and persistent latest-bus display after dismissing an alert.
