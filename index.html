@@ -220,14 +220,14 @@
         <button id="showQuiz" type="button">Quiz</button>
         <button id="showNumberGenerator" type="button">Number Generator</button>
         <button id="showCalculator" type="button" hidden aria-hidden="true">Calculator</button>
-        <button id="showEventSignup" type="button">Event Sign Up</button>
+        <button id="showEventSignup" type="button">Conference Sign-Up</button>
         <button id="showBusCall" type="button">Bus Call</button>
       </div>
       <section class="classroom-account-bar" id="classroomAccountBar" aria-label="Classroom Tools account">
         <div class="classroom-account-copy">
           <span>CLASSROOM TOOLS ACCOUNT</span>
           <strong>Save your classroom setup</strong>
-          <small>Sync Seating Chart, Schedule Timer, Name Picker, and Event Sign Up data across devices.</small>
+          <small>Sync Seating Chart, Schedule Timer, Name Picker, and Conference Sign-Up data across devices.</small>
         </div>
         <div class="classroom-account-controls">
           <div class="classroom-storage-switch" role="group" aria-label="Choose how Classroom Tools are saved">
@@ -292,7 +292,7 @@
               <button type="button" data-dashboard-tool="quiz"><span>?</span><strong>Quiz</strong><small>Create &amp; run quizzes</small></button>
               <button type="button" data-dashboard-tool="number-generator"><span>#</span><strong>Number Generator</strong><small>Random classroom numbers</small></button>
               <button type="button" data-dashboard-tool="calculator" hidden aria-hidden="true"><span>⌗</span><strong>Calculator</strong><small>Graphing &amp; scientific</small></button>
-              <button type="button" data-dashboard-tool="event-signup"><span>✓</span><strong>Event Sign Up</strong><small>Share appointment slots</small></button>
+              <button type="button" data-dashboard-tool="event-signup"><span>✓</span><strong>Conference Sign-Up</strong><small>Schedule family conferences</small></button>
               <button type="button" data-dashboard-tool="bus-call"><span>🚌</span><strong>Bus Call</strong><small>Send bus numbers live</small></button>
             </div>
           </section>
@@ -777,74 +777,74 @@ Fish = ညၣ်</textarea>
 
       <section class="event-signup-card" id="eventSignupPanel" aria-labelledby="eventSignupTitle" hidden>
         <div class="event-signup-toolbar">
-          <div><p class="eyebrow">CLASSROOM APPOINTMENTS &amp; EVENTS</p><h2 id="eventSignupTitle">Event Sign Up</h2></div>
-          <div class="event-signup-toolbar-actions"><button class="button ghost" id="refreshEventSignups" type="button">Refresh</button><button class="button primary" id="newEventSignup" type="button">＋ Create Event</button></div>
+          <div><p class="eyebrow">PARENT &amp; TEACHER CONFERENCES</p><h2 id="eventSignupTitle">Conference Sign-Up</h2></div>
+          <div class="event-signup-toolbar-actions"><button class="button ghost" id="refreshEventSignups" type="button">Refresh</button><button class="button primary" id="newEventSignup" type="button">＋ Create Conference</button></div>
         </div>
         <div class="event-signup-layout" id="eventSignupTeacherView">
           <section class="event-signup-list-panel">
-            <div class="event-signup-panel-heading"><div><strong>Saved Events</strong><small>Share a public link and watch signups update live.</small></div></div>
-            <p class="event-signup-status" id="eventSignupStatus">Connecting to Event Sign Up…</p>
-            <div class="event-signup-list" id="eventSignupList"><p class="event-signup-empty">No events yet. Create your first event.</p></div>
+            <div class="event-signup-panel-heading"><div><strong>Saved Conferences</strong><small>Share a public link and watch conference reservations update live.</small></div></div>
+            <p class="event-signup-status" id="eventSignupStatus">Connecting to Conference Sign-Up…</p>
+            <div class="event-signup-list" id="eventSignupList"><p class="event-signup-empty">No conferences yet. Create your first conference.</p></div>
           </section>
           <aside class="event-signup-editor">
-            <div class="event-signup-panel-heading"><div><strong id="eventSignupEditorTitle">Create Event</strong><small>Build time slots, then share the signup link.</small></div><button id="cancelEventSignupEdit" type="button" hidden>Cancel</button></div>
+            <div class="event-signup-panel-heading"><div><strong id="eventSignupEditorTitle">Create Conference</strong><small>Build conference time slots, then share the sign-up link.</small></div><button id="cancelEventSignupEdit" type="button" hidden>Cancel</button></div>
             <form id="eventSignupForm">
-              <label>Event name<input id="eventSignupName" maxlength="80" placeholder="Parent Conferences" required /></label>
-              <label>First event date<input id="eventSignupDate" type="date" required /><small>Used as the default date for new signup slots. Each slot can be placed on a different day.</small></label>
+              <label>Conference name<input id="eventSignupName" maxlength="80" placeholder="Parent Conferences" required /></label>
+              <label>First conference date<input id="eventSignupDate" type="date" required /><small>Used as the default date for new conference slots. Each slot can be placed on a different day.</small></label>
               <label>Instructions<textarea id="eventSignupDescription" maxlength="500" placeholder="Choose one available time slot."></textarea></label>
               <div class="event-link-options">
-                <label class="event-check"><input id="eventSignupLinkSchedule" type="checkbox" checked /><span><strong>Link to Schedule Timer</strong><small>Filled signup slots become a Special Schedule automatically.</small></span></label>
-                <label class="event-check"><input id="eventSignupOpen" type="checkbox" checked /><span><strong>Open for signups</strong><small>Turn this off to stop new registrations.</small></span></label>
+                <label class="event-check"><input id="eventSignupLinkSchedule" type="checkbox" checked /><span><strong>Link to Schedule Timer</strong><small>Filled conference slots become a Special Schedule automatically.</small></span></label>
+                <label class="event-check"><input id="eventSignupOpen" type="checkbox" checked /><span><strong>Open for conference sign-ups</strong><small>Turn this off to stop new conference reservations.</small></span></label>
                 <label class="event-check"><input id="eventSignupAllowMultiple" type="checkbox" checked /><span><strong>Allow multiple slots</strong><small>Families can reserve a separate time for each student.</small></span></label>
               </div>
-              <label>Schedule Timer activity name<select id="eventSignupActivityMode"><option value="participant" selected>Student/participant name</option><option value="event-participant">Event + participant name</option><option value="event">Event name</option></select></label>
+              <label>Schedule Timer conference activity name<select id="eventSignupActivityMode"><option value="participant" selected>Student name</option><option value="event-participant">Conference + student name</option><option value="event">Conference name</option></select></label>
               <section class="event-slot-generator" aria-labelledby="eventSlotGeneratorTitle">
-                <div class="event-slot-generator-heading"><div><strong id="eventSlotGeneratorTitle">Quick Slot Generator</strong><small>Create a batch of equal-length signup slots automatically.</small></div><span>Auto times</span></div>
+                <div class="event-slot-generator-heading"><div><strong id="eventSlotGeneratorTitle">Quick Slot Generator</strong><small>Create a batch of equal-length conference slots automatically.</small></div><span>Auto times</span></div>
                 <div class="event-slot-generator-grid">
                   <label>Date<input id="eventSlotGeneratorDate" type="date" /></label>
                   <label>First start time<input id="eventSlotGeneratorStart" type="time" /></label>
                   <label>Slot length<input id="eventSlotGeneratorDuration" type="number" min="1" max="480" value="15" /><small>minutes</small></label>
                   <label>Number of slots<input id="eventSlotGeneratorCount" type="number" min="1" max="96" value="8" /></label>
-                  <label>Max signups per slot<input id="eventSlotGeneratorCapacity" type="number" min="1" max="100" value="1" /></label>
+                  <label>Max families per slot<input id="eventSlotGeneratorCapacity" type="number" min="1" max="100" value="1" /></label>
                 </div>
                 <label class="event-slot-generator-label">Slot label (optional)<input id="eventSlotGeneratorLabel" maxlength="50" placeholder="Parent Conference" /></label>
                 <div class="event-slot-generator-actions"><button id="generateEventSignupSlots" type="button">Generate slots</button><button class="button ghost" id="addEventSignupDay" type="button">＋ Add another day</button><small id="eventSlotGeneratorPreview">Choose a date and first start time to preview the schedule.</small></div>
               </section>
-              <div class="event-slots-heading"><div><strong>Time slots</strong><small>Each slot can have its own date, time, and signup limit. Add Slot continues from the previous slot automatically.</small></div><button id="addEventSignupSlot" type="button">＋ Add slot</button></div>
+              <div class="event-slots-heading"><div><strong>Time slots</strong><small>Each conference slot can have its own date, time, and family limit. Add Slot continues from the previous slot automatically.</small></div><button id="addEventSignupSlot" type="button">＋ Add slot</button></div>
               <div class="event-slot-editor-list" id="eventSignupSlotEditor"></div>
-              <div class="event-editor-actions"><button class="button ghost" id="clearEventSignupForm" type="button">Clear</button><button class="button primary" id="saveEventSignup" type="submit">Create Event</button></div>
+              <div class="event-editor-actions"><button class="button ghost" id="clearEventSignupForm" type="button">Clear</button><button class="button primary" id="saveEventSignup" type="submit">Create Conference</button></div>
             </form>
           </aside>
         </div>
         <section class="event-shared-editor" id="eventSignupSharedEditorView" hidden>
-          <div class="event-public-hero event-shared-editor-hero"><p class="eyebrow">SHARED EVENT EDITOR</p><h2 id="eventSharedEditorTitle">Loading event…</h2><span class="event-public-date" id="eventSharedEditorDate">—</span><p id="eventSharedEditorDescription"></p></div>
-          <div class="event-shared-editor-toolbar"><div><strong>Editor access</strong><small>View the full signup list, move registrations to available times, and remove registrations. Event settings and deletion stay owner-only.</small></div><div><button class="button ghost" id="eventSharedCopySignup" type="button">Copy signup link</button><button class="button primary" id="eventSharedSchedule" type="button">Link to My Schedule Timer</button></div></div>
+          <div class="event-public-hero event-shared-editor-hero"><p class="eyebrow">SHARED CONFERENCE EDITOR</p><h2 id="eventSharedEditorTitle">Loading conference…</h2><span class="event-public-date" id="eventSharedEditorDate">—</span><p id="eventSharedEditorDescription"></p></div>
+          <div class="event-shared-editor-toolbar"><div><strong>Editor access</strong><small>View the full conference list, move reservations to available times, and remove reservations. Conference settings and deletion stay owner-only.</small></div><div><button class="button ghost" id="eventSharedCopySignup" type="button">Copy conference link</button><button class="button primary" id="eventSharedSchedule" type="button">Link to My Schedule Timer</button></div></div>
           <p class="event-public-message" id="eventSharedEditorMessage">Verifying editor link…</p>
           <div class="event-shared-editor-slots" id="eventSharedEditorSlots"></div>
         </section>
         <section class="event-signup-public" id="eventSignupPublicView" hidden>
-          <div class="event-public-hero"><p class="eyebrow">EVENT SIGN UP</p><h2 id="eventPublicTitle">Loading event…</h2><span class="event-public-date" id="eventPublicDate">—</span><p id="eventPublicDescription"></p></div>
+          <div class="event-public-hero"><p class="eyebrow">CONFERENCE SIGN-UP</p><h2 id="eventPublicTitle">Loading conference…</h2><span class="event-public-date" id="eventPublicDate">—</span><p id="eventPublicDescription"></p></div>
           <p class="event-public-message" id="eventPublicMessage">Loading available time slots…</p>
           <section class="event-public-success" id="eventPublicSuccess" hidden>
             <div class="event-public-success-icon">✓</div>
-            <div><h3>Signup confirmed</h3><p id="eventPublicSuccessText">Your appointment was saved.</p></div>
-            <label id="eventPublicManageLinkWrap"><span>Your private Manage Signup link</span><input id="eventPublicManageLink" readonly aria-label="Private manage signup link" /></label>
-            <div class="event-public-success-actions"><button class="button primary" id="eventPublicCopyManageLink" type="button">Copy private link</button><button class="button ghost" id="eventPublicStartAnother" type="button">Start Another Signup</button></div>
-            <small id="eventPublicFallbackNote">This is your private link to manage or cancel your signup. Save it somewhere safe.</small>
+            <div><h3>Conference time confirmed</h3><p id="eventPublicSuccessText">Your appointment was saved.</p></div>
+            <label id="eventPublicManageLinkWrap"><span>Your private Manage Conference link</span><input id="eventPublicManageLink" readonly aria-label="Private manage signup link" /></label>
+            <div class="event-public-success-actions"><button class="button primary" id="eventPublicCopyManageLink" type="button">Copy private link</button><button class="button ghost" id="eventPublicStartAnother" type="button">Reserve Another Time</button></div>
+            <small id="eventPublicFallbackNote">This is your private link to manage or cancel your conference time. Save it somewhere safe.</small>
           </section>
           <div class="event-public-slots" id="eventPublicSlots"></div>
           <form class="event-public-form" id="eventPublicForm" hidden>
-            <div class="event-public-form-heading"><div><h3>Sign up</h3><p>Enter the parent or guardian information once, then add the student details for each selected time.</p></div></div>
+            <div class="event-public-form-heading"><div><h3>Reserve a conference time</h3><p>Enter the parent or guardian information once, then add the student details for each selected time.</p></div></div>
             <div class="event-public-contact-grid">
               <label><span class="event-public-contact-label">Parent/Guardian Name</span><input id="eventPublicParentName" maxlength="60" autocomplete="name" required placeholder="Parent or guardian name" /></label>
-              <label><span class="event-public-contact-label">Email</span><input id="eventPublicEmail" type="email" maxlength="120" autocomplete="email" required placeholder="name@example.com" /><small>Contact email for this signup.</small></label>
+              <label><span class="event-public-contact-label">Email</span><input id="eventPublicEmail" type="email" maxlength="120" autocomplete="email" required placeholder="name@example.com" /><small>Contact email for this conference reservation.</small></label>
               <label><span class="event-public-contact-label">Phone <span class="optional">optional</span></span><input id="eventPublicPhone" type="tel" maxlength="30" autocomplete="tel" placeholder="Phone number" /><small>Optional contact number.</small></label>
             </div>
             <section class="event-public-selected-section" aria-labelledby="eventPublicSelectedSlot">
               <div class="event-public-selected-heading"><strong>Your selected times</strong><p id="eventPublicSelectedSlot">Choose a time slot above.</p></div>
               <div class="event-public-selection-list" id="eventPublicSelectionList"></div>
             </section>
-            <div class="event-public-actions"><button class="button ghost" id="eventPublicCancelSignup" type="button" hidden>Cancel appointment</button><button class="button primary" id="eventPublicSubmit" type="submit">Save signup</button></div>
+            <div class="event-public-actions"><button class="button ghost" id="eventPublicCancelSignup" type="button" hidden>Cancel appointment</button><button class="button primary" id="eventPublicSubmit" type="submit">Save conference time</button></div>
           </form>
         </section>
       </section>
@@ -980,8 +980,8 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="quiz.js?v=20260916-all-points-1"></script>
   <script src="quiz-classroom.js?v=20260916-paste-import-1"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
-  <script src="calculator.js?v=20260915-probability-popup-1"></script>
-  <script src="event-signup.js?v=20260912-15"></script>
+  <script src="calculator.js?v=20260917-conference-signup-1"></script>
+  <script src="event-signup.js?v=20260917-conference-signup-1"></script>
   <script src="seating.js?v=20260916-classroom-rules-physical-1"></script>
   <script src="rgb-theme.js?v=20260911-2"></script>
 </body>
