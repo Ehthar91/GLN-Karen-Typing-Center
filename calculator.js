@@ -6,6 +6,7 @@ const numberGeneratorPanel=document.querySelector('#numberGeneratorPanel');
 const scheduleTimerPanel=document.querySelector('#scheduleTimerPanel');
 const wheelPanel=document.querySelector('#wheelPanel');
 const eventSignupPanel=document.querySelector('#eventSignupPanel');
+const busCallPanel=document.querySelector('#busCallPanel');
 const seatingPanel=document.querySelector('#seatingPanel');
 const showDashboard=document.querySelector('#showDashboard');
 const showCalculator=document.querySelector('#showCalculator');
@@ -14,6 +15,7 @@ const showScheduleTimer=document.querySelector('#showScheduleTimer');
 const showQuiz=document.querySelector('#showQuiz');
 const showWheel=document.querySelector('#showWheel');
 const showEventSignup=document.querySelector('#showEventSignup');
+const showBusCall=document.querySelector('#showBusCall');
 const showSeating=document.querySelector('#showSeating');
 const calculatorTitle=document.querySelector('#calculator-title');
 const calculatorHint=document.querySelector('#calculatorHint');
@@ -26,6 +28,7 @@ function setCalculatorMode(mode){
   const quiz=mode==='quiz';
   const wheel=mode==='wheel';
   const eventSignup=mode==='event-signup';
+  const busCall=mode==='bus-call';
   const seating=mode==='seating';
   dashboardPanel.hidden=!dashboard;
   calculatorPanel.hidden=!calculator;
@@ -34,6 +37,7 @@ function setCalculatorMode(mode){
   quizView.hidden=!quiz;
   wheelPanel.hidden=!wheel;
   eventSignupPanel.hidden=!eventSignup;
+  busCallPanel.hidden=!busCall;
   seatingPanel.hidden=!seating;
   showDashboard.classList.toggle('active',dashboard);
   showCalculator.classList.toggle('active',calculator);
@@ -42,14 +46,16 @@ function setCalculatorMode(mode){
   showQuiz.classList.toggle('active',quiz);
   showWheel.classList.toggle('active',wheel);
   showEventSignup.classList.toggle('active',eventSignup);
+  showBusCall.classList.toggle('active',busCall);
   showSeating.classList.toggle('active',seating);
-  calculatorTitle.textContent=dashboard?'Classroom Dashboard':seating?'Seating Chart':eventSignup?'Event Sign Up':wheel?'Name Picker':quiz?'Quiz':scheduleTimer?'Schedule Timer':numberGenerator?'Number Generator':'Graphing & Scientific Calculator';
-  calculatorHint.textContent=dashboard?'Choose a class, see today’s schedule, and open your classroom tools from one place.':seating?'Create, arrange, and print a classroom seating plan.':eventSignup?'Create shareable signup events and link filled time slots to Special Schedules.':wheel?'Paste a list, spin, and select someone or something at random.':quiz?'Create, practice, and run classroom quizzes.':scheduleTimer?'Create multiple timers that start automatically at their scheduled times.':numberGenerator?'Generate classroom numbers from any range, with an optional no-repeat mode.':'Choose GLN TI-84 or GLN TI-30XS inside the calculator.';
+  calculatorTitle.textContent=dashboard?'Classroom Dashboard':seating?'Seating Chart':busCall?'Bus Call':eventSignup?'Event Sign Up':wheel?'Name Picker':quiz?'Quiz':scheduleTimer?'Schedule Timer':numberGenerator?'Number Generator':'Graphing & Scientific Calculator';
+  calculatorHint.textContent=dashboard?'Choose a class, see today’s schedule, and open your classroom tools from one place.':seating?'Create, arrange, and print a classroom seating plan.':busCall?'Send a bus number to every classroom listening with the same room code.':eventSignup?'Create shareable signup events and link filled time slots to Special Schedules.':wheel?'Paste a list, spin, and select someone or something at random.':quiz?'Create, practice, and run classroom quizzes.':scheduleTimer?'Create multiple timers that start automatically at their scheduled times.':numberGenerator?'Generate classroom numbers from any range, with an optional no-repeat mode.':'Choose GLN TI-84 or GLN TI-30XS inside the calculator.';
   if(dashboard)setTimeout(()=>{refreshDashboardClasses();updateClassroomDashboard()},0);
   if(numberGenerator)setTimeout(()=>{numberGeneratorMin.focus();queueFitNumberGeneratorResult()},0);
   if(scheduleTimer)setTimeout(()=>{renderScheduleTimers();updateScheduleTimerClock()},0);
   if(wheel)setTimeout(()=>{refreshWheelSeatingClasses();drawWheel()},0);
   if(eventSignup)setTimeout(()=>window.refreshEventSignupManager?.(),0);
+  if(busCall)setTimeout(()=>window.refreshBusCall?.(),0);
   if(seating)setTimeout(()=>window.renderSeatingChart?.(),0);
 }
 showDashboard.onclick=()=>setCalculatorMode('dashboard');
@@ -59,6 +65,7 @@ showScheduleTimer.onclick=()=>setCalculatorMode('schedule-timer');
 showQuiz.onclick=()=>openQuiz();
 showWheel.onclick=()=>setCalculatorMode('wheel');
 showEventSignup.onclick=()=>setCalculatorMode('event-signup');
+showBusCall.onclick=()=>setCalculatorMode('bus-call');
 showSeating.onclick=()=>setCalculatorMode('seating');
 
 const numberGeneratorMin=document.querySelector('#numberGeneratorMin');

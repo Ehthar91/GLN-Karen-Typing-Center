@@ -67,6 +67,18 @@
         }
       }
     },
+    "busCallRooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || (data.exists() && data.child('hostUid').val() === auth.uid) || (data.exists() && data.child('expiresAt').isNumber() && data.child('expiresAt').val() < now && newData.child('hostUid').val() === auth.uid))",
+        "listeners": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('busCallRooms').child($code).child('hostUid').val() === auth.uid)",
+            ".validate": "!newData.exists() || (newData.hasChildren(['id','name','connected','joinedAt','lastSeen']) && newData.child('id').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 32 && newData.child('connected').isBoolean() && newData.child('joinedAt').isNumber())"
+          }
+        }
+      }
+    },
     "eventSignups": {
       "$eventId": {
         ".read": "auth != null && (data.child('ownerUid').val() === auth.uid || (data.child('editorAccess').child('active').val() === true && data.child('editorAccess').child('token').val() === data.child('editorSessions').child(auth.uid).child('token').val()))",
