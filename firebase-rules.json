@@ -45,6 +45,10 @@
       }
     },
     "quizRooms": {
+      ".read": "auth != null && query.orderByChild == 'hostUid' && query.equalTo == auth.uid",
+      ".indexOn": [
+        "hostUid"
+      ],
       "$code": {
         ".read": "auth != null",
         ".write": "auth != null && ((!$code.matches(/^BUS_/) && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || data.child('hostUid').val() === auth.uid)) || ($code.matches(/^BUS_/) && newData.exists() && ((!data.exists() && newData.child('hostUid').val() === auth.uid && newData.child('callerLastActiveAt').val() === now) || data.child('hostUid').val() === auth.uid || (((data.child('callerLastActiveAt').isNumber() && data.child('callerLastActiveAt').val() <= now - 2592000000) || (!data.child('callerLastActiveAt').exists() && ((data.child('lastActivityAt').isNumber() && data.child('lastActivityAt').val() <= now - 2592000000) || (!data.child('lastActivityAt').exists() && data.child('createdAt').isNumber() && data.child('createdAt').val() <= now - 2592000000)))) && newData.child('hostUid').val() === auth.uid && newData.child('callerLastActiveAt').val() === now && newData.child('createdAt').val() === now && newData.child('status').val() === 'open' && !newData.child('history').exists() && !newData.child('currentCall').exists() && !newData.child('players').exists()))))",

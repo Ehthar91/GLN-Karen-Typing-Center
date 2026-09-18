@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
   <link rel="stylesheet" href="calculator.css?v=20260915-wheel-colors-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
-  <link rel="stylesheet" href="bus-call.css?v=20260917-all-clear" />
+  <link rel="stylesheet" href="bus-call.css?v=20260917-google-recovery-1" />
   <link rel="stylesheet" href="seating.css?v=20260916-quiz-disabled-desks-1" />
   <link rel="stylesheet" href="rgb-theme.css?v=20260916-all-points-1" />
   <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
@@ -668,10 +668,16 @@ Fish = ညၣ်</textarea>
         <div class="bus-call-setup" id="busCallSetup">
           <section class="bus-call-role-card bus-call-caller-card">
             <div class="bus-call-role-icon" aria-hidden="true">📣</div>
-            <div><p class="eyebrow">BUS CALLER</p><h3>Start or reopen your room</h3><p>Your last caller room is remembered on this device, so normally you only need your PIN to reopen it.</p></div>
-            <div class="bus-caller-saved-room" id="busCallerSavedRoom" hidden><div><span>RESERVED ROOM ON THIS DEVICE</span><strong id="busCallerSavedRoomCode">—</strong><small>Enter your caller PIN below to reopen this room.</small></div><button class="button ghost" id="busCallerRoomChoice" type="button">Use a different room code</button></div>
+            <div><p class="eyebrow">BUS CALLER</p><h3>Start or reopen your room</h3><p>Your last caller room is remembered on this device. Reopen it with its original PIN or Google account.</p></div>
+            <div class="bus-caller-saved-room" id="busCallerSavedRoom" hidden><div><span>RESERVED ROOM ON THIS DEVICE</span><strong id="busCallerSavedRoomCode">—</strong><small>Use its original caller PIN or Google account below to reopen this room.</small></div><button class="button ghost" id="busCallerRoomChoice" type="button">Use a different room code</button></div>
             <label id="busCallerCodeField">Room code <input id="busCallerCodeInput" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Example: GLN25" /></label>
             <button class="button primary" id="startBusGoogle" type="button">Continue with Google — no PIN</button>
+            <button class="button ghost bus-google-recover-button" id="recoverBusGoogle" type="button">Forgot room code? Recover with Google</button>
+            <section class="bus-google-recovery" id="busGoogleRecovery" hidden aria-live="polite">
+              <div class="bus-google-recovery-heading"><span>GOOGLE RECOVERY</span><strong id="busGoogleRecoveryTitle">Reserved Bus Call rooms</strong><small id="busGoogleRecoveryHint">Choose the room you want to reopen.</small></div>
+              <div class="bus-google-recovery-list" id="busGoogleRecoveryList"></div>
+            </section>
+            <p class="bus-google-recovery-note">Forgot the room code? Google can find rooms reserved by that Google account. Your caller PIN is never used to search for a room.</p>
             <p>Or use a caller PIN</p>
             <p>Your last room code stays remembered on this browser and remains reserved for its caller for 30 days after caller activity. If the caller browser closes, the live dismissal session expires after 1 hour.</p>
             <label>Caller PIN <input id="busCallerPinInput" type="password" inputmode="numeric" minlength="8" maxlength="12" pattern="[0-9]{8,12}" autocomplete="off" aria-describedby="busCallerPinHelp" placeholder="8–12 digits" /></label>
@@ -975,7 +981,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="games.js?v=20260915-unified-keyboard-1"></script>
   <script src="custom-games.js?v=20260915-unified-keyboard-1"></script>
   <script src="race.js?v=20260915-unified-keyboard-1"></script>
-  <script src="bus-call.js?v=20260917-all-clear"></script>
+  <script src="bus-call.js?v=20260917-google-recovery-1"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>
   <script src="quiz.js?v=20260916-all-points-1"></script>
   <script src="quiz-classroom.js?v=20260916-paste-import-1"></script>

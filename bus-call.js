@@ -5,7 +5,7 @@
   if(!panel)return;
   const connection=q('#busCallConnection'),setup=q('#busCallSetup'),callerConsole=q('#busCallerConsole'),teacherConsole=q('#busClassroomConsole'),errorEl=q('#busCallError');
   const popup=q('#busCallPopup'),popupGrid=q('#busPopupActiveGrid'),popupTime=q('#busPopupTime'),popupStage=q('#busPopupStage');
-  let busDb=null,busUser=null,callerAuth=null,callerDatabase=null,googleCallerAuth=null,googleCallerDatabase=null;
+  let busDb=null,busUser=null,callerAuth=null,callerDatabase=null,googleCallerAuth=null,googleCallerDatabase=null,recoveredGoogleUser=null;
   let role='',code='',room=null,unsubscribe=null,presenceDisconnect=null,lastCallId='',lastCombinedCallId='',lastAllClearId='',dismissedAllClearId='',seenAddOnIds=new Set(),audioContext=null,selectedStage='first',callerCodeEditing=false,lineupTarget='main';
   let callerDisconnect=null,callerHeartbeatTimer=null,sessionExpiryTimer=null,historyPruneBusy=false;
   let teacherDisplayName='',teacherPresenceAttached=false;
@@ -349,7 +349,7 @@
     sessionExpiryTimer=setTimeout(()=>{if(room&&sessionExpired(room))expireSessionUi()},Math.min(remaining+100,2147483000));
     return false;
   }
-  function resetUi(){if(fullscreenActive)exitBusFullscreen();clearCallerHeartbeat();clearSessionExpiryTimer();if(callerDisconnect){try{callerDisconnect.cancel().catch(()=>{})}catch{}callerDisconnect=null}setup.hidden=false;callerConsole.hidden=true;teacherConsole.hidden=true;popup.hidden=true;const activeAddOns=q('#busActiveAddOns');if(activeAddOns)activeAddOns.hidden=true;const addOnPanel=q('#busAddOnPanel');if(addOnPanel)addOnPanel.hidden=true;const addOnToggle=q('#toggleBusAddOn');if(addOnToggle){addOnToggle.setAttribute('aria-expanded','false');addOnToggle.textContent='＋ Add-On Buses'}role='';code='';room=null;teacherDisplayName='';teacherPresenceAttached=false;lastCallId='';lastCombinedCallId='';lastAllClearId='';dismissedAllClearId='';seenAddOnIds=new Set();setConnection('Not connected');setError('');updateRoleTabs()}
+  function resetUi(){if(fullscreenActive)exitBusFullscreen();hideGoogleRecovery();recoveredGoogleUser=null;clearCallerHeartbeat();clearSessionExpiryTimer();if(callerDisconnect){try{callerDisconnect.cancel().catch(()=>{})}catch{}callerDisconnect=null}setup.hidden=false;callerConsole.hidden=true;teacherConsole.hidden=true;popup.hidden=true;const activeAddOns=q('#busActiveAddOns');if(activeAddOns)activeAddOns.hidden=true;const addOnPanel=q('#busAddOnPanel');if(addOnPanel)addOnPanel.hidden=true;const addOnToggle=q('#toggleBusAddOn');if(addOnToggle){addOnToggle.setAttribute('aria-expanded','false');addOnToggle.textContent='＋ Add-On Buses'}role='';code='';room=null;teacherDisplayName='';teacherPresenceAttached=false;lastCallId='';lastCombinedCallId='';lastAllClearId='';dismissedAllClearId='';seenAddOnIds=new Set();setConnection('Not connected');setError('');updateRoleTabs()}
   function renderHistory(history={}){
     const list=q('#busCallHistory');
     const cutoff=Date.now()-HISTORY_RETENTION_MS;
@@ -650,6 +650,71 @@
     q('#busCallerAccount').textContent=google?`Google account: ${busUser.email||busUser.displayName||'Connected'} — no PIN needed.`:'Caller PIN access';
     q('#connectBusGoogle').hidden=!!google;
   }
+  function hideGoogleRecovery(){
+    const recovery=q('#busGoogleRecovery'),list=q('#busGoogleRecoveryList');
+    if(recovery)recovery.hidden=true;if(list)list.replaceChildren();
+  }
+  function recoverableGoogleRooms(snapshot,userUid){
+    const rooms=[];
+    snapshot.forEach(child=>{
+      const key=String(child.key||'');if(!key.startsWith('BUS_'))return;
+      const value=child.val()||{};if(value.hostUid!==userUid||reservationExpired(value))return;
+      const recoveredCode=normalizeCode(key.slice(4));if(!recoveredCode)return;
+      rooms.push({code:recoveredCode,value,lastActive:lastCallerActivity(value)});
+    });
+    rooms.sort((a,b)=>b.lastActive-a.lastActive||a.code.localeCompare(b.code));
+    return rooms;
+  }
+  function renderGoogleRecoveryRooms(user,rooms){
+    const recovery=q('#busGoogleRecovery'),title=q('#busGoogleRecoveryTitle'),hint=q('#busGoogleRecoveryHint'),list=q('#busGoogleRecoveryList');
+    if(!recovery||!title||!hint||!list)return;
+    recoveredGoogleUser=user;list.replaceChildren();recovery.hidden=false;
+    title.textContent=`${rooms.length} reserved room${rooms.length===1?'':'s'} found`;
+    const account=user.email||user.displayName||'your Google account';
+    hint.textContent=`Signed in as ${account}. Choose a room to reopen. PIN access cannot search for rooms.`;
+    rooms.forEach(item=>{
+      const button=document.createElement('button');button.type='button';button.className='bus-google-room-choice';
+      const codeEl=document.createElement('strong');codeEl.textContent=item.code;
+      const state=document.createElement('span');
+      const live=item.value.status!=='closed'&&(!item.value.expiresAt||Number(item.value.expiresAt)>Date.now())&&!sessionExpired(item.value);
+      state.textContent=live?'Reserved • session available':'Reserved • reopen session';
+      const detail=document.createElement('small');
+      const last=item.lastActive?new Date(item.lastActive).toLocaleString():'activity date unavailable';
+      const until=item.lastActive?new Date(item.lastActive+RESERVATION_MS).toLocaleDateString():'reserved';
+      detail.textContent=`Last caller activity: ${last} • Reserved until ${until}`;
+      button.append(codeEl,state,detail);
+      button.addEventListener('click',async()=>{
+        Array.from(list.querySelectorAll('button')).forEach(el=>el.disabled=true);setError('');
+        try{await createCallerRoom('google',{selectedCode:item.code,googleUser:user})}
+        finally{if(!setup.hidden)Array.from(list.querySelectorAll('button')).forEach(el=>el.disabled=false)}
+      });
+      list.append(button);
+    });
+  }
+  async function recoverBusGoogleRooms(){
+    if(role)return;
+    const button=q('#recoverBusGoogle');if(!button||button.disabled)return;
+    button.disabled=true;setError('');hideGoogleRecovery();setConnection('Signing in with Google…');
+    try{
+      await ensureFirebase();
+      const user=await googleCallerIdentity();
+      setConnection('Searching reservations…');
+      const queryRef=fb.query(fb.ref(googleCallerDatabase,'quizRooms'),fb.orderByChild('hostUid'),fb.equalTo(user.uid));
+      const snapshot=await fb.get(queryRef);
+      const rooms=recoverableGoogleRooms(snapshot,user.uid);
+      if(!rooms.length){
+        recoveredGoogleUser=user;
+        setConnection('Connected','online');
+        setError('No current Bus Call reservation was found for this Google account. Enter a room code to start a new room, or sign in with the Google account that originally reserved it.');
+        return;
+      }
+      setConnection('Reservation found','online');renderGoogleRecoveryRooms(user,rooms);
+    }catch(error){
+      setConnection('Could not recover','problem');
+      const permission=String(error?.code||'').includes('permission-denied')||/permission denied/i.test(String(error?.message||''));
+      setError(permission?'Google room recovery needs the updated Bus Call Firebase rules. Publish the quizRooms rules included with this build, then try again.':callerAuthError(error,'google'));
+    }finally{button.disabled=false}
+  }
   function callerAuthError(error,method='pin'){
     if(error.code==='auth/popup-closed-by-user'||error.code==='auth/cancelled-popup-request')return 'Google sign-in was canceled. Your room has not changed.';
     if(error.code==='auth/popup-blocked')return 'Allow popups for this site, then try Google sign-in again.';
@@ -671,7 +736,7 @@
     }catch(error){if(role==='caller'&&code)watchRoom();setError(callerAuthError(error,'google'))}
     finally{button.disabled=false}
   }
-  async function createCallerRoom(method='pin'){
+  async function createCallerRoom(method='pin',{selectedCode='',googleUser=null}={}){
     const buttons=[q('#startBusCaller'),q('#startBusGoogle')];
     if(buttons.some(button=>button.disabled))return;
     setError('');
@@ -681,13 +746,13 @@
     try{
       await ensureFirebase();
       const saved=getSavedCallerCode();
-      const selected=(!callerCodeEditing&&saved)?saved:(normalizeCode(q('#busCallerCodeInput').value)||randomCode());
+      const selected=normalizeCode(selectedCode)||((!callerCodeEditing&&saved)?saved:(normalizeCode(q('#busCallerCodeInput').value)||randomCode()));
       q('#busCallerCodeInput').value=selected;
       const originalDb=busDb,originalUser=busUser;
       const existing=(await fb.get(roomRef(selected))).val();
       const released=existing&&reservationExpired(existing);
       const accountKey=method==='pin'?((!existing||released)?`${selected.toLowerCase()}-${crypto.randomUUID().replaceAll('-','')}`:(existing.pinAccountKey||selected.toLowerCase())):null;
-      const user=method==='google'?await googleCallerIdentity():await callerIdentity(selected,pin,!existing||released||existing.hostUid===originalUser.uid,accountKey);
+      const user=method==='google'?(googleUser||await googleCallerIdentity()):await callerIdentity(selected,pin,!existing||released||existing.hostUid===originalUser.uid,accountKey);
       if(existing&&existing.hostUid!==user.uid&&!released){
         if(existing.hostUid!==originalUser.uid)throw new Error(reservedMessage);
         await fb.update(fb.ref(originalDb,`quizRooms/${roomKey(selected)}`),{hostUid:user.uid,callerLastActiveAt:fb.serverTimestamp()});
@@ -707,7 +772,7 @@
       role='caller';selectRole('caller');updateRoleTabs();code=selected;
       setup.hidden=true;callerConsole.hidden=false;teacherConsole.hidden=true;
       q('#busCallerRoomCode').textContent=code;q('#busCallerPinInput').value='';
-      saveCallerCode(code);callerCodeEditing=false;updateCallerResumeUi();
+      saveCallerCode(code);callerCodeEditing=false;hideGoogleRecovery();recoveredGoogleUser=null;updateCallerResumeUi();
       resetCallerCallControls({main:true,addOn:true});callerAccountUi();await startCallerLiveness();watchRoom();q('#busNumberInput').focus();
     }catch(error){
       setConnection('Could not connect','problem');
@@ -961,7 +1026,7 @@
   q('#changeBusRoomCode').addEventListener('click',changeRoomCode);
   q('#leaveBusCaller').addEventListener('click',leaveRoom);
   q('#busCallerRoomChoice').addEventListener('click',()=>{const saved=getSavedCallerCode();if(!saved)return;callerCodeEditing=!callerCodeEditing;if(callerCodeEditing){q('#busCallerCodeInput').value='';setTimeout(()=>q('#busCallerCodeInput').focus(),0)}else q('#busCallerCodeInput').value=saved;updateCallerResumeUi()});
-  q('#startBusGoogle').addEventListener('click',()=>createCallerRoom('google'));q('#connectBusGoogle').addEventListener('click',connectCallerGoogle);q('#startBusCaller').addEventListener('click',()=>createCallerRoom('pin'));q('#joinBusRoom').addEventListener('click',joinTeacherRoom);q('#sendBusCall').addEventListener('click',sendCall);q('#busNumberInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendCall()}});q('#clearBusCall').addEventListener('click',clearCurrent);q('#clearAllBuses').addEventListener('click',clearAllBuses);q('#sendBusAllClear').addEventListener('click',sendAllClear);q('#clearBusHistory').addEventListener('click',clearHistory);q('#closeBusRoom').addEventListener('click',closeRoom);q('#leaveBusRoom').addEventListener('click',leaveRoom);q('#copyBusRoomCode').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(code);showToast('Bus Call room code copied')}catch{showToast(`Room code: ${code}`)}});q('#dismissBusPopup').addEventListener('click',dismissCallPopup);q('#dismissBusPopupMain').addEventListener('click',dismissCallPopup);q('#testBusAlert').addEventListener('click',()=>{try{audioContext=audioContext||new (window.AudioContext||window.webkitAudioContext)()}catch{}const testValue=allActiveCalls(room).length?room:{currentCall:{id:'test',number:'123',numbers:['123'],note:'This is a test alert.',stage:selectedStage,stages:[selectedStage],calledAt:Date.now()}};showActivePopup(testValue,{heading:'🚌 TEST — ALL ACTIVE BUSES',timeLabel:'Test alert',test:true})});q('#busSoundEnabled').addEventListener('change',saveTeacherPrefs);
+  q('#startBusGoogle').addEventListener('click',()=>createCallerRoom('google'));q('#recoverBusGoogle').addEventListener('click',recoverBusGoogleRooms);q('#connectBusGoogle').addEventListener('click',connectCallerGoogle);q('#startBusCaller').addEventListener('click',()=>createCallerRoom('pin'));q('#joinBusRoom').addEventListener('click',joinTeacherRoom);q('#sendBusCall').addEventListener('click',sendCall);q('#busNumberInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendCall()}});q('#clearBusCall').addEventListener('click',clearCurrent);q('#clearAllBuses').addEventListener('click',clearAllBuses);q('#sendBusAllClear').addEventListener('click',sendAllClear);q('#clearBusHistory').addEventListener('click',clearHistory);q('#closeBusRoom').addEventListener('click',closeRoom);q('#leaveBusRoom').addEventListener('click',leaveRoom);q('#copyBusRoomCode').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(code);showToast('Bus Call room code copied')}catch{showToast(`Room code: ${code}`)}});q('#dismissBusPopup').addEventListener('click',dismissCallPopup);q('#dismissBusPopupMain').addEventListener('click',dismissCallPopup);q('#testBusAlert').addEventListener('click',()=>{try{audioContext=audioContext||new (window.AudioContext||window.webkitAudioContext)()}catch{}const testValue=allActiveCalls(room).length?room:{currentCall:{id:'test',number:'123',numbers:['123'],note:'This is a test alert.',stage:selectedStage,stages:[selectedStage],calledAt:Date.now()}};showActivePopup(testValue,{heading:'🚌 TEST — ALL ACTIVE BUSES',timeLabel:'Test alert',test:true})});q('#busSoundEnabled').addEventListener('change',saveTeacherPrefs);
   q('#toggleBusAddOn').addEventListener('click',()=>setAddOnPanel(q('#busAddOnPanel').hidden));
   q('#cancelBusAddOn').addEventListener('click',()=>setAddOnPanel(false));
   q('#clearBusAddOns').addEventListener('click',clearAddOns);
