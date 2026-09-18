@@ -185,8 +185,10 @@
   }
   function addRosterBusToTarget(number){
     const input=q(lineupTarget==='addon'?'#busAddOnNumberInput':'#busNumberInput');if(!input)return;
-    const current=parseBusNumbers(input.value);
-    if(!current.some(item=>busNumberKey(item)===busNumberKey(number)))current.push(number);
+    const current=parseBusNumbers(input.value),key=busNumberKey(number);
+    const selectedIndex=current.findIndex(item=>busNumberKey(item)===key);
+    if(selectedIndex>=0)current.splice(selectedIndex,1);
+    else current.push(number);
     input.value=current.join(' ');input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
   }
   function renderSchoolBusRoster(value){
@@ -207,8 +209,10 @@
     const mainSelected=new Set(parseBusNumbers(q('#busNumberInput')?.value||'').map(busNumberKey));
     const addOnSelected=new Set(parseBusNumbers(q('#busAddOnNumberInput')?.value||'').map(busNumberKey));
     remaining.forEach(number=>{
-      const chip=document.createElement('button');chip.type='button';chip.className='bus-roster-chip';chip.textContent=number;chip.title=`Add Bus ${number} to ${lineupTarget==='addon'?'Add-On Bus':'Main Bus'}`;
-      const key=busNumberKey(number);if(mainSelected.has(key))chip.classList.add('selected-main');if(addOnSelected.has(key))chip.classList.add('selected-addon');
+      const chip=document.createElement('button');chip.type='button';chip.className='bus-roster-chip';chip.textContent=number;
+      const key=busNumberKey(number),selectedInTarget=lineupTarget==='addon'?addOnSelected.has(key):mainSelected.has(key);
+      chip.title=`${selectedInTarget?'Deselect':'Select'} Bus ${number} ${selectedInTarget?'from':'for'} ${lineupTarget==='addon'?'Add-On Bus':'Main Bus'}`;chip.setAttribute('aria-pressed',String(selectedInTarget));
+      if(mainSelected.has(key))chip.classList.add('selected-main');if(addOnSelected.has(key))chip.classList.add('selected-addon');
       chip.addEventListener('click',()=>addRosterBusToTarget(number));list.append(chip)
     });
   }
