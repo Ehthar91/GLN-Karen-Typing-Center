@@ -6,6 +6,7 @@
 .calculator-mode-switch button{min-height:42px;padding:0 22px;border:0;border-radius:9px;background:transparent;color:#526075;font:800 .9rem Inter,ui-sans-serif,sans-serif;cursor:pointer}
 .calculator-mode-switch button.active{background:#fff;color:#173868;box-shadow:0 3px 10px rgba(18,33,63,.14)}
 .classroom-account-bar{display:grid;grid-template-columns:minmax(0,1fr) minmax(390px,.85fr);gap:24px;align-items:center;margin:0 0 22px;padding:16px 18px;border:1px solid #cad9e8;border-radius:18px;background:linear-gradient(135deg,#f9fcff,#eef6fd);box-shadow:0 8px 24px rgba(18,33,63,.06)}
+.classroom-account-bar[hidden]{display:none!important}
 .classroom-account-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.classroom-account-copy>span{color:#0e91b2;font-size:.68rem;font-weight:900;letter-spacing:.15em}.classroom-account-copy>strong{color:#173868;font-size:1.05rem}.classroom-account-copy>small{color:#66788d;font-size:.76rem;line-height:1.4}
 .classroom-account-controls{display:grid;grid-template-columns:minmax(250px,1fr) auto;gap:8px 10px;align-items:center}.classroom-storage-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:11px;background:#dfe8f3}.classroom-storage-switch button{min-height:38px;border:0;border-radius:8px;background:transparent;color:#5d6c80;font:800 .75rem Inter,sans-serif;cursor:pointer}.classroom-storage-switch button.active{background:#fff;color:#173868;box-shadow:0 2px 7px rgba(18,33,63,.12)}
 .classroom-account-actions{display:flex;gap:7px}.classroom-account-actions .button{white-space:nowrap;min-height:42px}.classroom-account-controls>small{grid-column:1/-1;color:#6f7f91;font-size:.7rem;line-height:1.35}.classroom-account-controls>small.synced{color:#087344}
@@ -318,7 +319,7 @@ body.schedule-fullscreen-open{overflow:hidden}
 .calculator-heading{width:100%;margin-bottom:18px}
 .calculator-mode-switch{
   display:grid;
-  grid-template-columns:repeat(8,minmax(0,1fr));
+  grid-template-columns:repeat(9,minmax(0,1fr));
   width:min(1320px,100%);
   max-width:1320px;
   margin:0 auto 14px;
@@ -340,6 +341,15 @@ body.schedule-fullscreen-open{overflow:hidden}
   margin-right:0;
 }
 .number-generator-card,.schedule-timer-card,.wheel-card{max-width:none}
+.flashcards-tool-panel{width:100%;max-width:none;margin:0;padding:0}
+.flashcards-tool-panel[hidden]{display:none!important}
+.flashcards-tool-frame{position:relative;width:100%;min-height:720px;overflow:hidden;border:1px solid #cad9e8;border-radius:18px;background:#f4f7fb;box-shadow:0 8px 24px rgba(18,33,63,.06)}
+.flashcards-tool-frame iframe{display:block;width:100%;height:calc(100vh - 190px);min-height:720px;border:0;background:#f4f7fb}
+.flashcards-fullscreen-btn{position:absolute;z-index:6;top:12px;right:12px;min-height:40px;padding:9px 14px;border-radius:999px;background:rgba(9,28,51,.88);border-color:rgba(255,255,255,.24);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.16);backdrop-filter:blur(8px)}
+.flashcards-fullscreen-btn:hover{background:rgba(14,43,76,.96)}
+.flashcards-tool-frame:fullscreen,.flashcards-tool-frame:-webkit-full-screen{width:100%;height:100%;min-height:0;border:0;border-radius:0;background:#f4f7fb;box-shadow:none}
+.flashcards-tool-frame:fullscreen iframe,.flashcards-tool-frame:-webkit-full-screen iframe{width:100%;height:100%;min-height:0}
+.flashcards-tool-frame:fullscreen .flashcards-fullscreen-btn,.flashcards-tool-frame:-webkit-full-screen .flashcards-fullscreen-btn{top:14px;right:14px}
 .quiz-view.classroom-tool-panel{padding:0}
 .quiz-view.classroom-tool-panel>.quiz-heading{display:none}
 .quiz-view.classroom-tool-panel .quiz-builder,
@@ -486,3 +496,10 @@ body.theme-rgb .wheel-color-heading strong{color:#f1f7ff}body.theme-rgb .wheel-c
 body.theme-rgb .wheel-color-mode-switch{border-color:#315271;background:#0b1729}body.theme-rgb .wheel-color-mode-switch button{color:#9fb1ca}body.theme-rgb .wheel-color-mode-switch button.active{color:#fff;background:linear-gradient(135deg,#153c64,#40235f);box-shadow:0 0 0 1px #5ce5ff,0 0 12px rgba(22,224,255,.18)}
 body.theme-rgb .wheel-color-row{border-color:#294967;background:#10243c}body.theme-rgb .wheel-color-row>span{color:#f1f7ff}body.theme-rgb .wheel-color-row code{color:#c6d7e9}body.theme-rgb .wheel-color-row input[type="color"]{border-color:#3a5b7b;background:#0d1f35}body.theme-rgb .wheel-color-empty{border-color:#315271;color:#a9bdd4}
 @media(max-width:620px){.wheel-color-heading{align-items:stretch;flex-direction:column}.wheel-color-mode-switch{width:100%;min-width:0}.wheel-color-row{grid-template-columns:minmax(0,1fr) 44px 70px}}
+
+
+/* Embedded Flashcards Classroom Tool */
+@media(max-width:680px){
+  .flashcards-tool-frame{min-height:640px;border-radius:14px}
+  .flashcards-tool-frame iframe{height:calc(100vh - 160px);min-height:640px}
+}
