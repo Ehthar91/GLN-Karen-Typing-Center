@@ -10,6 +10,7 @@ An online Karen Unicode keyboard, typing practice center, classroom games, and t
 - Typing Adventure with teacher-created word or sentence lists
 - Classroom Car Race with a shared room code and live player progress
 - Classroom Typing Tug of War with custom host lists, Red/Blue teams, player avatars, live rope movement, WPM, accuracy, and team awards
+- Classroom Tools Flashcards with classes, decks, study modes, quizzes, sharing, archiving, card copying, and Google Forms `.gs` export
 
 ## Classroom Tug of War
 
@@ -33,3 +34,9 @@ Run `npm run build` for the Worker build used by the project tooling. For GitHub
 
 ## Google Classroom roster sync
 Seating Chart can import active Google Classroom classes and read-only student rosters. See `GOOGLE-CLASSROOM-SETUP.md` for the one-time Google Cloud / school-admin setup.
+
+## Flashcards inside Classroom Tools
+
+Flashcards now appears as its own Classroom Tools tab and Dashboard quick action. The Flashcards app is stored under `flashcards/` so its styles, JavaScript, and Firebase project remain isolated from the main GLN site. This preserves the existing Flashcards features while letting teachers use it inside the Classroom Tools workspace.
+
+Flashcards uses its existing Firebase/Firestore project and its own Google sign-in. If Google sign-in is used from the GLN site, add the deployed GLN domain to the Flashcards Firebase Authentication authorized domains. See `FLASHCARDS-INTEGRATION-SETUP.md`.

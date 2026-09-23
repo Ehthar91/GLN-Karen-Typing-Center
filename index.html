@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="quiz-classroom.css?v=20260913-17" />
   <link rel="stylesheet" href="quiz-kiosk.css?v=20260913-1" />
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
-  <link rel="stylesheet" href="calculator.css?v=20260915-wheel-colors-1" />
+  <link rel="stylesheet" href="calculator.css?v=20260923-flashcards-fullscreen-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
   <link rel="stylesheet" href="bus-call.css?v=20260917-google-recovery-1" />
   <link rel="stylesheet" href="seating.css?v=20260916-quiz-disabled-desks-1" />
@@ -217,6 +217,7 @@
         <button id="showSeating" type="button">Seating Chart</button>
         <button id="showScheduleTimer" type="button">Schedule Timer</button>
         <button id="showWheel" type="button">Name Picker</button>
+        <button id="showFlashcards" type="button">Flashcards</button>
         <button id="showQuiz" type="button">Quiz</button>
         <button id="showNumberGenerator" type="button">Number Generator</button>
         <button id="showCalculator" type="button" hidden aria-hidden="true">Calculator</button>
@@ -289,6 +290,7 @@
               <button type="button" data-dashboard-tool="seating"><span>▦</span><strong>Seating Chart</strong><small>Classes &amp; room layout</small></button>
               <button type="button" data-dashboard-tool="schedule-timer"><span>◷</span><strong>Schedule Timer</strong><small>Automatic class timers</small></button>
               <button type="button" data-dashboard-tool="wheel"><span>◉</span><strong>Name Picker</strong><small>Pick names at random</small></button>
+              <button type="button" data-dashboard-tool="flashcards"><span>▤</span><strong>Flashcards</strong><small>Classes, decks &amp; study</small></button>
               <button type="button" data-dashboard-tool="quiz"><span>?</span><strong>Quiz</strong><small>Create &amp; run quizzes</small></button>
               <button type="button" data-dashboard-tool="number-generator"><span>#</span><strong>Number Generator</strong><small>Random classroom numbers</small></button>
               <button type="button" data-dashboard-tool="calculator" hidden aria-hidden="true"><span>⌗</span><strong>Calculator</strong><small>Graphing &amp; scientific</small></button>
@@ -296,6 +298,12 @@
               <button type="button" data-dashboard-tool="bus-call"><span>🚌</span><strong>Bus Call</strong><small>Send bus numbers live</small></button>
             </div>
           </section>
+        </div>
+      </section>
+      <section class="flashcards-tool-panel classroom-tool-panel" id="flashcardsPanel" aria-label="Flashcards" hidden>
+        <div class="flashcards-tool-frame" id="flashcardsFullscreenTarget">
+          <button class="button ghost flashcards-fullscreen-btn" id="flashcardsFullscreen" type="button" aria-pressed="false" title="Open Flashcards full screen">⛶ Full Screen</button>
+          <iframe id="flashcardsFrame" title="Flashcards" data-src="flashcards.html?embedded=classroom" src="about:blank" loading="lazy" allow="clipboard-write"></iframe>
         </div>
       </section>
     <section class="quiz-view classroom-tool-panel" id="quizView" aria-labelledby="quiz-title" hidden>
@@ -986,7 +994,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="quiz.js?v=20260916-all-points-1"></script>
   <script src="quiz-classroom.js?v=20260916-paste-import-1"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
-  <script src="calculator.js?v=20260917-conference-signup-1"></script>
+  <script src="calculator.js?v=20260923-flashcards-fullscreen-1"></script>
   <script src="event-signup.js?v=20260917-conference-signup-1"></script>
   <script src="seating.js?v=20260916-classroom-rules-physical-1"></script>
   <script src="rgb-theme.js?v=20260911-2"></script>
