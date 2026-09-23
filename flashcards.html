@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-rootfix-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-custom-share-title-1" />
 </head>
 <body>
   <div id="globalMessage" class="global-message hidden" role="status"></div>
@@ -161,7 +161,23 @@
               <button id="quizClassBtn" class="quiz-main-btn">
                 QUIZ <span>?</span>
               </button>
-              <button id="shareClassBtn" class="share-btn hidden">⌯ SHARE</button>
+              <button id="shareClassBtn" class="share-btn hidden">⌯ COPY LINK</button>
+              <div id="classroomShareAction" class="classroom-share-action hidden" aria-label="Share this flashcard class to Google Classroom">
+                <div class="classroom-share-heading">
+                  <span>GOOGLE CLASSROOM</span>
+                  <small>Choose exactly how you want this class title to appear when you share it.</small>
+                </div>
+                <div class="classroom-share-title-row">
+                  <label class="sr-only" for="classroomShareTitleInput">Google Classroom share title</label>
+                  <input id="classroomShareTitleInput" class="classroom-share-title-input" type="text" maxlength="120" autocomplete="off" />
+                  <button id="classroomUseClassNameBtn" class="classroom-share-title-btn" type="button">Use Class Name</button>
+                  <button id="classroomSaveShareTitleBtn" class="classroom-share-title-btn save" type="button">Save Title</button>
+                </div>
+                <div class="classroom-share-footer">
+                  <small id="classroomShareTitleStatus">This only changes the Google Classroom share title.</small>
+                  <div id="classroomShareWidget" aria-label="Share to Google Classroom"></div>
+                </div>
+              </div>
               <button id="removeSharedClassBtn" class="quiet-btn hidden">Remove from My Flashcards</button>
             </div>
           </div>
@@ -707,6 +723,6 @@
     </div>
   </div>
 
-  <script type="module" src="flashcards-app.js?v=20260923-auth-isolation-2"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-custom-share-title-1"></script>
 </body>
 </html>

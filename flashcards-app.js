@@ -111,6 +111,12 @@ function showTopView(id) {
 function showPanel(id) {
   document.querySelectorAll(".panel-view").forEach(v => v.classList.add("hidden"));
   document.getElementById(id)?.classList.remove("hidden");
+
+  if (id === "classView" && state.selectedClass?.name) {
+    document.title = classShareTitle(state.selectedClass.name);
+  } else if (!["studyView", "quizView", "quizCompleteView", "completeView"].includes(id)) {
+    document.title = "Flashcards";
+  }
 }
 
 function escapeHtml(value = "") {
@@ -170,12 +176,185 @@ function classParam() {
   return new URL(window.location.href).searchParams.get("class");
 }
 
-function buildClassShareLink(classId) {
+function classNameParam() {
+  return new URL(window.location.href).searchParams.get("name") || "";
+}
+
+const sharedClassNameFromLink = classNameParam();
+if (sharedClassNameFromLink) document.title = classShareTitle(sharedClassNameFromLink);
+
+function buildClassShareLink(classId, className = "") {
   const url = new URL(window.location.href);
   url.search = "";
   url.hash = "";
   url.searchParams.set("class", classId);
+  if (className) url.searchParams.set("name", className);
   return url.toString();
+}
+
+function classShareTitle(className = "") {
+  const name = String(className || "").trim();
+  return name ? `${name} — Flashcards` : "Flashcards";
+}
+
+function savedClassroomShareTitle(c = state.selectedClass) {
+  return String(c?.classroomShareTitle || "").replace(/\s+/g, " ").trim();
+}
+
+function classroomShareTitleFor(c = state.selectedClass) {
+  const input = document.getElementById("classroomShareTitleInput");
+  const typed = String(input?.value || "").replace(/\s+/g, " ").trim();
+  return typed || savedClassroomShareTitle(c) || classShareTitle(c?.name || "");
+}
+
+function syncClassroomShareTitleUi() {
+  const c = state.selectedClass;
+  const input = document.getElementById("classroomShareTitleInput");
+  const status = document.getElementById("classroomShareTitleStatus");
+  if (!c || !input) return;
+
+  const saved = savedClassroomShareTitle(c);
+  input.value = saved || classShareTitle(c.name);
+  if (status) {
+    status.textContent = saved
+      ? "Custom title saved for this class."
+      : "Using the class name automatically. Type a different title anytime.";
+  }
+}
+
+let classroomShareRenderTimer = null;
+function scheduleClassroomShareRender() {
+  clearTimeout(classroomShareRenderTimer);
+  classroomShareRenderTimer = setTimeout(() => renderGoogleClassroomShare(), 250);
+}
+
+async function saveClassroomShareTitle() {
+  if (!isOwner() || !state.selectedClass) return;
+  const input = document.getElementById("classroomShareTitleInput");
+  const status = document.getElementById("classroomShareTitleStatus");
+  const title = String(input?.value || "").replace(/\s+/g, " ").trim();
+
+  if (!title) {
+    showMessage("Enter a Google Classroom share title.", "error");
+    input?.focus();
+    return;
+  }
+
+  try {
+    await updateDoc(doc(state.db, "classes", state.selectedClass.id), {
+      classroomShareTitle: title,
+      updatedAt: serverTimestamp()
+    });
+    state.selectedClass = { ...state.selectedClass, classroomShareTitle: title };
+    const owned = state.ownedClasses.find(c => c.id === state.selectedClass.id);
+    if (owned) owned.classroomShareTitle = title;
+    if (status) status.textContent = "Custom title saved for this class.";
+    await renderGoogleClassroomShare();
+    showMessage("Google Classroom share title saved.", "success");
+  } catch (err) {
+    handleFirebaseError(err, "Could not save the Google Classroom share title.");
+  }
+}
+
+async function useClassNameForClassroomShare() {
+  if (!isOwner() || !state.selectedClass) return;
+  const input = document.getElementById("classroomShareTitleInput");
+  const status = document.getElementById("classroomShareTitleStatus");
+
+  try {
+    await updateDoc(doc(state.db, "classes", state.selectedClass.id), {
+      classroomShareTitle: "",
+      updatedAt: serverTimestamp()
+    });
+    state.selectedClass = { ...state.selectedClass, classroomShareTitle: "" };
+    const owned = state.ownedClasses.find(c => c.id === state.selectedClass.id);
+    if (owned) owned.classroomShareTitle = "";
+    if (input) input.value = classShareTitle(state.selectedClass.name);
+    if (status) status.textContent = "Using the class name automatically. Type a different title anytime.";
+    await renderGoogleClassroomShare();
+    showMessage("Google Classroom will use the class name.", "success");
+  } catch (err) {
+    handleFirebaseError(err, "Could not reset the Google Classroom share title.");
+  }
+}
+
+let classroomShareApiPromise = null;
+
+function loadClassroomShareApi() {
+  if (window.gapi?.sharetoclassroom?.render) return Promise.resolve(window.gapi.sharetoclassroom);
+  if (classroomShareApiPromise) return classroomShareApiPromise;
+
+  classroomShareApiPromise = new Promise((resolve, reject) => {
+    window.___gcfg = { ...(window.___gcfg || {}), parsetags: "explicit" };
+
+    const finish = () => {
+      let tries = 0;
+      const waitForApi = () => {
+        if (window.gapi?.sharetoclassroom?.render) {
+          resolve(window.gapi.sharetoclassroom);
+          return;
+        }
+        tries += 1;
+        if (tries > 50) {
+          classroomShareApiPromise = null;
+          reject(new Error("Google Classroom share button did not load."));
+          return;
+        }
+        setTimeout(waitForApi, 100);
+      };
+      waitForApi();
+    };
+
+    const existing = document.querySelector('script[data-gln-classroom-share="1"]');
+    if (existing) {
+      if (window.gapi?.sharetoclassroom?.render) resolve(window.gapi.sharetoclassroom);
+      else existing.addEventListener("load", finish, { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://apis.google.com/js/platform.js";
+    script.async = true;
+    script.defer = true;
+    script.dataset.glnClassroomShare = "1";
+    script.addEventListener("load", finish, { once: true });
+    script.addEventListener("error", () => {
+      classroomShareApiPromise = null;
+      reject(new Error("Could not load Google Classroom sharing."));
+    }, { once: true });
+    document.head.appendChild(script);
+  });
+
+  return classroomShareApiPromise;
+}
+
+async function renderGoogleClassroomShare() {
+  const wrap = document.getElementById("classroomShareAction");
+  const host = document.getElementById("classroomShareWidget");
+  const c = state.selectedClass;
+  const visible = Boolean(c && isOwner() && c.published !== false);
+
+  wrap?.classList.toggle("hidden", !visible);
+  if (!visible || !host) return;
+
+  host.replaceChildren();
+
+  try {
+    const shareApi = await loadClassroomShareApi();
+    if (!state.selectedClass || state.selectedClass.id !== c.id || !isOwner() || state.selectedClass.published === false) return;
+
+    shareApi.render(host, {
+      url: buildClassShareLink(c.id, c.name),
+      title: classroomShareTitleFor(c),
+      body: `Study the flashcards for ${c.name}.`,
+      itemtype: "material",
+      size: "32",
+      theme: "classic"
+    });
+  } catch (err) {
+    wrap?.classList.add("classroom-share-unavailable");
+    host.textContent = "Unavailable";
+  }
 }
 
 function clearClassParam() {
@@ -644,6 +823,7 @@ function renderClass() {
 
   document.getElementById("editClassBtn").classList.toggle("hidden", !owner);
   document.getElementById("shareClassBtn").classList.toggle("hidden", !owner);
+  document.getElementById("classroomShareAction").classList.toggle("hidden", !owner || state.selectedClass.published === false);
   document.getElementById("ownerDeckTools").classList.toggle("hidden", !owner);
   document.getElementById("editIntroBtn").classList.toggle("hidden", !owner);
   document.getElementById("refreshLearnersBtn").classList.toggle("hidden", !owner);
@@ -653,6 +833,9 @@ function renderClass() {
   document.getElementById("studyClassBtn").disabled = state.decks.length === 0;
   document.getElementById("quizClassBtn").disabled = state.decks.length === 0;
 
+  document.title = classShareTitle(state.selectedClass.name);
+  syncClassroomShareTitleUi();
+  renderGoogleClassroomShare();
   renderDeckRows();
 
   // Shared users see only their own learner count conceptually; owner count is loaded on Learners tab.
@@ -1134,7 +1317,7 @@ async function copyClassLink(classId = state.selectedClass?.id) {
     return;
   }
 
-  const link = buildClassShareLink(classId);
+  const link = buildClassShareLink(classId, c?.name || "");
 
   try {
     await navigator.clipboard.writeText(link);
@@ -2891,6 +3074,19 @@ document.getElementById("archiveClassBtn").addEventListener("click", archiveCurr
 document.getElementById("openArchiveBtn").addEventListener("click", openArchiveManager);
 
 document.getElementById("shareClassBtn").addEventListener("click", () => copyClassLink());
+document.getElementById("classroomSaveShareTitleBtn").addEventListener("click", saveClassroomShareTitle);
+document.getElementById("classroomUseClassNameBtn").addEventListener("click", useClassNameForClassroomShare);
+document.getElementById("classroomShareTitleInput").addEventListener("input", () => {
+  const status = document.getElementById("classroomShareTitleStatus");
+  if (status) status.textContent = "Preview updated. Click Save Title if you want to remember this title.";
+  scheduleClassroomShareRender();
+});
+document.getElementById("classroomShareTitleInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    saveClassroomShareTitle();
+  }
+});
 document.getElementById("removeSharedClassBtn").addEventListener("click", removeSharedClass);
 
 document.getElementById("newDeckBtn").addEventListener("click", openNewDeck);
