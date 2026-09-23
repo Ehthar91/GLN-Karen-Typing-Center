@@ -2966,3 +2966,95 @@ body.dark .archive-btn {
     opacity: .8;
   }
 }
+
+
+/* Pasted-link title controls */
+.link-preview-action {
+  display: grid;
+  gap: 9px;
+  width: min(100%, 760px);
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--soft-blue) 72%, var(--card));
+  color: var(--blue-dark);
+  font-weight: 850;
+  letter-spacing: .03em;
+  font-size: .78rem;
+}
+.link-preview-action.hidden { display: none; }
+.link-preview-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.link-preview-heading > span { white-space: nowrap; }
+.link-preview-heading small,
+#linkPreviewTitleStatus {
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.link-preview-title-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto auto;
+  gap: 8px;
+  align-items: center;
+}
+.link-preview-title-input {
+  min-width: 0;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 0 11px;
+  font: inherit;
+  font-weight: 750;
+  letter-spacing: 0;
+  outline: none;
+}
+.link-preview-title-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent);
+}
+.link-preview-title-btn {
+  height: 40px;
+  border: 1px solid color-mix(in srgb, var(--blue) 28%, var(--line));
+  border-radius: 9px;
+  background: var(--card);
+  color: var(--blue-dark);
+  padding: 0 11px;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.link-preview-action .share-btn {
+  min-height: 40px;
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--blue);
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.link-preview-action .share-btn:disabled { opacity: .55; cursor: not-allowed; }
+body.dark .link-preview-action,
+body.dark .link-preview-title-btn { color: #cceefa; }
+
+@media (max-width: 900px) {
+  .link-preview-heading { align-items: flex-start; flex-direction: column; }
+  .link-preview-title-row { grid-template-columns: 1fr 1fr 1fr; }
+  .link-preview-title-input { grid-column: 1 / -1; }
+}
+
+@media (max-width: 560px) {
+  .link-preview-title-row { grid-template-columns: 1fr; }
+  .link-preview-title-input { grid-column: auto; }
+  .link-preview-title-btn,
+  .link-preview-action .share-btn { width: 100%; }
+}

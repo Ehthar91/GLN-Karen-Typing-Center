@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-custom-share-title-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-pasted-link-title-1" />
 </head>
 <body>
   <div id="globalMessage" class="global-message hidden" role="status"></div>
@@ -161,11 +161,24 @@
               <button id="quizClassBtn" class="quiz-main-btn">
                 QUIZ <span>?</span>
               </button>
-              <button id="shareClassBtn" class="share-btn hidden">⌯ COPY LINK</button>
+              <div id="linkPreviewAction" class="link-preview-action hidden" aria-label="Customize how the pasted class link appears">
+                <div class="link-preview-heading">
+                  <span>PASTED LINK TITLE</span>
+                  <small>Controls the link attachment title when you paste this URL into Google Classroom. This does not rename the class or the Classroom post.</small>
+                </div>
+                <div class="link-preview-title-row">
+                  <label class="sr-only" for="linkPreviewTitleInput">Pasted link title</label>
+                  <input id="linkPreviewTitleInput" class="link-preview-title-input" type="text" maxlength="120" autocomplete="off" />
+                  <button id="linkPreviewUseClassNameBtn" class="link-preview-title-btn" type="button">Use Class Name</button>
+                  <button id="linkPreviewSaveTitleBtn" class="link-preview-title-btn" type="button">Save</button>
+                  <button id="shareClassBtn" class="share-btn hidden" type="button">⌯ COPY LINK</button>
+                </div>
+                <small id="linkPreviewTitleStatus">Using the class name automatically.</small>
+              </div>
               <div id="classroomShareAction" class="classroom-share-action hidden" aria-label="Share this flashcard class to Google Classroom">
                 <div class="classroom-share-heading">
-                  <span>GOOGLE CLASSROOM</span>
-                  <small>Choose exactly how you want this class title to appear when you share it.</small>
+                  <span>GOOGLE CLASSROOM POST TITLE</span>
+                  <small>Optional title used by the Google Classroom Share button. This is separate from the pasted-link title above.</small>
                 </div>
                 <div class="classroom-share-title-row">
                   <label class="sr-only" for="classroomShareTitleInput">Google Classroom share title</label>
@@ -723,6 +736,6 @@
     </div>
   </div>
 
-  <script type="module" src="flashcards-app.js?v=20260923-custom-share-title-1"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-pasted-link-title-1"></script>
 </body>
 </html>
