@@ -19,3 +19,6 @@ Because removing a learner must delete that learner's class membership and class
 - Removes the learner from the owner's Learners table.
 - Does not affect the learner's Google account or other classes.
 - If class sharing is still enabled and the learner has the class link, they can join the class again later.
+
+## Bulk removal update
+The Learners tab now also supports selecting multiple learners, selecting all learners, **Remove Selected**, and **Remove All**. The same Firestore rules above cover both single and bulk removal.

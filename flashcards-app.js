@@ -53,6 +53,7 @@ const state = {
   sidebarDraggedClassId: null,
   selectedClass: null,
   learners: [],
+  selectedLearnerIds: new Set(),
   pendingLearnerRemoval: null,
   decks: [],
   progressMap: new Map(),
@@ -2255,6 +2256,7 @@ async function loadLearners() {
 
   if (!isOwner()) {
     state.learners = [];
+    state.selectedLearnerIds.clear();
     const rows = [];
 
     for (const deck of state.decks) {
@@ -2351,16 +2353,34 @@ async function loadLearners() {
     state.learners = learners;
     document.getElementById("tabLearnerCount").textContent = `(${learners.length})`;
 
+    state.selectedLearnerIds.clear();
+
     if (!learners.length) {
       host.innerHTML = `<div class="empty-state">No learners have studied this class yet.</div>`;
       return;
     }
 
     host.innerHTML = `
-      <div class="table-wrap">
-        <table class="data-table">
+      <div class="learner-bulk-toolbar">
+        <label class="learner-select-all">
+          <input id="selectAllLearnersCheckbox" type="checkbox" />
+          <span>Select all</span>
+        </label>
+        <span id="selectedLearnersCount" class="learner-selected-count">0 selected</span>
+        <div class="learner-bulk-actions">
+          <button id="removeSelectedLearnersBtn" class="danger-btn compact-btn" type="button" disabled>
+            Remove Selected
+          </button>
+          <button id="removeAllLearnersBtn" class="danger-outline-btn compact-btn" type="button">
+            Remove All
+          </button>
+        </div>
+      </div>
+      <div class="table-wrap learner-table-wrap">
+        <table class="data-table learners-table">
           <thead>
             <tr>
+              <th class="learner-select-cell" aria-label="Select"></th>
               <th>Learner</th>
               <th>Email</th>
               <th>Unique Cards</th>
@@ -2377,7 +2397,15 @@ async function loadLearners() {
               const mastery = Math.round((avg / 5) * 100);
 
               return `
-                <tr>
+                <tr data-learner-row="${escapeHtml(l.studentId)}">
+                  <td class="learner-select-cell">
+                    <input
+                      type="checkbox"
+                      class="learner-select-checkbox"
+                      data-select-learner="${escapeHtml(l.studentId)}"
+                      aria-label="Select ${escapeHtml(l.name)}"
+                    />
+                  </td>
                   <td>${escapeHtml(l.name)}</td>
                   <td>${escapeHtml(l.email || "—")}</td>
                   <td>${l.uniqueKeys.size}</td>
@@ -2399,6 +2427,8 @@ async function loadLearners() {
           </tbody>
         </table>
       </div>`;
+
+    updateLearnerBulkControls();
   } catch (err) {
     host.innerHTML = `<div class="empty-state">Learners could not be loaded.</div>`;
     handleFirebaseError(err, "Could not load learners.");
@@ -2406,36 +2436,142 @@ async function loadLearners() {
 }
 
 
-function openRemoveLearnerModal(studentId) {
+function updateLearnerBulkControls() {
   if (!isOwner()) return;
 
-  const learner = state.learners.find(item => item.studentId === studentId);
-  if (!learner) {
-    showMessage("That learner could not be found. Refresh the Learners tab and try again.", "error");
+  const validIds = new Set(state.learners.map(learner => learner.studentId));
+  state.selectedLearnerIds = new Set(
+    [...state.selectedLearnerIds].filter(studentId => validIds.has(studentId))
+  );
+
+  const selectedCount = state.selectedLearnerIds.size;
+  const totalCount = state.learners.length;
+  const selectAll = document.getElementById("selectAllLearnersCheckbox");
+  const countLabel = document.getElementById("selectedLearnersCount");
+  const removeSelectedBtn = document.getElementById("removeSelectedLearnersBtn");
+
+  if (selectAll) {
+    selectAll.checked = totalCount > 0 && selectedCount === totalCount;
+    selectAll.indeterminate = selectedCount > 0 && selectedCount < totalCount;
+  }
+
+  if (countLabel) {
+    countLabel.textContent = `${selectedCount} selected`;
+  }
+
+  if (removeSelectedBtn) {
+    removeSelectedBtn.disabled = selectedCount === 0;
+    removeSelectedBtn.textContent = selectedCount
+      ? `Remove Selected (${selectedCount})`
+      : "Remove Selected";
+  }
+
+  document.querySelectorAll("[data-select-learner]").forEach(checkbox => {
+    checkbox.checked = state.selectedLearnerIds.has(checkbox.dataset.selectLearner);
+  });
+
+  document.querySelectorAll("[data-learner-row]").forEach(row => {
+    row.classList.toggle(
+      "learner-row-selected",
+      state.selectedLearnerIds.has(row.dataset.learnerRow)
+    );
+  });
+}
+
+function setAllLearnersSelected(selected) {
+  if (!isOwner()) return;
+
+  state.selectedLearnerIds = selected
+    ? new Set(state.learners.map(learner => learner.studentId))
+    : new Set();
+
+  updateLearnerBulkControls();
+}
+
+function toggleLearnerSelection(studentId, selected) {
+  if (!isOwner()) return;
+
+  if (selected) {
+    state.selectedLearnerIds.add(studentId);
+  } else {
+    state.selectedLearnerIds.delete(studentId);
+  }
+
+  updateLearnerBulkControls();
+}
+
+function openRemoveLearnersModal(studentIds) {
+  if (!isOwner()) return;
+
+  const wantedIds = new Set((studentIds || []).filter(Boolean));
+  const learners = state.learners.filter(learner => wantedIds.has(learner.studentId));
+
+  if (!learners.length) {
+    showMessage("No learners were selected. Refresh the Learners tab and try again.", "error");
     return;
   }
 
   state.pendingLearnerRemoval = {
-    studentId: learner.studentId,
-    name: learner.name || "Student",
-    email: learner.email || ""
+    learnerIds: learners.map(learner => learner.studentId),
+    learners: learners.map(learner => ({
+      studentId: learner.studentId,
+      name: learner.name || "Student",
+      email: learner.email || ""
+    }))
   };
 
-  document.getElementById("removeLearnerName").textContent = state.pendingLearnerRemoval.name;
+  const count = learners.length;
+  const names = learners.slice(0, 5).map(learner => learner.name || "Student");
+  const moreCount = Math.max(0, count - names.length);
+
+  document.getElementById("removeLearnerModalTitle").textContent =
+    count === 1 ? "Remove learner?" : `Remove ${count} learners?`;
+  document.getElementById("removeLearnerName").textContent =
+    count === 1 ? names[0] : `${count} learners selected`;
   document.getElementById("removeLearnerEmail").textContent =
-    state.pendingLearnerRemoval.email || "No email available";
+    count === 1
+      ? (learners[0].email || "No email available")
+      : `${names.join(", ")}${moreCount ? ` +${moreCount} more` : ""}`;
+
+  const confirmBtn = document.getElementById("confirmRemoveLearnerBtn");
+  confirmBtn.textContent = count === 1 ? "Remove Learner" : `Remove ${count} Learners`;
+
   openModal("removeLearnerModal");
+}
+
+function openRemoveLearnerModal(studentId) {
+  openRemoveLearnersModal([studentId]);
+}
+
+function openRemoveSelectedLearnersModal() {
+  openRemoveLearnersModal([...state.selectedLearnerIds]);
+}
+
+function openRemoveAllLearnersModal() {
+  openRemoveLearnersModal(state.learners.map(learner => learner.studentId));
+}
+
+async function commitDeleteRefsInChunks(refs, chunkSize = 450) {
+  for (let i = 0; i < refs.length; i += chunkSize) {
+    const batch = writeBatch(state.db);
+    refs.slice(i, i + chunkSize).forEach(ref => batch.delete(ref));
+    await batch.commit();
+  }
 }
 
 async function confirmRemoveLearner() {
   if (!isOwner() || !state.pendingLearnerRemoval || !state.selectedClass) return;
 
-  const learner = state.pendingLearnerRemoval;
+  const pending = state.pendingLearnerRemoval;
+  const learners = pending.learners || [];
+  const learnerIds = new Set(pending.learnerIds || []);
+  if (!learnerIds.size) return;
+
   const classId = state.selectedClass.id;
   const button = document.getElementById("confirmRemoveLearnerBtn");
   const originalText = button.textContent;
   button.disabled = true;
-  button.textContent = "Removing…";
+  button.textContent = learnerIds.size === 1 ? "Removing…" : `Removing ${learnerIds.size}…`;
 
   try {
     const progressQuery = query(
@@ -2443,29 +2579,39 @@ async function confirmRemoveLearner() {
       where("classId", "==", classId)
     );
     const progressSnap = await getDocs(progressQuery);
-    const learnerProgressDocs = progressSnap.docs.filter(
-      progressDoc => progressDoc.data().studentId === learner.studentId
-    );
 
-    const batch = writeBatch(state.db);
+    const refsToDelete = [];
 
-    // Remove the class from the learner's personal Flashcards library.
-    batch.delete(doc(state.db, "users", learner.studentId, "library", classId));
+    learnerIds.forEach(studentId => {
+      refsToDelete.push(doc(state.db, "users", studentId, "library", classId));
+    });
 
-    // Learners are currently identified by their progress documents, so remove
-    // this class's study/quiz progress too so the learner disappears cleanly.
-    learnerProgressDocs.forEach(progressDoc => batch.delete(progressDoc.ref));
+    progressSnap.docs.forEach(progressDoc => {
+      if (learnerIds.has(progressDoc.data().studentId)) {
+        refsToDelete.push(progressDoc.ref);
+      }
+    });
 
-    await batch.commit();
+    await commitDeleteRefsInChunks(refsToDelete);
+
+    const removedNames = learners.map(learner => learner.name || "Student");
+    const removedCount = learnerIds.size;
 
     state.pendingLearnerRemoval = null;
+    state.selectedLearnerIds.clear();
     closeModals();
     await loadLearners();
-    showMessage(`“${learner.name}” was removed from this class.`, "success");
+
+    showMessage(
+      removedCount === 1
+        ? `“${removedNames[0] || "Learner"}” was removed from this class.`
+        : `${removedCount} learners were removed from this class.`,
+      "success"
+    );
   } catch (err) {
     handleFirebaseError(
       err,
-      "Could not remove the learner. Make sure the updated Flashcards Firestore rules are published."
+      "Could not remove the learners. Make sure the updated Flashcards Firestore rules are published."
     );
   } finally {
     button.disabled = false;
@@ -3603,8 +3749,27 @@ document.addEventListener("click", async e => {
     return openRemoveLearnerModal(removeLearnerBtn.dataset.removeLearner);
   }
 
+  if (e.target.closest("#removeSelectedLearnersBtn")) {
+    return openRemoveSelectedLearnersModal();
+  }
+
+  if (e.target.closest("#removeAllLearnersBtn")) {
+    return openRemoveAllLearnersModal();
+  }
+
   if (e.target.closest("[data-close-modal]")) {
     closeModals();
+  }
+});
+
+document.addEventListener("change", e => {
+  if (e.target.matches("#selectAllLearnersCheckbox")) {
+    setAllLearnersSelected(e.target.checked);
+    return;
+  }
+
+  if (e.target.matches("[data-select-learner]")) {
+    toggleLearnerSelection(e.target.dataset.selectLearner, e.target.checked);
   }
 });
 

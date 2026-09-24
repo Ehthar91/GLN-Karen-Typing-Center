@@ -3767,3 +3767,90 @@ body.dark .remove-learner-warning {
   background: rgba(200,84,94,.11);
   color: #ffb1b8;
 }
+
+/* ---------- Bulk learner removal ---------- */
+.learner-bulk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-line, var(--line));
+  border-radius: 14px;
+  background: var(--panel, #fff);
+}
+
+.learner-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.learner-select-all input,
+.learner-select-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent, #2ca8d8);
+  cursor: pointer;
+}
+
+.learner-selected-count {
+  color: var(--muted);
+  font-size: .82rem;
+  min-width: 72px;
+}
+
+.learner-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.danger-outline-btn {
+  border: 1px solid rgba(200,84,94,.38);
+  background: transparent;
+  color: var(--danger);
+  font: inherit;
+  font-weight: 800;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.danger-outline-btn:hover {
+  background: #fff0f1;
+}
+
+body.dark .danger-outline-btn:hover {
+  background: rgba(200,84,94,.12);
+}
+
+.learner-select-cell {
+  width: 42px;
+  min-width: 42px;
+  text-align: center !important;
+}
+
+.learners-table tbody tr.learner-row-selected > td {
+  background: rgba(44,168,216,.08);
+}
+
+body.dark .learners-table tbody tr.learner-row-selected > td {
+  background: rgba(80,190,230,.09);
+}
+
+@media (max-width: 760px) {
+  .learner-bulk-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .learner-bulk-actions > button {
+    flex: 1;
+  }
+}
