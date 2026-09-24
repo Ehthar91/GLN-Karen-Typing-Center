@@ -2049,6 +2049,44 @@ body.dark .deck-quiz {
   box-shadow: 0 4px 12px rgba(24,50,74,.1);
 }
 
+.quiz-count-control {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) auto;
+  gap: 9px;
+  align-items: end;
+}
+
+.quiz-count-field {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink, var(--text));
+  font-size: .8rem;
+  font-weight: 800;
+}
+
+.quiz-count-field input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--app-line, var(--line));
+  border-radius: 9px;
+  background: var(--app-bg, var(--bg));
+  color: var(--ink, var(--text));
+}
+
+.quiz-use-all-btn {
+  min-height: 43px;
+  white-space: nowrap;
+}
+
+.quiz-count-help {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink-soft, var(--muted));
+  font-size: .79rem;
+  line-height: 1.4;
+}
+
 .quiz-setup-note {
   margin: 4px 0 20px;
   padding: 12px 14px;
@@ -4044,5 +4082,15 @@ body.dark .learners-table tbody tr.learner-row-selected > td {
   .selected-deck-count {
     white-space: normal;
     flex: 1 1 180px;
+  }
+}
+
+@media (max-width: 520px) {
+  .quiz-count-control {
+    grid-template-columns: 1fr;
+  }
+
+  .quiz-use-all-btn {
+    width: 100%;
   }
 }

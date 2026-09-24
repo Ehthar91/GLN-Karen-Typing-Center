@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-study-direction-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-quiz-count-1" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
   <style>
     html.flashcards-embedded .creator-credit { display: none !important; }
@@ -687,6 +687,18 @@
         </div>
       </div>
 
+      <div class="quiz-setup-section">
+        <strong>Questions to include</strong>
+        <div class="quiz-count-control">
+          <label class="quiz-count-field">
+            Number of questions
+            <input id="quizQuestionCountInput" type="number" min="1" step="1" value="1" inputmode="numeric" />
+          </label>
+          <button id="quizUseAllQuestionsBtn" class="secondary-btn quiz-use-all-btn" type="button">Use All</button>
+        </div>
+        <small id="quizQuestionCountHelp" class="quiz-count-help"></small>
+      </div>
+
       <div class="quiz-setup-note">
         Multiple-choice questions use other flashcards as answer choices. If there are not enough unique choices, that question automatically becomes Type Answer.
       </div>
@@ -867,6 +879,6 @@
       closeButton.addEventListener('click', () => badge.classList.add('is-dismissed'));
     })();
   </script>
-  <script type="module" src="flashcards-app.js?v=20260923-study-direction-1"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-quiz-count-1"></script>
 </body>
 </html>

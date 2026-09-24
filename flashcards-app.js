@@ -76,6 +76,7 @@ const state = {
     direction: "frontBack",
     answerMode: "multiple",
     order: "progressive",
+    questionCount: 0,
     points: 1
   },
   quizQuestions: [],
@@ -2861,12 +2862,14 @@ function chooseQuizSetup(scope, deckId = null) {
   }
 
   state.pendingQuiz = { scope, deckId };
+  const availableQuestionCount = collectQuizCards(scope, deckId).length;
   state.quizConfig = {
     questionStyle: "standard",
     template: "What is the answer for {term}?",
     direction: "frontBack",
     answerMode: "multiple",
     order: "progressive",
+    questionCount: availableQuestionCount,
     points: 1
   };
 
@@ -2884,6 +2887,14 @@ function chooseQuizSetup(scope, deckId = null) {
 
   document.getElementById("quizTemplateInput").value = state.quizConfig.template;
   document.getElementById("quizTemplateField").classList.add("hidden");
+
+  const questionCountInput = document.getElementById("quizQuestionCountInput");
+  questionCountInput.max = String(Math.max(1, availableQuestionCount));
+  questionCountInput.value = String(Math.max(1, availableQuestionCount));
+  document.getElementById("quizQuestionCountHelp").textContent =
+    `${availableQuestionCount} card${availableQuestionCount === 1 ? "" : "s"} available. ` +
+    `Progressive uses the first questions; Random chooses from across the set.`;
+
   document.getElementById("quizPointsInput").value = state.quizConfig.points;
   document.getElementById("exportGoogleFormsBtn").classList.toggle("hidden", !isOwner());
   document.getElementById("googleFormsExportResult").classList.add("hidden");
@@ -2953,11 +2964,17 @@ function buildMultipleChoiceOptions(card, direction, allCards) {
 }
 
 function buildQuizQuestions(scope, deckId, config) {
-  let cards = collectQuizCards(scope, deckId);
+  const allCards = collectQuizCards(scope, deckId);
+  let cards = config.order === "random"
+    ? shuffledCopy(allCards)
+    : [...allCards];
 
-  if (config.order === "random") {
-    cards = shuffledCopy(cards);
-  }
+  const requestedCount = Number(config.questionCount);
+  const questionCount = Number.isFinite(requestedCount) && requestedCount > 0
+    ? Math.min(allCards.length, Math.floor(requestedCount))
+    : allCards.length;
+
+  cards = cards.slice(0, questionCount);
 
   return cards.map((card, index) => {
     const direction = config.direction === "mixed"
@@ -2980,7 +2997,7 @@ function buildQuizQuestions(scope, deckId, config) {
     let type = requestedType;
 
     if (requestedType === "multiple") {
-      options = buildMultipleChoiceOptions(card, direction, cards);
+      options = buildMultipleChoiceOptions(card, direction, allCards);
       if (!options) type = "typed";
     }
 
@@ -3000,6 +3017,17 @@ function buildQuizQuestions(scope, deckId, config) {
 
 function syncQuizSetupInputs() {
   state.quizConfig.template = document.getElementById("quizTemplateInput").value.trim();
+
+  const availableCount = state.pendingQuiz
+    ? collectQuizCards(state.pendingQuiz.scope, state.pendingQuiz.deckId).length
+    : 0;
+  const rawQuestionCount = Number(document.getElementById("quizQuestionCountInput").value);
+  state.quizConfig.questionCount = availableCount
+    ? Math.max(1, Math.min(availableCount, Math.floor(rawQuestionCount || availableCount)))
+    : 0;
+  document.getElementById("quizQuestionCountInput").value =
+    String(state.quizConfig.questionCount || 1);
+
   state.quizConfig.points = Math.max(
     0,
     Math.min(100, Number(document.getElementById("quizPointsInput").value || 1))
@@ -4117,6 +4145,26 @@ document.getElementById("startQuizBtn").addEventListener("click", startConfigure
 document.getElementById("exportGoogleFormsBtn").addEventListener("click", exportQuizToGoogleForms);
 document.getElementById("quizTemplateInput").addEventListener("input", e => {
   state.quizConfig.template = e.target.value;
+});
+document.getElementById("quizQuestionCountInput").addEventListener("input", e => {
+  if (!state.pendingQuiz) return;
+  const availableCount = collectQuizCards(
+    state.pendingQuiz.scope,
+    state.pendingQuiz.deckId
+  ).length;
+  const value = Number(e.target.value);
+  if (Number.isFinite(value) && value > 0) {
+    state.quizConfig.questionCount = Math.min(availableCount, Math.floor(value));
+  }
+});
+document.getElementById("quizUseAllQuestionsBtn").addEventListener("click", () => {
+  if (!state.pendingQuiz) return;
+  const availableCount = collectQuizCards(
+    state.pendingQuiz.scope,
+    state.pendingQuiz.deckId
+  ).length;
+  state.quizConfig.questionCount = availableCount;
+  document.getElementById("quizQuestionCountInput").value = String(availableCount);
 });
 document.getElementById("quizPointsInput").addEventListener("input", e => {
   const value = Math.max(0, Math.min(100, Number(e.target.value || 1)));
