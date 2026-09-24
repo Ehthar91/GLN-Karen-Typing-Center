@@ -180,10 +180,6 @@ function classNameParam() {
   return new URL(window.location.href).searchParams.get("name") || "";
 }
 
-function linkPreviewParam() {
-  return new URL(window.location.href).searchParams.get("preview") || "";
-}
-
 function cleanShareTitle(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim().slice(0, 120);
 }
@@ -207,18 +203,15 @@ function setShareMetadataTitle(title = "Flashcards") {
 }
 
 const sharedClassNameFromLink = classNameParam();
-const sharedLinkPreviewFromLink = linkPreviewParam();
-if (sharedLinkPreviewFromLink) setShareMetadataTitle(sharedLinkPreviewFromLink);
-else if (sharedClassNameFromLink) setShareMetadataTitle(classShareTitle(sharedClassNameFromLink));
+if (sharedClassNameFromLink) setShareMetadataTitle(sharedClassNameFromLink);
 
-function buildClassShareLink(classId, className = "", previewTitle = "") {
+function buildClassShareLink(classId, displayName = "") {
   const url = new URL(window.location.href);
   url.search = "";
   url.hash = "";
   url.searchParams.set("class", classId);
-  if (className) url.searchParams.set("name", className);
-  const preview = cleanShareTitle(previewTitle);
-  if (preview) url.searchParams.set("preview", preview);
+  const name = cleanShareTitle(displayName);
+  if (name) url.searchParams.set("name", name);
   return url.toString();
 }
 
@@ -228,8 +221,8 @@ function classShareTitle(className = "") {
 }
 
 function applyClassDocumentTitle(className = "") {
-  const preview = linkPreviewParam();
-  setShareMetadataTitle(preview || classShareTitle(className));
+  const linkedName = classNameParam();
+  setShareMetadataTitle(linkedName || classShareTitle(className));
 }
 
 function savedLinkPreviewTitle(c = state.selectedClass) {
@@ -239,7 +232,7 @@ function savedLinkPreviewTitle(c = state.selectedClass) {
 function linkPreviewTitleFor(c = state.selectedClass) {
   const input = document.getElementById("linkPreviewTitleInput");
   const typed = cleanShareTitle(input?.value || "");
-  return typed || savedLinkPreviewTitle(c) || classShareTitle(c?.name || "");
+  return typed || savedLinkPreviewTitle(c) || cleanShareTitle(c?.name || "") || "Flashcards";
 }
 
 function syncLinkPreviewTitleUi() {
@@ -249,11 +242,11 @@ function syncLinkPreviewTitleUi() {
   if (!c || !input) return;
 
   const saved = savedLinkPreviewTitle(c);
-  input.value = saved || classShareTitle(c.name);
+  input.value = saved || cleanShareTitle(c.name);
   if (status) {
     status.textContent = saved
-      ? "Custom pasted-link title saved for this class."
-      : "Using the class name automatically. You can type a different pasted-link title anytime.";
+      ? "Custom link display name saved for this class."
+      : "Using the class name automatically. Type a different name to change the &name= part of the copied link.";
   }
 }
 
@@ -264,7 +257,7 @@ async function saveLinkPreviewTitle() {
   const title = cleanShareTitle(input?.value || "");
 
   if (!title) {
-    showMessage("Enter a pasted-link title.", "error");
+    showMessage("Enter a link display name.", "error");
     input?.focus();
     return;
   }
@@ -277,9 +270,9 @@ async function saveLinkPreviewTitle() {
     state.selectedClass = { ...state.selectedClass, linkPreviewTitle: title };
     const owned = state.ownedClasses.find(c => c.id === state.selectedClass.id);
     if (owned) owned.linkPreviewTitle = title;
-    if (status) status.textContent = "Custom pasted-link title saved for this class.";
+    if (status) status.textContent = "Custom link display name saved for this class.";
     await renderGoogleClassroomShare();
-    showMessage("Pasted-link title saved.", "success");
+    showMessage("Link display name saved.", "success");
   } catch (err) {
     handleFirebaseError(err, "Could not save the pasted-link title.");
   }
@@ -298,8 +291,8 @@ async function useClassNameForLinkPreview() {
     state.selectedClass = { ...state.selectedClass, linkPreviewTitle: "" };
     const owned = state.ownedClasses.find(c => c.id === state.selectedClass.id);
     if (owned) owned.linkPreviewTitle = "";
-    if (input) input.value = classShareTitle(state.selectedClass.name);
-    if (status) status.textContent = "Using the class name automatically. You can type a different pasted-link title anytime.";
+    if (input) input.value = cleanShareTitle(state.selectedClass.name);
+    if (status) status.textContent = "Using the class name automatically. Type a different name to change the &name= part of the copied link.";
     await renderGoogleClassroomShare();
     showMessage("Pasted links will use the class name.", "success");
   } catch (err) {
@@ -324,7 +317,7 @@ function syncClassroomShareTitleUi() {
   if (!c || !input) return;
 
   const saved = savedClassroomShareTitle(c);
-  input.value = saved || classShareTitle(c.name);
+  input.value = saved || cleanShareTitle(c.name);
   if (status) {
     status.textContent = saved
       ? "Custom title saved for this class."
@@ -454,7 +447,7 @@ async function renderGoogleClassroomShare() {
     if (!state.selectedClass || state.selectedClass.id !== c.id || !isOwner() || state.selectedClass.published === false) return;
 
     shareApi.render(host, {
-      url: buildClassShareLink(c.id, c.name, linkPreviewTitleFor(c)),
+      url: buildClassShareLink(c.id, linkPreviewTitleFor(c)),
       title: classroomShareTitleFor(c),
       body: `Study the flashcards for ${c.name}.`,
       itemtype: "material",
@@ -470,6 +463,8 @@ async function renderGoogleClassroomShare() {
 function clearClassParam() {
   const url = new URL(window.location.href);
   url.searchParams.delete("class");
+  url.searchParams.delete("name");
+  url.searchParams.delete("preview"); // remove legacy pasted-link preview parameter if present
   history.replaceState({}, "", url);
 }
 
@@ -1429,12 +1424,12 @@ async function copyClassLink(classId = state.selectedClass?.id) {
     return;
   }
 
-  const previewTitle = linkPreviewTitleFor(c);
-  const link = buildClassShareLink(classId, c?.name || "", previewTitle);
+  const displayName = linkPreviewTitleFor(c);
+  const link = buildClassShareLink(classId, displayName);
 
   try {
     await navigator.clipboard.writeText(link);
-    showMessage(`Class link copied as “${previewTitle}”. Paste it into Google Classroom.`, "success");
+    showMessage(`Class link copied with name “${displayName}”.`, "success");
   } catch {
     window.prompt("Copy this class link:", link);
   }
@@ -3191,7 +3186,7 @@ document.getElementById("linkPreviewSaveTitleBtn").addEventListener("click", sav
 document.getElementById("linkPreviewUseClassNameBtn").addEventListener("click", useClassNameForLinkPreview);
 document.getElementById("linkPreviewTitleInput").addEventListener("input", () => {
   const status = document.getElementById("linkPreviewTitleStatus");
-  if (status) status.textContent = "This title will be built into the copied link. Click Save if you want to remember it.";
+  if (status) status.textContent = "This name will become the &name= value in the copied link. Click Save if you want to remember it.";
   scheduleClassroomShareRender();
 });
 document.getElementById("linkPreviewTitleInput").addEventListener("keydown", e => {
