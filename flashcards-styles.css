@@ -3596,3 +3596,122 @@ body.dark .sidebar-class-menu button.danger:focus-visible { background: rgba(200
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* =========================================================
+   SIDEBAR POLISH — cleaner class rows, better spacing, less clipping
+   ========================================================= */
+
+/* Give long class names a little more room without crowding the main panel. */
+.app-view.active {
+  grid-template-columns: 300px minmax(0, 1fr);
+}
+
+.class-sidebar-list {
+  padding: 4px 12px 18px;
+}
+
+/* The outer row owns the hover/selected background so we do not get
+   a rounded card nested inside another rounded card. */
+.sidebar-class-row {
+  grid-template-columns: 16px minmax(0, 1fr) 28px;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding: 4px 5px;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sidebar-class-row:hover {
+  background: rgba(255,255,255,.055);
+}
+
+.sidebar-class-row.active {
+  background: rgba(255,255,255,.11);
+  box-shadow:
+    inset 3px 0 0 #69d2f2,
+    inset 0 0 0 1px rgba(255,255,255,.06);
+}
+
+/* Make the drag handle compact and subtle until the row is used. */
+.sidebar-class-drag-handle {
+  width: 16px;
+  min-width: 16px;
+  height: 40px;
+  border-radius: 7px;
+  font-size: .88rem;
+  opacity: .46;
+}
+
+.sidebar-class-row:hover .sidebar-class-drag-handle,
+.sidebar-class-row.active .sidebar-class-drag-handle,
+.sidebar-class-drag-handle:focus-visible {
+  opacity: 1;
+}
+
+/* Remove the second card-like background from the class button itself. */
+.sidebar-class-row .sidebar-class-item,
+.sidebar-class-row .sidebar-class-item:hover,
+.sidebar-class-row .sidebar-class-item.active {
+  margin: 0;
+  padding: 7px 2px 7px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 9px;
+}
+
+.sidebar-class-row .sidebar-stack-icon {
+  width: 28px;
+  height: 28px;
+  transform: scale(.88);
+  transform-origin: center;
+}
+
+.sidebar-class-copy {
+  min-width: 0;
+}
+
+/* Long class names can use two lines instead of being chopped off immediately. */
+.sidebar-class-copy strong {
+  display: -webkit-box;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  font-size: .79rem;
+}
+
+.sidebar-class-copy small {
+  margin-top: 3px;
+  font-size: .66rem;
+}
+
+/* Cleaner, standard three-dot menu target. */
+.sidebar-class-menu-btn {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 1.08rem;
+  line-height: 1;
+  letter-spacing: 0;
+  opacity: .48;
+}
+
+.sidebar-class-row:hover .sidebar-class-menu-btn,
+.sidebar-class-row.active .sidebar-class-menu-btn,
+.sidebar-class-menu-btn:focus-visible {
+  opacity: 1;
+}
+
+@media (max-width: 860px) {
+  .app-view.active {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1063,7 +1063,7 @@ function renderSidebar() {
           title="Class options"
           aria-label="Options for ${escapeHtml(c.name)}"
           aria-haspopup="menu"
-        >•••</button>
+        >⋯</button>
       </div>
     `;
   }).join("");
