@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-multi-deck-study-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-study-direction-1" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
   <style>
     html.flashcards-embedded .creator-credit { display: none !important; }
@@ -597,25 +597,38 @@
       <div class="modal-head">
         <div>
           <span class="eyebrow">Study setup</span>
-          <h2>Choose card order</h2>
+          <h2>Choose how to study</h2>
         </div>
         <button class="modal-close" data-close-modal>×</button>
       </div>
 
       <p id="studyOrderTarget" class="study-order-target"></p>
 
-      <div class="study-order-grid">
-        <button id="progressiveOrderBtn" class="study-order-option">
-          <span class="study-order-icon">1→2→3</span>
-          <strong>Progressive</strong>
-          <small>Study cards in their normal order.</small>
-        </button>
+      <div class="study-direction-section">
+        <strong>Card direction</strong>
+        <div class="study-direction-segmented" role="group" aria-label="Card direction">
+          <button type="button" class="study-direction-btn active" data-study-direction="frontBack">Front → Back</button>
+          <button type="button" class="study-direction-btn" data-study-direction="backFront">Back → Front</button>
+          <button type="button" class="study-direction-btn" data-study-direction="mixed">Mixed</button>
+        </div>
+        <small>Mixed randomly chooses the direction for each card.</small>
+      </div>
 
-        <button id="randomOrderBtn" class="study-order-option">
-          <span class="study-order-icon">↝</span>
-          <strong>Random</strong>
-          <small>Shuffle the cards into a new order.</small>
-        </button>
+      <div class="study-order-section">
+        <strong>Card order</strong>
+        <div class="study-order-grid">
+          <button id="progressiveOrderBtn" class="study-order-option">
+            <span class="study-order-icon">1→2→3</span>
+            <strong>Progressive</strong>
+            <small>Study cards in their normal order.</small>
+          </button>
+
+          <button id="randomOrderBtn" class="study-order-option">
+            <span class="study-order-icon">↝</span>
+            <strong>Random</strong>
+            <small>Shuffle the cards into a new order.</small>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -854,6 +867,6 @@
       closeButton.addEventListener('click', () => badge.classList.add('is-dismissed'));
     })();
   </script>
-  <script type="module" src="flashcards-app.js?v=20260923-multi-deck-study-1"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-study-direction-1"></script>
 </body>
 </html>

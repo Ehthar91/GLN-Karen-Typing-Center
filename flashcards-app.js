@@ -67,6 +67,7 @@ const state = {
   sessionIndex: 0,
   sessionRatings: [],
   studyOrder: "progressive",
+  studyDirection: "frontBack",
   pendingStudy: null,
   pendingQuiz: null,
   quizConfig: {
@@ -2709,6 +2710,10 @@ function chooseStudyOrder(scope, deckId = null, deckIds = null) {
         ? `Study together: ${targetName}`
         : `Study class: ${targetName}`;
 
+  document.querySelectorAll("[data-study-direction]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.studyDirection === state.studyDirection);
+  });
+
   openModal("studyOrderModal");
 }
 
@@ -2717,20 +2722,36 @@ function beginPendingStudy(order) {
   if (!pending) return;
 
   state.studyOrder = order;
+  const direction = state.studyDirection;
   closeModals();
 
   if (pending.scope === "deck") {
-    startDeckStudy(pending.deckId, order);
+    startDeckStudy(pending.deckId, order, direction);
   } else if (pending.scope === "selection") {
-    startSelectedDecksStudy(pending.deckIds, order);
+    startSelectedDecksStudy(pending.deckIds, order, direction);
   } else {
-    startClassStudy(order);
+    startClassStudy(order, direction);
   }
 
   state.pendingStudy = null;
 }
 
-function startDeckStudy(deckId, order = state.studyOrder) {
+function studyDirectionLabel(direction) {
+  if (direction === "backFront") return "Back → Front";
+  if (direction === "mixed") return "Mixed Direction";
+  return "Front → Back";
+}
+
+function applyStudyDirection(cards, direction = state.studyDirection) {
+  return cards.map(card => ({
+    ...card,
+    _studyDirection: direction === "mixed"
+      ? (Math.random() < 0.5 ? "frontBack" : "backFront")
+      : direction
+  }));
+}
+
+function startDeckStudy(deckId, order = state.studyOrder, direction = state.studyDirection) {
   const deck = state.decks.find(d => d.id === deckId);
   if (!deck?.cards?.length) return;
 
@@ -2738,12 +2759,13 @@ function startDeckStudy(deckId, order = state.studyOrder) {
   state.selectedDeck = deck;
   state.studyMode = "standard";
   state.studyOrder = order;
+  state.studyDirection = direction;
 
-  const cards = deck.cards.map(card => ({
+  const cards = applyStudyDirection(deck.cards.map(card => ({
     ...card,
     deckId: deck.id,
     deckName: deck.name
-  }));
+  })), direction);
 
   state.sessionCards = order === "random"
     ? shuffledCopy(cards)
@@ -2751,11 +2773,11 @@ function startDeckStudy(deckId, order = state.studyOrder) {
 
   prepareSession(
     deck.name,
-    order === "random" ? "Deck Study · Random" : "Deck Study · Progressive"
+    `Deck Study · ${studyDirectionLabel(direction)} · ${order === "random" ? "Random" : "Progressive"}`
   );
 }
 
-function startSelectedDecksStudy(deckIds, order = state.studyOrder) {
+function startSelectedDecksStudy(deckIds, order = state.studyOrder, direction = state.studyDirection) {
   const wanted = new Set(Array.isArray(deckIds) ? deckIds : []);
   const decks = state.decks.filter(
     deck => wanted.has(deck.id) && (deck.cards?.length || 0) > 0
@@ -2781,18 +2803,20 @@ function startSelectedDecksStudy(deckIds, order = state.studyOrder) {
   state.studySelectionDeckIds = decks.map(deck => deck.id);
   state.studyMode = "standard";
   state.studyOrder = order;
+  state.studyDirection = direction;
 
+  const directedCards = applyStudyDirection(cards, direction);
   state.sessionCards = order === "random"
-    ? shuffledCopy(cards)
-    : cards;
+    ? shuffledCopy(directedCards)
+    : directedCards;
 
   prepareSession(
     state.selectedClass.name,
-    `${decks.length} Selected Deck${decks.length === 1 ? "" : "s"} · ${order === "random" ? "Random" : "Progressive"}`
+    `${decks.length} Selected Deck${decks.length === 1 ? "" : "s"} · ${studyDirectionLabel(direction)} · ${order === "random" ? "Random" : "Progressive"}`
   );
 }
 
-function startClassStudy(order = state.studyOrder) {
+function startClassStudy(order = state.studyOrder, direction = state.studyDirection) {
   const cards = [];
 
   for (const deck of state.decks) {
@@ -2811,14 +2835,16 @@ function startClassStudy(order = state.studyOrder) {
   state.selectedDeck = null;
   state.studyMode = "standard";
   state.studyOrder = order;
+  state.studyDirection = direction;
 
+  const directedCards = applyStudyDirection(cards, direction);
   state.sessionCards = order === "random"
-    ? shuffledCopy(cards)
-    : cards;
+    ? shuffledCopy(directedCards)
+    : directedCards;
 
   prepareSession(
     state.selectedClass.name,
-    order === "random" ? "Class Study · Random" : "Class Study · Progressive"
+    `Class Study · ${studyDirectionLabel(direction)} · ${order === "random" ? "Random" : "Progressive"}`
   );
 }
 
@@ -3533,8 +3559,12 @@ function renderStudyCard() {
     return;
   }
 
-  document.getElementById("questionText").textContent = card.front;
-  document.getElementById("answerText").textContent = card.back;
+  const direction = card._studyDirection || state.studyDirection || "frontBack";
+  const question = direction === "backFront" ? card.back : card.front;
+  const answer = direction === "backFront" ? card.front : card.back;
+
+  document.getElementById("questionText").textContent = question;
+  document.getElementById("answerText").textContent = answer;
   document.getElementById("cardCounter").textContent =
     `${state.sessionIndex + 1} of ${state.sessionCards.length}`;
   document.getElementById("studyProgressFill").style.width =
@@ -4116,11 +4146,11 @@ document.getElementById("revealBtn").addEventListener("click", e => {
 document.getElementById("exitStudyBtn").addEventListener("click", returnToClass);
 document.getElementById("studyAgainBtn").addEventListener("click", () => {
   if (state.studyScope === "class") {
-    startClassStudy(state.studyOrder);
+    startClassStudy(state.studyOrder, state.studyDirection);
   } else if (state.studyScope === "selection") {
-    startSelectedDecksStudy(state.studySelectionDeckIds, state.studyOrder);
+    startSelectedDecksStudy(state.studySelectionDeckIds, state.studyOrder, state.studyDirection);
   } else if (state.selectedDeck) {
-    startDeckStudy(state.selectedDeck.id, state.studyOrder);
+    startDeckStudy(state.selectedDeck.id, state.studyOrder, state.studyDirection);
   }
 });
 document.getElementById("completeBackBtn").addEventListener("click", returnToClass);
@@ -4139,7 +4169,9 @@ document.getElementById("checkTypingBtn").addEventListener("click", () => {
     return;
   }
 
-  const correct = normalizeText(given) === normalizeText(card.back);
+  const direction = card._studyDirection || state.studyDirection || "frontBack";
+  const expected = direction === "backFront" ? card.front : card.back;
+  const correct = normalizeText(given) === normalizeText(expected);
   result.textContent = correct ? "Correct!" : "Not quite.";
   result.className = `typing-result ${correct ? "correct" : "incorrect"}`;
   document.getElementById("answerArea").classList.remove("hidden");
@@ -4183,6 +4215,16 @@ document.addEventListener("keydown", e => {
 
   e.preventDefault();
   rateCurrentCard(Number(e.key));
+});
+
+
+document.querySelectorAll("[data-study-direction]").forEach(button => {
+  button.addEventListener("click", () => {
+    state.studyDirection = button.dataset.studyDirection || "frontBack";
+    document.querySelectorAll("[data-study-direction]").forEach(btn => {
+      btn.classList.toggle("active", btn === button);
+    });
+  });
 });
 
 document.getElementById("progressiveOrderBtn").addEventListener("click", () => {

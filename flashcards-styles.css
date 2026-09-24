@@ -1839,6 +1839,53 @@ body.dark .confidence-buttons button[data-rating="3"] {
   font-size: .92rem;
 }
 
+.study-direction-section,
+.study-order-section {
+  margin-top: 18px;
+}
+
+.study-direction-section > strong,
+.study-order-section > strong {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--ink, var(--text));
+}
+
+.study-direction-section > small {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink-soft, var(--muted));
+  font-size: .8rem;
+}
+
+.study-direction-segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  padding: 5px;
+  border-radius: 13px;
+  background: var(--panel-soft);
+}
+
+.study-direction-btn {
+  min-height: 43px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-soft, var(--muted));
+  font-weight: 800;
+}
+
+.study-direction-btn.active {
+  background: var(--card-bg, var(--panel));
+  color: var(--ink, var(--text));
+  box-shadow: 0 4px 12px rgba(24,50,74,.1);
+}
+
+.study-direction-btn:hover {
+  color: var(--ink, var(--text));
+}
+
 .study-order-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1898,6 +1945,10 @@ body.dark .confidence-buttons button[data-rating="3"] {
 }
 
 @media (max-width: 560px) {
+  .study-direction-segmented {
+    grid-template-columns: 1fr;
+  }
+
   .study-order-grid {
     grid-template-columns: 1fr;
   }
