@@ -14,7 +14,7 @@ const { initializeApp } = appModule;
 const {
   getAuth,
   initializeAuth,
-  inMemoryPersistence,
+  browserLocalPersistence,
   browserPopupRedirectResolver,
   GoogleAuthProvider,
   signInWithPopup,
@@ -3354,13 +3354,13 @@ function initTheme() {
 async function initializeFirebase() {
   try {
     // Classroom Tools embeds Flashcards in an iframe. Give that embedded copy its
-    // own named Firebase app and in-memory Auth instance so it never restores
-    // the standalone Flashcards login from this browser. The standalone page
-    // keeps Firebase's normal persistent sign-in behavior.
+    // own named Firebase app so its login stays separate from the standalone
+    // Flashcards page. Use local persistence so embedded Flashcards remembers
+    // the teacher until they explicitly click Sign out.
     if (EMBEDDED_CLASSROOM_MODE) {
       state.app = initializeApp(firebaseConfig, "flashcardsClassroomToolsEmbedded");
       state.auth = initializeAuth(state.app, {
-        persistence: inMemoryPersistence,
+        persistence: browserLocalPersistence,
         popupRedirectResolver: browserPopupRedirectResolver
       });
     } else {
