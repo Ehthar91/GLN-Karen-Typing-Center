@@ -6,8 +6,20 @@
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
   <link rel="stylesheet" href="flashcards-styles.css?v=20260923-bulk-remove-learners-1" />
+  <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
+  <style>
+    html.flashcards-embedded .creator-credit { display: none !important; }
+  </style>
 </head>
 <body>
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("embedded") === "classroom") {
+        document.documentElement.classList.add("flashcards-embedded");
+      }
+    })();
+  </script>
   <div id="globalMessage" class="global-message hidden" role="status"></div>
 
   <section id="loginView" class="view auth-view">
@@ -821,6 +833,19 @@
     </div>
   </div>
 
+  <aside class="creator-credit" id="flashcardsCreatorCredit" aria-label="Website creator">
+    <button class="creator-credit-close" id="dismissFlashcardsCreatorCredit" type="button" aria-label="Hide creator badge" title="Hide creator badge">×</button>
+    <img src="creator-ehthar.png?v=20260910-6" alt="Ehthar Htain (Aung Naing)" />
+    <span>Created by<strong>Ehthar Htain (Aung Naing)</strong></span>
+  </aside>
+  <script>
+    (() => {
+      const badge = document.querySelector('#flashcardsCreatorCredit');
+      const closeButton = document.querySelector('#dismissFlashcardsCreatorCredit');
+      if (!badge || !closeButton) return;
+      closeButton.addEventListener('click', () => badge.classList.add('is-dismissed'));
+    })();
+  </script>
   <script type="module" src="flashcards-app.js?v=20260923-bulk-remove-learners-1"></script>
 </body>
 </html>
