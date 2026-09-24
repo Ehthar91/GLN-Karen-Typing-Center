@@ -7,6 +7,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function teacherSignedIn() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider != "anonymous";
+    }
+
     function classExists(classId) {
       return exists(/databases/$(database)/documents/classes/$(classId));
     }
@@ -65,7 +70,9 @@ service cloud.firestore {
       allow list: if signedIn()
         && resource.data.ownerId == request.auth.uid;
 
-      allow create: if signedIn()
+      // Only a real signed-in teacher account can create classes. Anonymous
+      // guest sessions are study-only and cannot become class owners.
+      allow create: if teacherSignedIn()
         && request.resource.data.ownerId == request.auth.uid;
 
       allow update, delete: if signedIn()

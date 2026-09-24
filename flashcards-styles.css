@@ -4483,3 +4483,26 @@ body.dark .learners-table tbody tr.learner-row-selected > td {
     line-height: 1;
   }
 }
+
+
+/* Shared-link guest study mode: students can study without a Google account. */
+.guest-opening-indicator {
+  margin-top: 14px;
+  font-weight: 700;
+  opacity: .8;
+}
+
+body.guest-study-mode #newClassSidebarBtn,
+body.guest-study-mode #newClassMainBtn,
+body.guest-study-mode #openArchiveBtn,
+body.guest-study-mode .sidebar-class-drag-handle,
+body.guest-study-mode .sidebar-class-menu-btn {
+  display: none !important;
+}
+
+body.guest-study-mode .sidebar-title-row h3::after {
+  content: " · Guest Study";
+  font-size: .72em;
+  font-weight: 600;
+  opacity: .7;
+}

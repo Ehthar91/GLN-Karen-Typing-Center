@@ -18,6 +18,7 @@ const {
   browserPopupRedirectResolver,
   GoogleAuthProvider,
   signInWithPopup,
+  signInAnonymously,
   signOut,
   onAuthStateChanged
 } = authModule;
@@ -489,6 +490,27 @@ function isOwner() {
   return Boolean(state.selectedClass && state.user && state.selectedClass.ownerId === state.user.uid);
 }
 
+function isGuestStudent() {
+  return Boolean(state.user?.isAnonymous);
+}
+
+function guestStudentName() {
+  if (!isGuestStudent()) return state.user?.displayName || "";
+  const suffix = String(state.user?.uid || "guest").slice(-4).toUpperCase();
+  return `Guest ${suffix}`;
+}
+
+function applyGuestStudyUi() {
+  const guest = isGuestStudent();
+  document.body.classList.toggle("guest-study-mode", guest);
+
+  const name = document.getElementById("sidebarName");
+  if (guest && name) name.textContent = "Guest Student";
+
+  const signOutButton = document.getElementById("signOutBtn");
+  if (signOutButton) signOutButton.textContent = guest ? "Exit Guest Study" : "Sign out";
+}
+
 function progressDocId(classId, deckId, studentId) {
   return `${classId}_${deckId}_${studentId}`;
 }
@@ -577,16 +599,18 @@ async function signInGoogle() {
 
 async function ensureUserProfile() {
   await setDoc(doc(state.db, "users", state.user.uid), {
-    displayName: state.user.displayName || "",
+    displayName: isGuestStudent() ? guestStudentName() : (state.user.displayName || ""),
     email: state.user.email || "",
     photoURL: state.user.photoURL || "",
+    guest: isGuestStudent(),
     updatedAt: serverTimestamp()
   }, { merge: true });
 }
 
 function renderUser() {
-  document.getElementById("sidebarName").textContent =
-    state.user.displayName?.split(" ")[0] || state.user.email || "User";
+  document.getElementById("sidebarName").textContent = isGuestStudent()
+    ? "Guest Student"
+    : (state.user.displayName?.split(" ")[0] || state.user.email || "User");
 
   const photo = document.getElementById("sidebarPhoto");
   if (state.user.photoURL) {
@@ -598,30 +622,47 @@ function renderUser() {
 }
 
 async function routeAfterAuth() {
-  if (!state.user) {
-    const inviteId = classParam();
+  const inviteId = classParam();
 
+  if (!state.user) {
     if (inviteId) {
       try {
         const snap = await getDoc(doc(state.db, "classes", inviteId));
         if (snap.exists() && snap.data().published === true) {
           document.getElementById("sharedClassSignInTitle").textContent =
-            snap.data().name || "A class was shared with you.";
+            snap.data().name || "Opening shared class…";
           showTopView("sharedSignInView");
+          await signInAnonymously(state.auth);
           return;
         }
-      } catch (_) {}
+      } catch (err) {
+        console.error(err);
+        showTopView("loginView");
+        showMessage(
+          "Guest study could not start. Make sure Anonymous sign-in is enabled in Firebase Authentication.",
+          "error",
+          0
+        );
+        return;
+      }
     }
 
     showTopView("loginView");
     return;
   }
 
+  // Anonymous accounts exist only to let students study from a shared link.
+  // If a guest reaches the regular Flashcards home page, return to teacher sign-in.
+  if (isGuestStudent() && !inviteId) {
+    await signOut(state.auth);
+    return;
+  }
+
   await ensureUserProfile();
   renderUser();
+  applyGuestStudyUi();
   showTopView("appView");
 
-  const inviteId = classParam();
   if (inviteId) {
     await acceptSharedClass(inviteId);
     return;
@@ -1185,10 +1226,15 @@ async function acceptSharedClass(classId) {
         addedAt: serverTimestamp()
       }, { merge: true });
 
-      showMessage(`"${c.name}" was added to My Flashcards.`, "success");
+      showMessage(
+        isGuestStudent()
+          ? `Guest study opened for "${c.name}" — no Google sign-in required.`
+          : `"${c.name}" was added to My Flashcards.`,
+        "success"
+      );
     }
 
-    clearClassParam();
+    if (!isGuestStudent()) clearClassParam();
     await loadLibrary();
     await openClass(c.id);
   } catch (err) {
@@ -1289,7 +1335,7 @@ function renderClass() {
   document.getElementById("ownerDeckTools").classList.toggle("hidden", !owner);
   document.getElementById("editIntroBtn").classList.toggle("hidden", !owner);
   document.getElementById("refreshLearnersBtn").classList.toggle("hidden", !owner);
-  document.getElementById("removeSharedClassBtn").classList.toggle("hidden", owner);
+  document.getElementById("removeSharedClassBtn").classList.toggle("hidden", owner || isGuestStudent());
 
   document.getElementById("shareClassBtn").disabled = owner && !state.selectedClass.published;
   document.getElementById("studyClassBtn").disabled = state.decks.length === 0;
@@ -3687,8 +3733,8 @@ async function saveQuizProgress() {
         deckId,
         deckName: group.deckName,
         studentId: state.user.uid,
-        studentName: state.user.displayName || "",
-        studentEmail: state.user.email || "",
+        studentName: isGuestStudent() ? guestStudentName() : (state.user.displayName || ""),
+        studentEmail: isGuestStudent() ? "" : (state.user.email || ""),
         studied: 0,
         ratingCount: 0,
         ratingTotal: 0,
@@ -3708,8 +3754,8 @@ async function saveQuizProgress() {
       deckId,
       deckName: group.deckName,
       studentId: state.user.uid,
-      studentName: state.user.displayName || "",
-      studentEmail: state.user.email || "",
+      studentName: isGuestStudent() ? guestStudentName() : (state.user.displayName || ""),
+      studentEmail: isGuestStudent() ? "" : (state.user.email || ""),
       quizAnswered: p.quizAnswered,
       quizCorrect: p.quizCorrect,
       lastQuizPercent: group.answered
@@ -3868,8 +3914,8 @@ async function rateCurrentCard(rating) {
       deckId: card.deckId,
       deckName: card.deckName,
       studentId: state.user.uid,
-      studentName: state.user.displayName || "",
-      studentEmail: state.user.email || "",
+      studentName: isGuestStudent() ? guestStudentName() : (state.user.displayName || ""),
+      studentEmail: isGuestStudent() ? "" : (state.user.email || ""),
       studied: 0,
       ratingCount: 0,
       ratingTotal: 0,
@@ -3898,8 +3944,8 @@ async function rateCurrentCard(rating) {
       deckId: card.deckId,
       deckName: card.deckName,
       studentId: state.user.uid,
-      studentName: state.user.displayName || "",
-      studentEmail: state.user.email || "",
+      studentName: isGuestStudent() ? guestStudentName() : (state.user.displayName || ""),
+      studentEmail: isGuestStudent() ? "" : (state.user.email || ""),
       studied: p.studied,
       ratingCount: p.ratingCount,
       ratingTotal: p.ratingTotal,
@@ -4244,6 +4290,7 @@ document.getElementById("googleSignInBtn").addEventListener("click", signInGoogl
 document.getElementById("sharedGoogleSignInBtn").addEventListener("click", signInGoogle);
 
 document.getElementById("signOutBtn").addEventListener("click", async () => {
+  if (isGuestStudent()) clearClassParam();
   await signOut(state.auth);
 });
 
