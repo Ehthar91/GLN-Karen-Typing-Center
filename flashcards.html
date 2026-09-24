@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-deck-list-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-google-forms-copy-1" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
   <style>
     html.flashcards-embedded .creator-credit { display: none !important; }
@@ -734,11 +734,23 @@
 
         <button id="exportGoogleFormsBtn" class="google-forms-btn hidden" type="button">
           <span class="google-forms-icon">G</span>
-          Download Google Forms Script (.gs)
+          Generate Google Forms Script
         </button>
       </div>
 
-      <div id="googleFormsExportResult" class="google-forms-result hidden"></div>
+      <div id="googleFormsExportResult" class="google-forms-result hidden">
+        <div class="google-forms-generated-head">
+          <div>
+            <strong>Google Forms Script Ready</strong>
+            <small id="googleFormsGeneratedSummary">Choose Copy Script or Download .gs.</small>
+          </div>
+          <div class="google-forms-generated-actions">
+            <button id="copyGoogleFormsScriptBtn" class="secondary-btn" type="button">Copy Script</button>
+            <button id="downloadGoogleFormsScriptBtn" class="google-forms-download-btn" type="button">Download .gs</button>
+          </div>
+        </div>
+        <textarea id="googleFormsScriptPreview" class="google-forms-script-preview" readonly spellcheck="false" aria-label="Generated Google Forms Apps Script"></textarea>
+      </div>
 
       <p id="googleFormsExportStatus" class="google-forms-status" aria-live="polite"></p>
 
@@ -925,6 +937,6 @@
       closeButton.addEventListener('click', () => badge.classList.add('is-dismissed'));
     })();
   </script>
-  <script type="module" src="flashcards-app.js?v=20260923-deck-list-1"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-google-forms-copy-1"></script>
 </body>
 </html>

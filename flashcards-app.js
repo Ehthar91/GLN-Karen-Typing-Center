@@ -86,6 +86,9 @@ const state = {
   quizScore: 0,
   quizResults: [],
   quizAnswered: false,
+  generatedGoogleFormsScript: "",
+  generatedGoogleFormsFileName: "",
+  generatedGoogleFormsQuestionCount: 0,
   copyCardsDestinationDeckId: null,
   copySourceDecks: [],
   copySourceCards: []
@@ -2938,8 +2941,7 @@ function chooseQuizSetup(scope, deckId = null) {
 
   document.getElementById("quizPointsInput").value = state.quizConfig.points;
   document.getElementById("exportGoogleFormsBtn").classList.toggle("hidden", !isOwner());
-  document.getElementById("googleFormsExportResult").classList.add("hidden");
-  document.getElementById("googleFormsExportStatus").textContent = "";
+  resetGoogleFormsGeneratedScript();
 
   openModal("quizSetupModal");
 }
@@ -3414,9 +3416,25 @@ function buildGsQuizPayload() {
   };
 }
 
-function exportQuizToGoogleForms() {
+function resetGoogleFormsGeneratedScript() {
+  state.generatedGoogleFormsScript = "";
+  state.generatedGoogleFormsFileName = "";
+  state.generatedGoogleFormsQuestionCount = 0;
+
+  const resultBox = document.getElementById("googleFormsExportResult");
+  const preview = document.getElementById("googleFormsScriptPreview");
+  const summary = document.getElementById("googleFormsGeneratedSummary");
+  const status = document.getElementById("googleFormsExportStatus");
+
+  resultBox?.classList.add("hidden");
+  if (preview) preview.value = "";
+  if (summary) summary.textContent = "Choose Copy Script or Download .gs.";
+  if (status) status.textContent = "";
+}
+
+function generateQuizGoogleFormsScript() {
   if (!isOwner()) {
-    showMessage("Only the class owner can export this quiz.", "error");
+    showMessage("Only the class owner can generate this quiz script.", "error");
     return;
   }
 
@@ -3425,23 +3443,96 @@ function exportQuizToGoogleForms() {
 
   const status = document.getElementById("googleFormsExportStatus");
   const resultBox = document.getElementById("googleFormsExportResult");
-  resultBox.classList.add("hidden");
-
+  const preview = document.getElementById("googleFormsScriptPreview");
+  const summary = document.getElementById("googleFormsGeneratedSummary");
   const payload = buildGsQuizPayload();
 
   if (!payload) {
+    resetGoogleFormsGeneratedScript();
     status.textContent = "There are no flashcards available to export.";
     return;
   }
 
   try {
     const source = buildGoogleFormsGsSource(payload);
+    const fileName = `${safeFileName(payload.title)}.gs`;
+
+    state.generatedGoogleFormsScript = source;
+    state.generatedGoogleFormsFileName = fileName;
+    state.generatedGoogleFormsQuestionCount = payload.questions.length;
+
+    preview.value = source;
+    summary.textContent =
+      `${payload.questions.length} question${payload.questions.length === 1 ? "" : "s"} ready · ${fileName}`;
+    resultBox.classList.remove("hidden");
+    status.textContent = "Script generated. Copy it directly or download the .gs file.";
+
+    showMessage("Google Forms script generated.", "success");
+  } catch (err) {
+    console.error(err);
+    resetGoogleFormsGeneratedScript();
+    status.textContent = `Generation failed: ${err?.message || "Unknown error"}`;
+  }
+}
+
+async function writeTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const helper = document.createElement("textarea");
+  helper.value = text;
+  helper.setAttribute("readonly", "");
+  helper.style.position = "fixed";
+  helper.style.opacity = "0";
+  helper.style.pointerEvents = "none";
+  document.body.appendChild(helper);
+  helper.select();
+  helper.setSelectionRange(0, helper.value.length);
+
+  const copied = document.execCommand("copy");
+  helper.remove();
+
+  if (!copied) throw new Error("Copy was blocked by the browser.");
+}
+
+async function copyGeneratedGoogleFormsScript() {
+  const source = state.generatedGoogleFormsScript;
+  const status = document.getElementById("googleFormsExportStatus");
+
+  if (!source) {
+    status.textContent = "Generate the Google Forms script first.";
+    return;
+  }
+
+  try {
+    await writeTextToClipboard(source);
+    status.textContent =
+      `Copied ${state.generatedGoogleFormsQuestionCount} question${state.generatedGoogleFormsQuestionCount === 1 ? "" : "s"} as Google Apps Script.`;
+    showMessage("Google Forms script copied.", "success");
+  } catch (err) {
+    console.error(err);
+    status.textContent = `Copy failed: ${err?.message || "Unknown error"}`;
+  }
+}
+
+function downloadGeneratedGoogleFormsScript() {
+  const source = state.generatedGoogleFormsScript;
+  const status = document.getElementById("googleFormsExportStatus");
+
+  if (!source) {
+    status.textContent = "Generate the Google Forms script first.";
+    return;
+  }
+
+  try {
     const blob = new Blob([source], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `${safeFileName(payload.title)}.gs`;
+    link.download = state.generatedGoogleFormsFileName || "flashcards-quiz.gs";
 
     document.body.appendChild(link);
     link.click();
@@ -3450,16 +3541,11 @@ function exportQuizToGoogleForms() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 
     status.textContent =
-      `Downloaded ${payload.questions.length} questions as a Google Apps Script file.`;
-
-    resultBox.innerHTML =
-      "<strong>Script downloaded.</strong> Open Google Apps Script, paste the .gs file, and run createFlashcardsQuiz().";
-    resultBox.classList.remove("hidden");
-
+      `Downloaded ${state.generatedGoogleFormsQuestionCount} question${state.generatedGoogleFormsQuestionCount === 1 ? "" : "s"} as a Google Apps Script file.`;
     showMessage("Google Forms .gs script downloaded.", "success");
   } catch (err) {
     console.error(err);
-    status.textContent = `Export failed: ${err?.message || "Unknown error"}`;
+    status.textContent = `Download failed: ${err?.message || "Unknown error"}`;
   }
 }
 
@@ -4001,6 +4087,7 @@ document.addEventListener("click", async e => {
     const setting = group.dataset.quizSetting;
 
     state.quizConfig[setting] = quizSettingBtn.dataset.value;
+    resetGoogleFormsGeneratedScript();
 
     group.querySelectorAll(".quiz-setting-btn").forEach(btn => {
       btn.classList.toggle("active", btn === quizSettingBtn);
@@ -4282,9 +4369,12 @@ document.getElementById("deckRows").addEventListener("change", e => {
 document.getElementById("studyClassBtn").addEventListener("click", () => chooseStudyOrder("class"));
 document.getElementById("quizClassBtn").addEventListener("click", () => chooseQuizSetup("class"));
 document.getElementById("startQuizBtn").addEventListener("click", startConfiguredQuiz);
-document.getElementById("exportGoogleFormsBtn").addEventListener("click", exportQuizToGoogleForms);
+document.getElementById("exportGoogleFormsBtn").addEventListener("click", generateQuizGoogleFormsScript);
+document.getElementById("copyGoogleFormsScriptBtn").addEventListener("click", copyGeneratedGoogleFormsScript);
+document.getElementById("downloadGoogleFormsScriptBtn").addEventListener("click", downloadGeneratedGoogleFormsScript);
 document.getElementById("quizTemplateInput").addEventListener("input", e => {
   state.quizConfig.template = e.target.value;
+  resetGoogleFormsGeneratedScript();
 });
 document.getElementById("quizQuestionCountInput").addEventListener("input", e => {
   if (!state.pendingQuiz) return;
@@ -4295,6 +4385,7 @@ document.getElementById("quizQuestionCountInput").addEventListener("input", e =>
   const value = Number(e.target.value);
   if (Number.isFinite(value) && value > 0) {
     state.quizConfig.questionCount = Math.min(availableCount, Math.floor(value));
+    resetGoogleFormsGeneratedScript();
   }
 });
 document.getElementById("quizUseAllQuestionsBtn").addEventListener("click", () => {
@@ -4305,16 +4396,19 @@ document.getElementById("quizUseAllQuestionsBtn").addEventListener("click", () =
   ).length;
   state.quizConfig.questionCount = availableCount;
   document.getElementById("quizQuestionCountInput").value = String(availableCount);
+  resetGoogleFormsGeneratedScript();
 });
 
 document.getElementById("quizManualSelectAllBtn").addEventListener("click", () => {
   state.quizConfig.manualCardKeys = availableQuizCards().map(quizCardKey);
   renderManualQuizPicker();
+  resetGoogleFormsGeneratedScript();
 });
 
 document.getElementById("quizManualClearBtn").addEventListener("click", () => {
   state.quizConfig.manualCardKeys = [];
   renderManualQuizPicker();
+  resetGoogleFormsGeneratedScript();
 });
 
 document.getElementById("quizManualCardList").addEventListener("change", e => {
@@ -4330,11 +4424,13 @@ document.getElementById("quizManualCardList").addEventListener("change", e => {
   state.quizConfig.manualCardKeys = [...selected];
   document.getElementById("quizManualSelectionCount").textContent =
     `${selected.size} of ${availableQuizCards().length} selected`;
+  resetGoogleFormsGeneratedScript();
 });
 
 document.getElementById("quizPointsInput").addEventListener("input", e => {
   const value = Math.max(0, Math.min(100, Number(e.target.value || 1)));
   state.quizConfig.points = value;
+  resetGoogleFormsGeneratedScript();
 });
 document.getElementById("quizCheckBtn").addEventListener("click", () => {
   answerQuizQuestion(document.getElementById("quizTypingInput").value);

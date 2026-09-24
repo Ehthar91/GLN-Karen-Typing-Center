@@ -2732,6 +2732,95 @@ body.dark .google-forms-result a {
   color: #a4e5bd;
 }
 
+.google-forms-generated-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.google-forms-generated-head > div:first-child {
+  min-width: 0;
+}
+
+.google-forms-generated-head strong {
+  margin: 0;
+  color: inherit;
+}
+
+.google-forms-generated-head small {
+  display: block;
+  margin-top: 3px;
+  color: inherit;
+  opacity: .82;
+}
+
+.google-forms-generated-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.google-forms-generated-actions .secondary-btn,
+.google-forms-download-btn {
+  min-height: 38px;
+  padding: 0 13px;
+  border-radius: 9px;
+  font-weight: 850;
+}
+
+.google-forms-download-btn {
+  border: 1px solid #3e9967;
+  background: #45a66f;
+  color: #fff;
+}
+
+.google-forms-download-btn:hover {
+  background: #3d9664;
+}
+
+.google-forms-script-preview {
+  width: 100%;
+  min-height: 210px;
+  max-height: 330px;
+  margin-top: 12px;
+  padding: 12px 13px;
+  resize: vertical;
+  border: 1px solid rgba(36, 107, 68, .22);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .72);
+  color: #173f2a;
+  font: 12px/1.48 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  white-space: pre;
+  tab-size: 2;
+}
+
+body.dark .google-forms-script-preview {
+  border-color: rgba(164, 229, 189, .2);
+  background: rgba(8, 24, 16, .5);
+  color: #d8f4e2;
+}
+
+@media (max-width: 620px) {
+  .google-forms-generated-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .google-forms-generated-actions {
+    width: 100%;
+  }
+
+  .google-forms-generated-actions button {
+    flex: 1 1 140px;
+  }
+
+  .google-forms-script-preview {
+    min-height: 170px;
+  }
+}
+
 @media (max-width: 620px) {
   .quiz-export-row {
     grid-template-columns: 1fr;
