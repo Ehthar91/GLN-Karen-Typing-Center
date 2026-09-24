@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-quiz-manual-pick-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-deck-list-1" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
   <style>
     html.flashcards-embedded .creator-credit { display: none !important; }
@@ -748,6 +748,29 @@
       </div>
     </div>
 
+    <div id="deckListModal" class="modal deck-list-modal hidden">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">Deck list</span>
+          <h2 id="deckListTitle">Deck</h2>
+          <small id="deckListCount" class="deck-list-count">0 cards</small>
+        </div>
+        <button class="modal-close" data-close-modal aria-label="Close deck list">×</button>
+      </div>
+
+      <div class="deck-list-heading" aria-hidden="true">
+        <span>#</span>
+        <span>Front</span>
+        <span></span>
+        <span>Back</span>
+      </div>
+      <div id="deckListRows" class="deck-list-rows"></div>
+
+      <div class="modal-actions">
+        <button class="secondary-btn" data-close-modal type="button">Close</button>
+      </div>
+    </div>
+
     <div id="archiveModal" class="modal archive-modal hidden">
       <div class="modal-head">
         <div>
@@ -902,6 +925,6 @@
       closeButton.addEventListener('click', () => badge.classList.add('is-dismissed'));
     })();
   </script>
-  <script type="module" src="flashcards-app.js?v=20260923-quiz-manual-pick-1"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-deck-list-1"></script>
 </body>
 </html>

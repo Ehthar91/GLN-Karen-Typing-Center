@@ -1384,6 +1384,7 @@ function renderDeckRows() {
             </div>
           ` : ""}
           <div class="deck-primary-actions">
+            <button class="deck-list-btn" data-view-deck-list="${deck.id}" title="View all cards">☷ List</button>
             <button class="deck-quiz" data-quiz-deck="${deck.id}" title="Quiz">Quiz ?</button>
             <button class="deck-play" data-study-deck="${deck.id}" title="Study">▶</button>
           </div>
@@ -1393,6 +1394,40 @@ function renderDeckRows() {
   }).join("");
 
   updateDeckStudySelectionUi();
+}
+
+function openDeckList(deckId) {
+  const deck = state.decks.find(item => item.id === deckId);
+  if (!deck) return;
+
+  const cards = Array.isArray(deck.cards) ? deck.cards : [];
+  const title = document.getElementById("deckListTitle");
+  const count = document.getElementById("deckListCount");
+  const host = document.getElementById("deckListRows");
+
+  if (!title || !count || !host) return;
+
+  title.textContent = deck.name || "Deck";
+  count.textContent = `${cards.length} card${cards.length === 1 ? "" : "s"}`;
+
+  host.innerHTML = cards.length
+    ? cards.map((card, index) => `
+        <div class="deck-list-row">
+          <span class="deck-list-number">${index + 1}</span>
+          <div class="deck-list-side">
+            <small>Front</small>
+            <strong>${escapeHtml(card.front ?? "")}</strong>
+          </div>
+          <span class="deck-list-arrow" aria-hidden="true">→</span>
+          <div class="deck-list-side">
+            <small>Back</small>
+            <strong>${escapeHtml(card.back ?? "")}</strong>
+          </div>
+        </div>
+      `).join("")
+    : '<div class="deck-list-empty">This deck does not contain any cards yet.</div>';
+
+  openModal("deckListModal");
 }
 
 function studyableDecks() {
@@ -3943,6 +3978,11 @@ document.addEventListener("click", async e => {
   const toggleDeckVisibilityBtn = e.target.closest("[data-toggle-deck-visibility]");
   if (toggleDeckVisibilityBtn) {
     return toggleDeckVisibility(toggleDeckVisibilityBtn.dataset.toggleDeckVisibility);
+  }
+
+  const viewDeckList = e.target.closest("[data-view-deck-list]");
+  if (viewDeckList) {
+    return openDeckList(viewDeckList.dataset.viewDeckList);
   }
 
   const studyDeck = e.target.closest("[data-study-deck]");
