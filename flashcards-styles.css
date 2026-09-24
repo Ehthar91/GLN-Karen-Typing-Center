@@ -4568,3 +4568,76 @@ body.guest-study-mode .sidebar-title-row h3::after {
     flex: 1 1 150px;
   }
 }
+
+/* =========================================================
+   DECK DRAG REORDER
+   Owners can drag deck cards to save a class-wide deck order.
+   ========================================================= */
+.deck-reorder-start {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deck-drag-handle {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--app-line);
+  border-radius: 9px;
+  background: var(--panel-soft);
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  opacity: .72;
+  transition: opacity .15s ease, background .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.deck-row:hover .deck-drag-handle,
+.deck-drag-handle:focus-visible {
+  opacity: 1;
+  border-color: rgba(78,185,223,.55);
+  background: var(--soft-blue);
+}
+
+.deck-drag-handle:active {
+  cursor: grabbing;
+  transform: scale(.96);
+}
+
+.deck-row.deck-dragging {
+  opacity: .48;
+  transform: scale(.985);
+}
+
+.deck-row.deck-drag-over-before,
+.deck-row.deck-drag-over-after {
+  overflow: visible;
+}
+
+.deck-row.deck-drag-over-before::after,
+.deck-row.deck-drag-over-after::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 4px;
+  border-radius: 999px;
+  background: #55c7e8;
+  box-shadow: 0 0 0 3px rgba(85,199,232,.16);
+  z-index: 5;
+}
+
+.deck-row.deck-drag-over-before::after { top: -10px; }
+.deck-row.deck-drag-over-after::after { bottom: -10px; }
+
+body.guest-study-mode .deck-drag-handle {
+  display: none !important;
+}

@@ -53,6 +53,7 @@ const state = {
   sidebarMenuClassId: null,
   sidebarShareClassId: null,
   sidebarDraggedClassId: null,
+  draggedDeckId: null,
   selectedClass: null,
   learners: [],
   selectedLearnerIds: new Set(),
@@ -1464,6 +1465,64 @@ function renderClass() {
   document.getElementById("tabLearnerCount").textContent = owner ? "(…)" : "";
 }
 
+async function saveDeckOrder(deckIds) {
+  if (!isOwner() || !state.selectedClass) return;
+
+  const byId = new Map(state.decks.map(deck => [deck.id, deck]));
+  const ordered = deckIds.map(id => byId.get(id)).filter(Boolean);
+
+  // Keep any decks that were not present in deckIds at the end rather than
+  // accidentally dropping them from the local view.
+  for (const deck of state.decks) {
+    if (!deckIds.includes(deck.id)) ordered.push(deck);
+  }
+
+  const changed = ordered.filter((deck, index) => Number(deck.order ?? -1) !== index);
+  state.decks = ordered.map((deck, index) => ({ ...deck, order: index }));
+  renderDeckRows();
+
+  if (!changed.length) return;
+
+  try {
+    const batch = writeBatch(state.db);
+    state.decks.forEach((deck, index) => {
+      batch.update(
+        doc(state.db, "classes", state.selectedClass.id, "decks", deck.id),
+        { order: index, updatedAt: serverTimestamp() }
+      );
+    });
+    await batch.commit();
+    showMessage("Deck order saved.", "success", 2200);
+  } catch (err) {
+    console.error(err);
+    showMessage("Could not save the deck order.", "error");
+    await loadDecks();
+    renderDeckRows();
+  }
+}
+
+async function reorderDeck(draggedId, targetId, placeAfter = false) {
+  if (!isOwner() || !draggedId || !targetId || draggedId === targetId) return;
+
+  const ids = state.decks.map(deck => deck.id);
+  const from = ids.indexOf(draggedId);
+  if (from < 0) return;
+
+  ids.splice(from, 1);
+  let targetIndex = ids.indexOf(targetId);
+  if (targetIndex < 0) return;
+  if (placeAfter) targetIndex += 1;
+  ids.splice(targetIndex, 0, draggedId);
+
+  await saveDeckOrder(ids);
+}
+
+function clearDeckDragMarkers() {
+  document.querySelectorAll(".deck-row").forEach(row => {
+    row.classList.remove("deck-dragging", "deck-drag-over-before", "deck-drag-over-after");
+  });
+}
+
 function renderDeckRows() {
   const host = document.getElementById("deckRows");
   const owner = isOwner();
@@ -1491,9 +1550,21 @@ function renderDeckRows() {
     const uniquePct = total ? Math.min(100, Math.round((s.unique / total) * 100)) : 0;
 
     return `
-      <article class="deck-row">
+      <article class="deck-row" data-deck-drop-row="${deck.id}">
         <div class="deck-percent">
-          <span class="check-circle">✓</span>
+          <div class="deck-reorder-start">
+            ${owner ? `
+              <button
+                class="deck-drag-handle"
+                data-deck-drag-handle="${deck.id}"
+                draggable="true"
+                type="button"
+                title="Drag to rearrange ${escapeHtml(deck.name)}"
+                aria-label="Drag to rearrange ${escapeHtml(deck.name)}"
+              >⠿</button>
+            ` : ""}
+            <span class="check-circle">✓</span>
+          </div>
           <strong>${s.mastery}%</strong>
         </div>
 
@@ -4341,6 +4412,21 @@ document.addEventListener("change", e => {
 });
 
 document.addEventListener("dragstart", e => {
+  const deckHandle = e.target.closest("[data-deck-drag-handle]");
+  if (deckHandle && isOwner()) {
+    const deckId = deckHandle.dataset.deckDragHandle;
+    state.draggedDeckId = deckId;
+
+    const deckRow = deckHandle.closest("[data-deck-drop-row]");
+    deckRow?.classList.add("deck-dragging");
+
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", deckId);
+    }
+    return;
+  }
+
   const handle = e.target.closest("[data-sidebar-drag-handle]");
   if (!handle) return;
 
@@ -4358,6 +4444,26 @@ document.addEventListener("dragstart", e => {
 });
 
 document.addEventListener("dragover", e => {
+  const deckRow = e.target.closest("[data-deck-drop-row]");
+  if (deckRow && state.draggedDeckId) {
+    if (deckRow.dataset.deckDropRow === state.draggedDeckId) return;
+
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+    document.querySelectorAll(".deck-row").forEach(other => {
+      if (other !== deckRow) {
+        other.classList.remove("deck-drag-over-before", "deck-drag-over-after");
+      }
+    });
+
+    const rect = deckRow.getBoundingClientRect();
+    const after = e.clientY > rect.top + rect.height / 2;
+    deckRow.classList.toggle("deck-drag-over-before", !after);
+    deckRow.classList.toggle("deck-drag-over-after", after);
+    return;
+  }
+
   const row = e.target.closest("[data-sidebar-drop-row]");
   if (!row || !state.sidebarDraggedClassId) return;
   if (row.dataset.sidebarDropRow === state.sidebarDraggedClassId) return;
@@ -4376,6 +4482,14 @@ document.addEventListener("dragover", e => {
 });
 
 document.addEventListener("dragleave", e => {
+  const deckRow = e.target.closest("[data-deck-drop-row]");
+  if (deckRow && state.draggedDeckId) {
+    const related = e.relatedTarget;
+    if (related && deckRow.contains(related)) return;
+    deckRow.classList.remove("deck-drag-over-before", "deck-drag-over-after");
+    return;
+  }
+
   const row = e.target.closest("[data-sidebar-drop-row]");
   if (!row) return;
   const related = e.relatedTarget;
@@ -4384,6 +4498,20 @@ document.addEventListener("dragleave", e => {
 });
 
 document.addEventListener("drop", async e => {
+  const deckRow = e.target.closest("[data-deck-drop-row]");
+  if (deckRow && state.draggedDeckId) {
+    e.preventDefault();
+    const draggedId = state.draggedDeckId;
+    const targetId = deckRow.dataset.deckDropRow;
+    const rect = deckRow.getBoundingClientRect();
+    const after = e.clientY > rect.top + rect.height / 2;
+
+    clearDeckDragMarkers();
+    state.draggedDeckId = null;
+    await reorderDeck(draggedId, targetId, after);
+    return;
+  }
+
   const row = e.target.closest("[data-sidebar-drop-row]");
   if (!row || !state.sidebarDraggedClassId) return;
 
@@ -4400,7 +4528,9 @@ document.addEventListener("drop", async e => {
 
 document.addEventListener("dragend", () => {
   clearSidebarDragMarkers();
+  clearDeckDragMarkers();
   state.sidebarDraggedClassId = null;
+  state.draggedDeckId = null;
 });
 
 document.addEventListener("keydown", e => {
