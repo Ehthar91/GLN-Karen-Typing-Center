@@ -930,6 +930,11 @@ function renderClass() {
   document.getElementById("shareClassBtn").classList.toggle("hidden", !owner);
   document.getElementById("linkPreviewAction").classList.toggle("hidden", !owner);
   document.getElementById("classroomShareAction").classList.toggle("hidden", !owner || state.selectedClass.published === false);
+  const shareTools = document.getElementById("classShareTools");
+  if (shareTools) {
+    shareTools.classList.toggle("hidden", !owner);
+    if (!owner) shareTools.removeAttribute("open");
+  }
   document.getElementById("ownerDeckTools").classList.toggle("hidden", !owner);
   document.getElementById("editIntroBtn").classList.toggle("hidden", !owner);
   document.getElementById("refreshLearnersBtn").classList.toggle("hidden", !owner);

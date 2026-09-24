@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-pasted-link-title-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-compact-header-1" />
 </head>
 <body>
   <div id="globalMessage" class="global-message hidden" role="status"></div>
@@ -155,43 +155,58 @@
             </div>
 
             <div class="class-actions">
-              <button id="studyClassBtn" class="study-main-btn">
-                STUDY <span>▶</span>
-              </button>
-              <button id="quizClassBtn" class="quiz-main-btn">
-                QUIZ <span>?</span>
-              </button>
-              <div id="linkPreviewAction" class="link-preview-action hidden" aria-label="Customize how the pasted class link appears">
-                <div class="link-preview-heading">
-                  <span>LINK DISPLAY NAME</span>
-                  <small>Changes the name= value in the copied class link. For example, type Grade 6 Vocabs and Copy Link will create a URL ending in &name=Grade+6+Vocabs. This does not rename the class.</small>
-                </div>
-                <div class="link-preview-title-row">
-                  <label class="sr-only" for="linkPreviewTitleInput">Link display name</label>
-                  <input id="linkPreviewTitleInput" class="link-preview-title-input" type="text" maxlength="120" autocomplete="off" />
-                  <button id="linkPreviewUseClassNameBtn" class="link-preview-title-btn" type="button">Use Class Name</button>
-                  <button id="linkPreviewSaveTitleBtn" class="link-preview-title-btn" type="button">Save</button>
-                  <button id="shareClassBtn" class="share-btn hidden" type="button">⌯ COPY LINK</button>
-                </div>
-                <small id="linkPreviewTitleStatus">Using the class name automatically. Type a different name before Copy Link if you want a shorter display name.</small>
+              <div class="class-primary-actions">
+                <button id="studyClassBtn" class="study-main-btn">
+                  STUDY <span>▶</span>
+                </button>
+                <button id="quizClassBtn" class="quiz-main-btn">
+                  QUIZ <span>?</span>
+                </button>
+
+                <details id="classShareTools" class="class-share-tools hidden">
+                  <summary>
+                    <span class="class-share-icon" aria-hidden="true">↗</span>
+                    <span class="class-share-label">SHARE</span>
+                    <small>Link &amp; Google Classroom</small>
+                    <span class="class-share-chevron" aria-hidden="true">⌄</span>
+                  </summary>
+                  <div class="class-share-tools-panel">
+                    <div id="linkPreviewAction" class="link-preview-action hidden" aria-label="Customize how the pasted class link appears">
+                      <div class="link-preview-heading">
+                        <span>PASTED LINK NAME</span>
+                        <small>Controls the <strong>name=</strong> value in the copied class link. This does not rename the class.</small>
+                      </div>
+                      <div class="link-preview-title-row">
+                        <label class="sr-only" for="linkPreviewTitleInput">Link display name</label>
+                        <input id="linkPreviewTitleInput" class="link-preview-title-input" type="text" maxlength="120" autocomplete="off" />
+                        <button id="linkPreviewUseClassNameBtn" class="link-preview-title-btn" type="button">Use Class Name</button>
+                        <button id="linkPreviewSaveTitleBtn" class="link-preview-title-btn" type="button">Save</button>
+                        <button id="shareClassBtn" class="share-btn hidden" type="button">⌯ COPY LINK</button>
+                      </div>
+                      <small id="linkPreviewTitleStatus">Using the class name automatically. Type a different name before Copy Link if you want a shorter display name.</small>
+                    </div>
+
+                    <div id="classroomShareAction" class="classroom-share-action hidden" aria-label="Share this flashcard class to Google Classroom">
+                      <div class="classroom-share-heading">
+                        <span>GOOGLE CLASSROOM POST TITLE</span>
+                        <small>Optional title for the Google Classroom Share button. Separate from the pasted-link name.</small>
+                      </div>
+                      <div class="classroom-share-title-row">
+                        <label class="sr-only" for="classroomShareTitleInput">Google Classroom share title</label>
+                        <input id="classroomShareTitleInput" class="classroom-share-title-input" type="text" maxlength="120" autocomplete="off" />
+                        <button id="classroomUseClassNameBtn" class="classroom-share-title-btn" type="button">Use Class Name</button>
+                        <button id="classroomSaveShareTitleBtn" class="classroom-share-title-btn save" type="button">Save Title</button>
+                      </div>
+                      <div class="classroom-share-footer">
+                        <small id="classroomShareTitleStatus">This only changes the Google Classroom share title.</small>
+                        <div id="classroomShareWidget" aria-label="Share to Google Classroom"></div>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+
+                <button id="removeSharedClassBtn" class="quiet-btn hidden">Remove from My Flashcards</button>
               </div>
-              <div id="classroomShareAction" class="classroom-share-action hidden" aria-label="Share this flashcard class to Google Classroom">
-                <div class="classroom-share-heading">
-                  <span>GOOGLE CLASSROOM POST TITLE</span>
-                  <small>Optional title used by the Google Classroom Share button. This is separate from the pasted-link title above.</small>
-                </div>
-                <div class="classroom-share-title-row">
-                  <label class="sr-only" for="classroomShareTitleInput">Google Classroom share title</label>
-                  <input id="classroomShareTitleInput" class="classroom-share-title-input" type="text" maxlength="120" autocomplete="off" />
-                  <button id="classroomUseClassNameBtn" class="classroom-share-title-btn" type="button">Use Class Name</button>
-                  <button id="classroomSaveShareTitleBtn" class="classroom-share-title-btn save" type="button">Save Title</button>
-                </div>
-                <div class="classroom-share-footer">
-                  <small id="classroomShareTitleStatus">This only changes the Google Classroom share title.</small>
-                  <div id="classroomShareWidget" aria-label="Share to Google Classroom"></div>
-                </div>
-              </div>
-              <button id="removeSharedClassBtn" class="quiet-btn hidden">Remove from My Flashcards</button>
             </div>
           </div>
 
@@ -736,6 +751,6 @@
     </div>
   </div>
 
-  <script type="module" src="flashcards-app.js?v=20260923-pasted-link-title-1"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-compact-header-1"></script>
 </body>
 </html>

@@ -3058,3 +3058,193 @@ body.dark .link-preview-title-btn { color: #cceefa; }
   .link-preview-title-btn,
   .link-preview-action .share-btn { width: 100%; }
 }
+
+
+/* =========================================================
+   COMPACT CLASS HEADER + ORGANIZED SHARE TOOLS
+   ========================================================= */
+.class-header {
+  margin-top: 18px;
+  padding: 18px 22px;
+  grid-template-columns: 68px minmax(0,1fr) 96px;
+  gap: 18px;
+  align-items: center;
+}
+.class-icon {
+  width: 64px;
+  height: 64px;
+  transform: scale(.72);
+  transform-origin: center;
+}
+.class-title-line h1 {
+  font-size: clamp(1.65rem, 2.5vw, 2.15rem);
+}
+.class-meta {
+  margin-top: 6px;
+  gap: 8px;
+  font-size: .76rem;
+}
+.class-meta span {
+  padding: 4px 8px;
+}
+.class-actions {
+  margin-top: 12px;
+  display: block;
+}
+.class-primary-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.study-main-btn {
+  min-width: 142px;
+  padding: 10px 18px;
+}
+.quiz-main-btn {
+  min-width: 110px;
+  padding: 10px 15px;
+}
+.mastery-ring {
+  width: 86px;
+  height: 86px;
+}
+.mastery-ring::before {
+  width: 66px;
+  height: 66px;
+}
+.mastery-ring strong {
+  font-size: 1.05rem;
+}
+.mastery-ring span {
+  font-size: .61rem;
+}
+.class-share-tools {
+  position: relative;
+  min-width: 210px;
+}
+.class-share-tools[open] {
+  flex-basis: 100%;
+  width: 100%;
+}
+.class-share-tools.hidden { display: none; }
+.class-share-tools > summary {
+  list-style: none;
+  width: fit-content;
+  min-width: 210px;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--blue) 30%, var(--line));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--soft-blue) 45%, var(--card));
+  color: var(--blue-dark);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+.class-share-tools > summary::-webkit-details-marker { display: none; }
+.class-share-tools > summary:hover {
+  border-color: color-mix(in srgb, var(--blue) 60%, var(--line));
+}
+.class-share-icon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--blue);
+  color: #fff;
+  font-size: .82rem;
+}
+.class-share-label { font-size: .78rem; }
+.class-share-tools > summary small {
+  color: var(--muted);
+  font-size: .66rem;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+.class-share-chevron {
+  margin-left: auto;
+  transition: transform .18s ease;
+}
+.class-share-tools[open] .class-share-chevron { transform: rotate(180deg); }
+.class-share-tools-panel {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: minmax(0,1.18fr) minmax(0,.82fr);
+  gap: 10px;
+  border: 1px solid var(--app-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card-bg) 96%, transparent);
+  box-shadow: 0 14px 34px rgba(24,50,74,.12);
+}
+.class-share-tools .link-preview-action,
+.class-share-tools .classroom-share-action {
+  width: 100%;
+  align-self: stretch;
+  box-shadow: none;
+}
+.class-share-tools .link-preview-heading,
+.class-share-tools .classroom-share-heading {
+  align-items: flex-start;
+}
+.class-share-tools .link-preview-heading small,
+.class-share-tools .classroom-share-heading small {
+  max-width: 62%;
+  text-align: right;
+}
+
+@media (max-width: 1100px) {
+  .class-share-tools-panel {
+    grid-template-columns: 1fr;
+  }
+  .class-share-tools .link-preview-heading small,
+  .class-share-tools .classroom-share-heading small {
+    max-width: none;
+    text-align: left;
+  }
+}
+
+@media (max-width: 900px) {
+  .class-header {
+    grid-template-columns: 64px minmax(0,1fr);
+    padding: 16px 18px;
+  }
+  .mastery-ring-wrap {
+    grid-column: 2;
+    justify-content: end;
+    margin-top: -56px;
+  }
+}
+
+@media (max-width: 760px) {
+  .class-header {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .class-icon { display: none; }
+  .mastery-ring-wrap {
+    grid-column: 1;
+    justify-content: start;
+    margin-top: 0;
+  }
+  .class-share-tools { width: 100%; }
+  .class-share-tools > summary { width: 100%; min-width: 0; }
+  .class-share-tools-panel { width: 100%; }
+}
+
+@media (max-width: 560px) {
+  .class-primary-actions > button,
+  .class-share-tools {
+    width: 100%;
+  }
+  .study-main-btn,
+  .quiz-main-btn { min-width: 0; }
+  .class-share-tools > summary small { display: none; }
+}
