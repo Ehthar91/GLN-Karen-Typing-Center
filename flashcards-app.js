@@ -76,7 +76,9 @@ const state = {
     direction: "frontBack",
     answerMode: "multiple",
     order: "progressive",
+    inclusionMode: "count",
     questionCount: 0,
+    manualCardKeys: [],
     points: 1
   },
   quizQuestions: [],
@@ -2869,7 +2871,9 @@ function chooseQuizSetup(scope, deckId = null) {
     direction: "frontBack",
     answerMode: "multiple",
     order: "progressive",
+    inclusionMode: "count",
     questionCount: availableQuestionCount,
+    manualCardKeys: [],
     points: 1
   };
 
@@ -2894,6 +2898,8 @@ function chooseQuizSetup(scope, deckId = null) {
   document.getElementById("quizQuestionCountHelp").textContent =
     `${availableQuestionCount} card${availableQuestionCount === 1 ? "" : "s"} available. ` +
     `Progressive uses the first questions; Random chooses from across the set.`;
+
+  syncQuizInclusionUi();
 
   document.getElementById("quizPointsInput").value = state.quizConfig.points;
   document.getElementById("exportGoogleFormsBtn").classList.toggle("hidden", !isOwner());
@@ -2934,6 +2940,78 @@ function collectQuizCards(scope, deckId = null) {
   return cards;
 }
 
+function quizCardKey(card) {
+  return `${card.deckId}::${card.id}`;
+}
+
+function availableQuizCards() {
+  if (!state.pendingQuiz) return [];
+  return collectQuizCards(state.pendingQuiz.scope, state.pendingQuiz.deckId);
+}
+
+function normalizeManualQuizSelection() {
+  const available = availableQuizCards();
+  const validKeys = new Set(available.map(quizCardKey));
+  const current = Array.isArray(state.quizConfig.manualCardKeys)
+    ? state.quizConfig.manualCardKeys
+    : [];
+
+  state.quizConfig.manualCardKeys = current.filter(key => validKeys.has(key));
+}
+
+function ensureManualQuizSelection() {
+  normalizeManualQuizSelection();
+  if (state.quizConfig.manualCardKeys.length) return;
+
+  // Start with everything selected the first time Manual Pick is opened.
+  // This makes it quick to remove only a few cards, while Clear supports building from zero.
+  state.quizConfig.manualCardKeys = availableQuizCards().map(quizCardKey);
+}
+
+function renderManualQuizPicker() {
+  const list = document.getElementById("quizManualCardList");
+  const countEl = document.getElementById("quizManualSelectionCount");
+  if (!list || !countEl) return;
+
+  normalizeManualQuizSelection();
+  const selected = new Set(state.quizConfig.manualCardKeys || []);
+  const cards = availableQuizCards();
+
+  countEl.textContent = `${selected.size} of ${cards.length} selected`;
+
+  if (!cards.length) {
+    list.innerHTML = '<div class="quiz-manual-empty">No flashcards are available.</div>';
+    return;
+  }
+
+  list.innerHTML = cards.map((card, index) => {
+    const key = quizCardKey(card);
+    const checked = selected.has(key) ? "checked" : "";
+    return `
+      <label class="quiz-manual-card-row">
+        <input type="checkbox" data-quiz-manual-card="${escapeHtml(key)}" ${checked} />
+        <span class="quiz-manual-card-number">${index + 1}</span>
+        <span class="quiz-manual-card-copy">
+          <strong>${escapeHtml(card.front)}</strong>
+          <span>${escapeHtml(card.back)}</span>
+          <small>${escapeHtml(card.deckName || "Deck")}</small>
+        </span>
+      </label>
+    `;
+  }).join("");
+}
+
+function syncQuizInclusionUi() {
+  const manual = state.quizConfig.inclusionMode === "manual";
+  document.getElementById("quizCountModePanel")?.classList.toggle("hidden", manual);
+  document.getElementById("quizManualModePanel")?.classList.toggle("hidden", !manual);
+
+  if (manual) {
+    ensureManualQuizSelection();
+    renderManualQuizPicker();
+  }
+}
+
 function uniqueValues(values) {
   const seen = new Set();
   const result = [];
@@ -2965,16 +3043,24 @@ function buildMultipleChoiceOptions(card, direction, allCards) {
 
 function buildQuizQuestions(scope, deckId, config) {
   const allCards = collectQuizCards(scope, deckId);
-  let cards = config.order === "random"
-    ? shuffledCopy(allCards)
-    : [...allCards];
+  let cards;
 
-  const requestedCount = Number(config.questionCount);
-  const questionCount = Number.isFinite(requestedCount) && requestedCount > 0
-    ? Math.min(allCards.length, Math.floor(requestedCount))
-    : allCards.length;
+  if (config.inclusionMode === "manual") {
+    const selectedKeys = new Set(Array.isArray(config.manualCardKeys) ? config.manualCardKeys : []);
+    cards = allCards.filter(card => selectedKeys.has(quizCardKey(card)));
+    if (config.order === "random") cards = shuffledCopy(cards);
+  } else {
+    cards = config.order === "random"
+      ? shuffledCopy(allCards)
+      : [...allCards];
 
-  cards = cards.slice(0, questionCount);
+    const requestedCount = Number(config.questionCount);
+    const questionCount = Number.isFinite(requestedCount) && requestedCount > 0
+      ? Math.min(allCards.length, Math.floor(requestedCount))
+      : allCards.length;
+
+    cards = cards.slice(0, questionCount);
+  }
 
   return cards.map((card, index) => {
     const direction = config.direction === "mixed"
@@ -3021,12 +3107,17 @@ function syncQuizSetupInputs() {
   const availableCount = state.pendingQuiz
     ? collectQuizCards(state.pendingQuiz.scope, state.pendingQuiz.deckId).length
     : 0;
-  const rawQuestionCount = Number(document.getElementById("quizQuestionCountInput").value);
-  state.quizConfig.questionCount = availableCount
-    ? Math.max(1, Math.min(availableCount, Math.floor(rawQuestionCount || availableCount)))
-    : 0;
-  document.getElementById("quizQuestionCountInput").value =
-    String(state.quizConfig.questionCount || 1);
+
+  if (state.quizConfig.inclusionMode === "manual") {
+    normalizeManualQuizSelection();
+  } else {
+    const rawQuestionCount = Number(document.getElementById("quizQuestionCountInput").value);
+    state.quizConfig.questionCount = availableCount
+      ? Math.max(1, Math.min(availableCount, Math.floor(rawQuestionCount || availableCount)))
+      : 0;
+    document.getElementById("quizQuestionCountInput").value =
+      String(state.quizConfig.questionCount || 1);
+  }
 
   state.quizConfig.points = Math.max(
     0,
@@ -3047,6 +3138,11 @@ function validateQuizSetup() {
       showMessage('Custom questions must include {term}.', "error");
       return false;
     }
+  }
+
+  if (state.quizConfig.inclusionMode === "manual" && !state.quizConfig.manualCardKeys.length) {
+    showMessage("Select at least one flashcard for the quiz.", "error");
+    return false;
   }
 
   return true;
@@ -3879,6 +3975,10 @@ document.addEventListener("click", async e => {
       }
     }
 
+    if (setting === "inclusionMode") {
+      syncQuizInclusionUi();
+    }
+
     return;
   }
 
@@ -4166,6 +4266,32 @@ document.getElementById("quizUseAllQuestionsBtn").addEventListener("click", () =
   state.quizConfig.questionCount = availableCount;
   document.getElementById("quizQuestionCountInput").value = String(availableCount);
 });
+
+document.getElementById("quizManualSelectAllBtn").addEventListener("click", () => {
+  state.quizConfig.manualCardKeys = availableQuizCards().map(quizCardKey);
+  renderManualQuizPicker();
+});
+
+document.getElementById("quizManualClearBtn").addEventListener("click", () => {
+  state.quizConfig.manualCardKeys = [];
+  renderManualQuizPicker();
+});
+
+document.getElementById("quizManualCardList").addEventListener("change", e => {
+  const checkbox = e.target.closest("input[data-quiz-manual-card]");
+  if (!checkbox) return;
+
+  const selected = new Set(state.quizConfig.manualCardKeys || []);
+  const key = checkbox.dataset.quizManualCard;
+
+  if (checkbox.checked) selected.add(key);
+  else selected.delete(key);
+
+  state.quizConfig.manualCardKeys = [...selected];
+  document.getElementById("quizManualSelectionCount").textContent =
+    `${selected.size} of ${availableQuizCards().length} selected`;
+});
+
 document.getElementById("quizPointsInput").addEventListener("input", e => {
   const value = Math.max(0, Math.min(100, Number(e.target.value || 1)));
   state.quizConfig.points = value;
