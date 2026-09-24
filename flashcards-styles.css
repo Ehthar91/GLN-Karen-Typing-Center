@@ -3302,3 +3302,297 @@ body.dark .link-preview-title-btn { color: #cceefa; }
   .quiz-main-btn { min-width: 0; }
   .class-share-tools > summary small { display: none; }
 }
+
+/* =========================================================
+   SIDEBAR DRAG REORDER + THREE-DOT CLASS MENU
+   ========================================================= */
+
+/* Replace the previous arrow/archive control grid with a grab handle + menu. */
+.sidebar-class-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 30px;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 5px;
+  padding: 2px;
+  border-radius: 12px;
+  transition: background .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+
+.sidebar-class-row:hover,
+.sidebar-class-row.active {
+  background: rgba(255,255,255,.035);
+}
+
+.sidebar-class-row.dragging {
+  opacity: .48;
+}
+
+.sidebar-class-row.drag-over-before::before,
+.sidebar-class-row.drag-over-after::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  border-radius: 999px;
+  background: #55c7e8;
+  box-shadow: 0 0 0 2px rgba(85,199,232,.16);
+  z-index: 3;
+}
+
+.sidebar-class-row.drag-over-before::before { top: -3px; }
+.sidebar-class-row.drag-over-after::after { bottom: -3px; }
+
+.sidebar-class-drag-handle {
+  width: 24px;
+  min-width: 24px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255,255,255,.36);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: color .15s ease, background .15s ease, transform .15s ease;
+}
+
+.sidebar-class-row:hover .sidebar-class-drag-handle,
+.sidebar-class-row.active .sidebar-class-drag-handle,
+.sidebar-class-drag-handle:focus-visible {
+  color: rgba(255,255,255,.78);
+}
+
+.sidebar-class-drag-handle:hover {
+  background: rgba(78,185,223,.14);
+  color: #dff8ff;
+}
+
+.sidebar-class-drag-handle:active {
+  cursor: grabbing;
+  transform: scale(.96);
+}
+
+.sidebar-class-row .sidebar-class-item {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.sidebar-class-menu-btn {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(255,255,255,.52);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+  cursor: pointer;
+  opacity: .58;
+  transition: opacity .15s ease, background .15s ease, color .15s ease;
+}
+
+.sidebar-class-row:hover .sidebar-class-menu-btn,
+.sidebar-class-row.active .sidebar-class-menu-btn,
+.sidebar-class-menu-btn:focus-visible {
+  opacity: 1;
+}
+
+.sidebar-class-menu-btn:hover {
+  background: rgba(255,255,255,.11);
+  color: #fff;
+}
+
+.sidebar-class-menu {
+  position: fixed;
+  z-index: 1300;
+  width: 190px;
+  padding: 6px;
+  border: 1px solid rgba(17,46,72,.14);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(7,28,48,.24);
+}
+
+.sidebar-class-menu[hidden] { display: none !important; }
+
+.sidebar-class-menu button {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  display: grid;
+  grid-template-columns: 24px minmax(0,1fr);
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #173954;
+  text-align: left;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sidebar-class-menu button:hover,
+.sidebar-class-menu button:focus-visible {
+  background: #eef7fb;
+  outline: none;
+}
+
+.sidebar-class-menu button > span:first-child {
+  color: #329fc8;
+  text-align: center;
+  font-size: .95rem;
+}
+
+.sidebar-class-menu button.danger {
+  color: #a84149;
+}
+
+.sidebar-class-menu button.danger > span:first-child {
+  color: #c8545e;
+}
+
+.sidebar-class-menu button.danger:hover,
+.sidebar-class-menu button.danger:focus-visible {
+  background: #fff0f1;
+}
+
+.sidebar-class-menu-divider {
+  height: 1px;
+  margin: 5px 4px;
+  background: #e3ebf1;
+}
+
+body.dark .sidebar-class-menu {
+  border-color: rgba(255,255,255,.1);
+  background: #173149;
+  box-shadow: 0 16px 40px rgba(0,0,0,.38);
+}
+
+body.dark .sidebar-class-menu button { color: #e9f3f8; }
+body.dark .sidebar-class-menu button:hover,
+body.dark .sidebar-class-menu button:focus-visible { background: rgba(255,255,255,.08); }
+body.dark .sidebar-class-menu-divider { background: rgba(255,255,255,.1); }
+body.dark .sidebar-class-menu button.danger { color: #ffb1b8; }
+body.dark .sidebar-class-menu button.danger:hover,
+body.dark .sidebar-class-menu button.danger:focus-visible { background: rgba(200,84,94,.14); }
+
+/* The old per-class archive icon and arrow controls are intentionally gone.
+   Archive now lives in the class three-dot menu. */
+.sidebar-class-move-controls,
+.sidebar-class-move-btn,
+.sidebar-class-action-spacer,
+.sidebar-class-archive-btn {
+  display: none !important;
+}
+
+/* =========================================================
+   SIDEBAR SHARE POPUP
+   Mirrors the top Link Display Name controls in a compact modal.
+   ========================================================= */
+
+.sidebar-share-modal {
+  width: min(650px, 100%);
+}
+
+.sidebar-share-box {
+  margin: 18px 0 16px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, var(--line));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--soft-blue) 72%, var(--card));
+}
+
+.sidebar-share-box-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sidebar-share-box-heading > span {
+  color: var(--blue-dark);
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+
+.sidebar-share-box-heading small,
+#sidebarShareStatus {
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.sidebar-share-box > label {
+  margin: 3px 0 -2px;
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 850;
+}
+
+.sidebar-share-box input {
+  margin: 0;
+}
+
+.sidebar-share-name-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sidebar-share-name-actions .secondary-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: .76rem;
+}
+
+.sidebar-share-url-preview {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .72rem;
+  color: var(--muted) !important;
+}
+
+.sidebar-share-modal-actions {
+  justify-content: flex-end;
+}
+
+.sidebar-share-modal-actions .primary-btn {
+  min-width: 150px;
+}
+
+@media (max-width: 760px) {
+  .sidebar-class-drag-handle,
+  .sidebar-class-menu-btn { opacity: .9; }
+
+  .sidebar-share-box-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sidebar-share-name-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

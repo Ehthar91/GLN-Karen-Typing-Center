@@ -47,6 +47,9 @@ const state = {
   archivedDecks: [],
   sharedClasses: [],
   sidebarClassOrder: [],
+  sidebarMenuClassId: null,
+  sidebarShareClassId: null,
+  sidebarDraggedClassId: null,
   selectedClass: null,
   decks: [],
   progressMap: new Map(),
@@ -678,17 +681,8 @@ async function normalizeSidebarClassOrder() {
   }
 }
 
-async function moveSidebarClass(classId, direction) {
-  const ids = sidebarClassesInSavedOrder().map(c => c.id);
-  const from = ids.indexOf(classId);
-  if (from < 0) return;
-
-  const delta = direction === "up" ? -1 : direction === "down" ? 1 : 0;
-  const to = from + delta;
-  if (!delta || to < 0 || to >= ids.length) return;
-
-  [ids[from], ids[to]] = [ids[to], ids[from]];
-  state.sidebarClassOrder = ids;
+async function saveSidebarClassOrder(ids) {
+  state.sidebarClassOrder = [...ids];
   renderSidebar();
 
   try {
@@ -701,6 +695,258 @@ async function moveSidebarClass(classId, direction) {
     showMessage("Could not save the class order.", "error");
     await loadSidebarClassOrder();
     renderSidebar();
+  }
+}
+
+async function reorderSidebarClass(draggedId, targetId, placeAfter = false) {
+  if (!draggedId || !targetId || draggedId === targetId) return;
+
+  const ids = sidebarClassesInSavedOrder().map(c => c.id);
+  const from = ids.indexOf(draggedId);
+  if (from < 0) return;
+
+  ids.splice(from, 1);
+  let targetIndex = ids.indexOf(targetId);
+  if (targetIndex < 0) return;
+  if (placeAfter) targetIndex += 1;
+  ids.splice(targetIndex, 0, draggedId);
+
+  await saveSidebarClassOrder(ids);
+}
+
+function clearSidebarDragMarkers() {
+  document.querySelectorAll(".sidebar-class-row").forEach(row => {
+    row.classList.remove("dragging", "drag-over-before", "drag-over-after");
+  });
+}
+
+function sidebarClassById(classId) {
+  return [...state.ownedClasses, ...state.sharedClasses, ...state.archivedClasses]
+    .find(c => c.id === classId) || null;
+}
+
+function closeSidebarClassMenu() {
+  const menu = document.getElementById("sidebarClassMenu");
+  if (menu) menu.hidden = true;
+  state.sidebarMenuClassId = null;
+}
+
+function openSidebarClassMenu(button, classId) {
+  const menu = document.getElementById("sidebarClassMenu");
+  const c = sidebarClassById(classId);
+  if (!menu || !c) return;
+
+  state.sidebarMenuClassId = classId;
+  const owned = c.ownerId === state.user?.uid;
+
+  menu.querySelectorAll("[data-owner-only]").forEach(el => {
+    el.hidden = !owned;
+  });
+
+  menu.hidden = false;
+  menu.style.left = "0px";
+  menu.style.top = "0px";
+
+  const rect = button.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+  const gap = 6;
+  const left = Math.max(8, Math.min(
+    window.innerWidth - menuRect.width - 8,
+    rect.right - menuRect.width
+  ));
+  const topBelow = rect.bottom + gap;
+  const top = topBelow + menuRect.height <= window.innerHeight - 8
+    ? topBelow
+    : Math.max(8, rect.top - menuRect.height - gap);
+
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+}
+
+function sidebarShareClass() {
+  return sidebarClassById(state.sidebarShareClassId);
+}
+
+function syncSidebarShareModal() {
+  const c = sidebarShareClass();
+  if (!c) return;
+
+  const input = document.getElementById("sidebarShareLinkNameInput");
+  const className = document.getElementById("sidebarShareClassName");
+  const urlPreview = document.getElementById("sidebarShareUrlPreview");
+  const status = document.getElementById("sidebarShareStatus");
+  const saveBtn = document.getElementById("sidebarShareSaveNameBtn");
+  const copyBtn = document.getElementById("sidebarShareCopyLinkBtn");
+
+  const saved = savedLinkPreviewTitle(c);
+  const displayName = cleanShareTitle(input?.value || "") || saved || cleanShareTitle(c.name);
+
+  if (className) className.textContent = c.name || "Class";
+  if (urlPreview) urlPreview.value = buildClassShareLink(c.id, displayName);
+  if (saveBtn) saveBtn.hidden = c.ownerId !== state.user?.uid;
+
+  const ownerPrivate = c.ownerId === state.user?.uid && !c.published;
+  if (copyBtn) copyBtn.disabled = ownerPrivate;
+
+  if (status) {
+    status.textContent = ownerPrivate
+      ? "Class sharing is off. Open the class settings and enable sharing before copying a student link."
+      : c.ownerId === state.user?.uid
+        ? (saved
+            ? "This class has a saved custom link display name. You can change it or use the class name."
+            : "The copied link currently uses the class name. Type a different display name if you want.")
+        : "You can customize the display name for the link you copy. This does not rename the class.";
+  }
+}
+
+function openSidebarShareModal(classId) {
+  const c = sidebarClassById(classId);
+  if (!c) return;
+
+  state.sidebarShareClassId = classId;
+  const input = document.getElementById("sidebarShareLinkNameInput");
+  if (input) input.value = savedLinkPreviewTitle(c) || cleanShareTitle(c.name);
+  syncSidebarShareModal();
+  openModal("sidebarShareModal");
+  setTimeout(() => input?.focus(), 0);
+}
+
+async function saveSidebarShareLinkName() {
+  const c = sidebarShareClass();
+  if (!c || c.ownerId !== state.user?.uid) return;
+
+  const input = document.getElementById("sidebarShareLinkNameInput");
+  const title = cleanShareTitle(input?.value || "");
+  if (!title) {
+    showMessage("Enter a link display name.", "error");
+    input?.focus();
+    return;
+  }
+
+  try {
+    await updateDoc(doc(state.db, "classes", c.id), {
+      linkPreviewTitle: title,
+      updatedAt: serverTimestamp()
+    });
+    c.linkPreviewTitle = title;
+    if (state.selectedClass?.id === c.id) {
+      state.selectedClass = { ...state.selectedClass, linkPreviewTitle: title };
+      syncLinkPreviewTitleUi();
+    }
+    syncSidebarShareModal();
+    showMessage("Link display name saved.", "success");
+  } catch (err) {
+    handleFirebaseError(err, "Could not save the link display name.");
+  }
+}
+
+function useClassNameInSidebarShare() {
+  const c = sidebarShareClass();
+  if (!c) return;
+  const input = document.getElementById("sidebarShareLinkNameInput");
+  if (input) input.value = cleanShareTitle(c.name);
+  syncSidebarShareModal();
+}
+
+async function copySidebarShareLink() {
+  const c = sidebarShareClass();
+  if (!c) return;
+
+  const input = document.getElementById("sidebarShareLinkNameInput");
+  const displayName = cleanShareTitle(input?.value || "") || cleanShareTitle(c.name);
+  const link = buildClassShareLink(c.id, displayName);
+
+  try {
+    await navigator.clipboard.writeText(link);
+    showMessage(`Link copied as “${displayName}”.`, "success");
+    const preview = document.getElementById("sidebarShareUrlPreview");
+    if (preview) preview.value = link;
+  } catch (err) {
+    console.error(err);
+    showMessage("Could not copy the class link.", "error");
+  }
+}
+
+async function duplicateClassById(classId) {
+  const source = sidebarClassById(classId);
+  if (!source || source.ownerId !== state.user?.uid) return;
+
+  closeSidebarClassMenu();
+
+  try {
+    const sourceDeckSnap = await getDocs(collection(state.db, "classes", classId, "decks"));
+    const copyName = `${String(source.name || "Class").trim()} Copy`;
+
+    const newClassRef = await addDoc(collection(state.db, "classes"), {
+      name: copyName,
+      intro: source.intro || "",
+      ownerId: state.user.uid,
+      ownerName: state.user.displayName || state.user.email || "Owner",
+      published: false,
+      archived: false,
+      linkPreviewTitle: "",
+      classroomShareTitle: "",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    for (const deckDoc of sourceDeckSnap.docs) {
+      const data = deckDoc.data();
+      await addDoc(collection(state.db, "classes", newClassRef.id, "decks"), {
+        name: data.name || "Deck",
+        cards: Array.isArray(data.cards) ? data.cards : [],
+        published: data.published !== false,
+        archived: data.archived === true,
+        archivedPublished: data.archivedPublished ?? null,
+        order: Number(data.order ?? 0),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    await loadLibrary();
+    await openClass(newClassRef.id);
+    showMessage(`Duplicated as “${copyName}”. Sharing is off until you enable it.`, "success");
+  } catch (err) {
+    handleFirebaseError(err, "Could not duplicate the class.");
+  }
+}
+
+async function deleteOwnedClassPermanently(classId) {
+  const c = sidebarClassById(classId);
+  if (!c || c.ownerId !== state.user?.uid) return;
+
+  closeSidebarClassMenu();
+
+  const className = String(c.name || "Untitled Class");
+  const typedName = window.prompt(
+    `Permanently delete "${className}" and every deck and card inside it? This cannot be undone.\n\nType the class name exactly to confirm:`
+  );
+
+  if (typedName === null) return;
+  if (typedName.trim() !== className.trim()) {
+    showMessage("Class name did not match. Nothing was deleted.", "error");
+    return;
+  }
+
+  try {
+    const deckSnap = await getDocs(collection(state.db, "classes", classId, "decks"));
+    for (const deckSnapDoc of deckSnap.docs) {
+      await deleteDoc(deckSnapDoc.ref);
+    }
+    await deleteDoc(doc(state.db, "classes", classId));
+
+    const wasOpen = state.selectedClass?.id === classId;
+    if (wasOpen) {
+      state.selectedClass = null;
+      state.decks = [];
+    }
+
+    await loadLibrary();
+    if (wasOpen) showPanel("libraryView");
+    showMessage(`“${className}” was permanently deleted.`, "success");
+  } catch (err) {
+    handleFirebaseError(err, "Could not permanently delete the class.");
   }
 }
 
@@ -783,14 +1029,21 @@ function renderSidebar() {
     return;
   }
 
-  host.innerHTML = classes.map((c, index) => {
+  host.innerHTML = classes.map(c => {
     const active = state.selectedClass?.id === c.id;
     const owned = c.libraryType === "owned";
-    const isFirst = index === 0;
-    const isLast = index === classes.length - 1;
 
     return `
-      <div class="sidebar-class-row ${active ? "active" : ""}">
+      <div class="sidebar-class-row ${active ? "active" : ""}" data-sidebar-drop-row="${c.id}">
+        <button
+          class="sidebar-class-drag-handle"
+          data-sidebar-drag-handle="${c.id}"
+          draggable="true"
+          type="button"
+          title="Drag to rearrange ${escapeHtml(c.name)}"
+          aria-label="Drag to rearrange ${escapeHtml(c.name)}"
+        >⠿</button>
+
         <button
           class="sidebar-class-item ${active ? "active" : ""}"
           data-sidebar-class="${c.id}"
@@ -803,38 +1056,14 @@ function renderSidebar() {
           </span>
         </button>
 
-        <span class="sidebar-class-move-controls" role="group" aria-label="Reorder ${escapeHtml(c.name)}">
-          <button
-            class="sidebar-class-move-btn"
-            data-move-sidebar-class="${c.id}"
-            data-move-direction="up"
-            type="button"
-            title="Move ${escapeHtml(c.name)} up"
-            aria-label="Move ${escapeHtml(c.name)} up"
-            ${isFirst ? "disabled" : ""}
-          >▲</button>
-          <button
-            class="sidebar-class-move-btn"
-            data-move-sidebar-class="${c.id}"
-            data-move-direction="down"
-            type="button"
-            title="Move ${escapeHtml(c.name)} down"
-            aria-label="Move ${escapeHtml(c.name)} down"
-            ${isLast ? "disabled" : ""}
-          >▼</button>
-        </span>
-
-        ${owned ? `
-          <button
-            class="sidebar-class-archive-btn"
-            data-archive-sidebar-class="${c.id}"
-            type="button"
-            title="Archive class"
-            aria-label="Archive ${escapeHtml(c.name)}"
-          >
-            ▣
-          </button>
-        ` : `<span class="sidebar-class-action-spacer" aria-hidden="true"></span>`}
+        <button
+          class="sidebar-class-menu-btn"
+          data-sidebar-menu-button="${c.id}"
+          type="button"
+          title="Class options"
+          aria-label="Options for ${escapeHtml(c.name)}"
+          aria-haspopup="menu"
+        >•••</button>
       </div>
     `;
   }).join("");
@@ -1377,24 +1606,16 @@ async function deleteArchivedClassPermanently(classId) {
   );
 
   if (typedName === null) return;
-
   if (typedName.trim() !== className.trim()) {
     showMessage("Class name did not match. Nothing was deleted.", "error");
     return;
   }
 
   try {
-    // Firestore does not automatically delete subcollections when a parent
-    // document is removed, so delete every deck first. Cards are stored in
-    // their deck documents and are removed with those documents.
-    const deckSnap = await getDocs(
-      collection(state.db, "classes", classId, "decks")
-    );
-
+    const deckSnap = await getDocs(collection(state.db, "classes", classId, "decks"));
     for (const deckSnapDoc of deckSnap.docs) {
       await deleteDoc(deckSnapDoc.ref);
     }
-
     await deleteDoc(doc(state.db, "classes", classId));
 
     if (state.selectedClass?.id === classId) {
@@ -1405,7 +1626,6 @@ async function deleteArchivedClassPermanently(classId) {
     await loadLibrary();
     await loadArchivedDecks();
     renderArchiveManager();
-
     showMessage(`"${className}" was permanently deleted.`, "success");
   } catch (err) {
     handleFirebaseError(err, "Could not permanently delete the class.");
@@ -3167,22 +3387,38 @@ async function initializeFirebase() {
 }
 
 document.addEventListener("click", async e => {
-  const sidebarMoveClass = e.target.closest("[data-move-sidebar-class]");
-  if (sidebarMoveClass) {
+  const sidebarMenuButton = e.target.closest("[data-sidebar-menu-button]");
+  if (sidebarMenuButton) {
     e.preventDefault();
     e.stopPropagation();
-    if (sidebarMoveClass.disabled) return;
-    return moveSidebarClass(
-      sidebarMoveClass.dataset.moveSidebarClass,
-      sidebarMoveClass.dataset.moveDirection
-    );
+    const classId = sidebarMenuButton.dataset.sidebarMenuButton;
+    const menu = document.getElementById("sidebarClassMenu");
+    if (!menu.hidden && state.sidebarMenuClassId === classId) {
+      closeSidebarClassMenu();
+    } else {
+      openSidebarClassMenu(sidebarMenuButton, classId);
+    }
+    return;
   }
 
-  const sidebarArchiveClass = e.target.closest("[data-archive-sidebar-class]");
-  if (sidebarArchiveClass) {
+  const sidebarMenuAction = e.target.closest("[data-sidebar-menu-action]");
+  if (sidebarMenuAction) {
     e.preventDefault();
     e.stopPropagation();
-    return archiveClassById(sidebarArchiveClass.dataset.archiveSidebarClass);
+    const classId = state.sidebarMenuClassId;
+    const action = sidebarMenuAction.dataset.sidebarMenuAction;
+    closeSidebarClassMenu();
+    if (!classId) return;
+
+    if (action === "share") return openSidebarShareModal(classId);
+    if (action === "duplicate") return duplicateClassById(classId);
+    if (action === "archive") return archiveClassById(classId);
+    if (action === "delete") return deleteOwnedClassPermanently(classId);
+    return;
+  }
+
+  if (!e.target.closest("#sidebarClassMenu")) {
+    closeSidebarClassMenu();
   }
 
   const sidebarClass = e.target.closest("[data-sidebar-class]");
@@ -3285,6 +3521,76 @@ document.addEventListener("click", async e => {
   }
 });
 
+document.addEventListener("dragstart", e => {
+  const handle = e.target.closest("[data-sidebar-drag-handle]");
+  if (!handle) return;
+
+  const classId = handle.dataset.sidebarDragHandle;
+  state.sidebarDraggedClassId = classId;
+  closeSidebarClassMenu();
+
+  const row = handle.closest("[data-sidebar-drop-row]");
+  row?.classList.add("dragging");
+
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", classId);
+  }
+});
+
+document.addEventListener("dragover", e => {
+  const row = e.target.closest("[data-sidebar-drop-row]");
+  if (!row || !state.sidebarDraggedClassId) return;
+  if (row.dataset.sidebarDropRow === state.sidebarDraggedClassId) return;
+
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+
+  document.querySelectorAll(".sidebar-class-row").forEach(other => {
+    if (other !== row) other.classList.remove("drag-over-before", "drag-over-after");
+  });
+
+  const rect = row.getBoundingClientRect();
+  const after = e.clientY > rect.top + rect.height / 2;
+  row.classList.toggle("drag-over-before", !after);
+  row.classList.toggle("drag-over-after", after);
+});
+
+document.addEventListener("dragleave", e => {
+  const row = e.target.closest("[data-sidebar-drop-row]");
+  if (!row) return;
+  const related = e.relatedTarget;
+  if (related && row.contains(related)) return;
+  row.classList.remove("drag-over-before", "drag-over-after");
+});
+
+document.addEventListener("drop", async e => {
+  const row = e.target.closest("[data-sidebar-drop-row]");
+  if (!row || !state.sidebarDraggedClassId) return;
+
+  e.preventDefault();
+  const draggedId = state.sidebarDraggedClassId;
+  const targetId = row.dataset.sidebarDropRow;
+  const rect = row.getBoundingClientRect();
+  const after = e.clientY > rect.top + rect.height / 2;
+
+  clearSidebarDragMarkers();
+  state.sidebarDraggedClassId = null;
+  await reorderSidebarClass(draggedId, targetId, after);
+});
+
+document.addEventListener("dragend", () => {
+  clearSidebarDragMarkers();
+  state.sidebarDraggedClassId = null;
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeSidebarClassMenu();
+});
+
+window.addEventListener("resize", closeSidebarClassMenu);
+window.addEventListener("scroll", closeSidebarClassMenu, true);
+
 document.getElementById("googleSignInBtn").addEventListener("click", signInGoogle);
 document.getElementById("sharedGoogleSignInBtn").addEventListener("click", signInGoogle);
 
@@ -3301,8 +3607,18 @@ document.getElementById("createClassBtn").addEventListener("click", createClass)
 document.getElementById("editClassBtn").addEventListener("click", openEditClass);
 document.getElementById("editIntroBtn").addEventListener("click", openEditClass);
 document.getElementById("saveClassBtn").addEventListener("click", saveClassChanges);
-document.getElementById("archiveClassBtn").addEventListener("click", archiveCurrentClass);
 document.getElementById("openArchiveBtn").addEventListener("click", openArchiveManager);
+
+document.getElementById("sidebarShareLinkNameInput").addEventListener("input", syncSidebarShareModal);
+document.getElementById("sidebarShareUseClassNameBtn").addEventListener("click", useClassNameInSidebarShare);
+document.getElementById("sidebarShareSaveNameBtn").addEventListener("click", saveSidebarShareLinkName);
+document.getElementById("sidebarShareCopyLinkBtn").addEventListener("click", copySidebarShareLink);
+document.getElementById("sidebarShareLinkNameInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    copySidebarShareLink();
+  }
+});
 
 document.getElementById("shareClassBtn").addEventListener("click", () => copyClassLink());
 document.getElementById("linkPreviewSaveTitleBtn").addEventListener("click", saveLinkPreviewTitle);

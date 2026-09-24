@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-sidebar-order-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-drag-menu-1" />
 </head>
 <body>
   <div id="globalMessage" class="global-message hidden" role="status"></div>
@@ -400,7 +400,57 @@
     </main>
   </section>
 
+  <div id="sidebarClassMenu" class="sidebar-class-menu" role="menu" hidden>
+    <button type="button" data-sidebar-menu-action="share" role="menuitem">
+      <span aria-hidden="true">↗</span><span>Share</span>
+    </button>
+    <button type="button" data-sidebar-menu-action="duplicate" data-owner-only role="menuitem">
+      <span aria-hidden="true">⧉</span><span>Duplicate</span>
+    </button>
+    <button type="button" data-sidebar-menu-action="archive" data-owner-only role="menuitem">
+      <span aria-hidden="true">▣</span><span>Archive</span>
+    </button>
+    <div class="sidebar-class-menu-divider" data-owner-only></div>
+    <button type="button" class="danger" data-sidebar-menu-action="delete" data-owner-only role="menuitem">
+      <span aria-hidden="true">⌫</span><span>Delete</span>
+    </button>
+  </div>
+
   <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div id="sidebarShareModal" class="modal sidebar-share-modal hidden">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">Share class</span>
+          <h2 id="sidebarShareClassName">Class</h2>
+        </div>
+        <button class="modal-close" data-close-modal>×</button>
+      </div>
+
+      <div class="sidebar-share-box">
+        <div class="sidebar-share-box-heading">
+          <span>LINK DISPLAY NAME</span>
+          <small>Change only how this copied link appears. This does not rename the class.</small>
+        </div>
+
+        <label for="sidebarShareLinkNameInput">Link display name</label>
+        <input id="sidebarShareLinkNameInput" type="text" maxlength="120" autocomplete="off" />
+
+        <div class="sidebar-share-name-actions">
+          <button id="sidebarShareUseClassNameBtn" class="secondary-btn" type="button">Use Class Name</button>
+          <button id="sidebarShareSaveNameBtn" class="secondary-btn" type="button">Save Display Name</button>
+        </div>
+
+        <label for="sidebarShareUrlPreview">Link preview</label>
+        <input id="sidebarShareUrlPreview" class="sidebar-share-url-preview" type="text" readonly />
+        <small id="sidebarShareStatus">Type a display name, then copy the link.</small>
+      </div>
+
+      <div class="modal-actions sidebar-share-modal-actions">
+        <button id="sidebarShareCopyLinkBtn" class="primary-btn" type="button">Copy Link</button>
+        <button class="secondary-btn" data-close-modal type="button">Close</button>
+      </div>
+    </div>
+
     <div id="newClassModal" class="modal hidden">
       <div class="modal-head">
         <div>
@@ -455,13 +505,8 @@
         <label for="editClassPublished">Enable class sharing</label>
       </div>
 
-      <div class="archive-explainer">
-        Archiving removes this class from your normal class list and hides it from students, but keeps all decks and cards available for copying later.
-      </div>
-
       <div class="modal-actions">
         <button id="saveClassBtn" class="primary-btn">Save Changes</button>
-        <button id="archiveClassBtn" class="archive-btn">Archive Class</button>
         <button class="secondary-btn" data-close-modal>Cancel</button>
       </div>
     </div>
@@ -751,6 +796,6 @@
     </div>
   </div>
 
-  <script type="module" src="flashcards-app.js?v=20260923-sidebar-order-1"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-drag-menu-1"></script>
 </body>
 </html>
