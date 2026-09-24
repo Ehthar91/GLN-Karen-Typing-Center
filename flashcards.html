@@ -451,6 +451,31 @@
       </div>
     </div>
 
+    <div id="removeLearnerModal" class="modal remove-learner-modal hidden">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">Owner controls</span>
+          <h2>Remove learner?</h2>
+        </div>
+        <button class="modal-close" data-close-modal>×</button>
+      </div>
+
+      <div class="remove-learner-summary">
+        <strong id="removeLearnerName">Learner</strong>
+        <span id="removeLearnerEmail">Email</span>
+      </div>
+
+      <div class="remove-learner-warning">
+        This will remove the learner from this class and delete their saved study and quiz progress for this class.
+        They can join again later if they still have an active class link.
+      </div>
+
+      <div class="modal-actions">
+        <button id="confirmRemoveLearnerBtn" class="danger-btn" type="button">Remove Learner</button>
+        <button class="secondary-btn" data-close-modal type="button">Cancel</button>
+      </div>
+    </div>
+
     <div id="newClassModal" class="modal hidden">
       <div class="modal-head">
         <div>
@@ -796,6 +821,6 @@
     </div>
   </div>
 
-  <script type="module" src="flashcards-app.js?v=20260923-sidebar-polish-1"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-remove-learners-1"></script>
 </body>
 </html>

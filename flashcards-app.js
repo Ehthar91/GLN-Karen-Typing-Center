@@ -34,6 +34,7 @@ const {
   getDocs,
   query,
   where,
+  writeBatch,
   serverTimestamp
 } = firestoreModule;
 
@@ -51,6 +52,8 @@ const state = {
   sidebarShareClassId: null,
   sidebarDraggedClassId: null,
   selectedClass: null,
+  learners: [],
+  pendingLearnerRemoval: null,
   decks: [],
   progressMap: new Map(),
   selectedDeck: null,
@@ -2251,6 +2254,7 @@ async function loadLearners() {
   const host = document.getElementById("learnersContent");
 
   if (!isOwner()) {
+    state.learners = [];
     const rows = [];
 
     for (const deck of state.decks) {
@@ -2344,6 +2348,7 @@ async function loadLearners() {
     const learners = [...byStudent.values()]
       .sort((a, b) => String(a.name).localeCompare(String(b.name)));
 
+    state.learners = learners;
     document.getElementById("tabLearnerCount").textContent = `(${learners.length})`;
 
     if (!learners.length) {
@@ -2363,6 +2368,7 @@ async function loadLearners() {
               <th>Mastery</th>
               <th>Quiz</th>
               <th>Last Studied</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -2379,6 +2385,14 @@ async function loadLearners() {
                   <td>${mastery}%</td>
                   <td>${l.quizAnswered ? `${Math.round((l.quizCorrect / l.quizAnswered) * 100)}% (${l.quizCorrect}/${l.quizAnswered})` : "—"}</td>
                   <td>${timestampToText(l.updatedAt)}</td>
+                  <td class="learner-action-cell">
+                    <button
+                      type="button"
+                      class="danger-btn compact-btn remove-learner-btn"
+                      data-remove-learner="${escapeHtml(l.studentId)}"
+                      aria-label="Remove ${escapeHtml(l.name)} from this class"
+                    >Remove</button>
+                  </td>
                 </tr>
               `;
             }).join("")}
@@ -2388,6 +2402,74 @@ async function loadLearners() {
   } catch (err) {
     host.innerHTML = `<div class="empty-state">Learners could not be loaded.</div>`;
     handleFirebaseError(err, "Could not load learners.");
+  }
+}
+
+
+function openRemoveLearnerModal(studentId) {
+  if (!isOwner()) return;
+
+  const learner = state.learners.find(item => item.studentId === studentId);
+  if (!learner) {
+    showMessage("That learner could not be found. Refresh the Learners tab and try again.", "error");
+    return;
+  }
+
+  state.pendingLearnerRemoval = {
+    studentId: learner.studentId,
+    name: learner.name || "Student",
+    email: learner.email || ""
+  };
+
+  document.getElementById("removeLearnerName").textContent = state.pendingLearnerRemoval.name;
+  document.getElementById("removeLearnerEmail").textContent =
+    state.pendingLearnerRemoval.email || "No email available";
+  openModal("removeLearnerModal");
+}
+
+async function confirmRemoveLearner() {
+  if (!isOwner() || !state.pendingLearnerRemoval || !state.selectedClass) return;
+
+  const learner = state.pendingLearnerRemoval;
+  const classId = state.selectedClass.id;
+  const button = document.getElementById("confirmRemoveLearnerBtn");
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = "Removing…";
+
+  try {
+    const progressQuery = query(
+      collection(state.db, "progress"),
+      where("classId", "==", classId)
+    );
+    const progressSnap = await getDocs(progressQuery);
+    const learnerProgressDocs = progressSnap.docs.filter(
+      progressDoc => progressDoc.data().studentId === learner.studentId
+    );
+
+    const batch = writeBatch(state.db);
+
+    // Remove the class from the learner's personal Flashcards library.
+    batch.delete(doc(state.db, "users", learner.studentId, "library", classId));
+
+    // Learners are currently identified by their progress documents, so remove
+    // this class's study/quiz progress too so the learner disappears cleanly.
+    learnerProgressDocs.forEach(progressDoc => batch.delete(progressDoc.ref));
+
+    await batch.commit();
+
+    state.pendingLearnerRemoval = null;
+    closeModals();
+    await loadLearners();
+    showMessage(`“${learner.name}” was removed from this class.`, "success");
+  } catch (err) {
+    handleFirebaseError(
+      err,
+      "Could not remove the learner. Make sure the updated Flashcards Firestore rules are published."
+    );
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
   }
 }
 
@@ -3516,6 +3598,11 @@ document.addEventListener("click", async e => {
     return restoreArchivedDeck(classId, deckId);
   }
 
+  const removeLearnerBtn = e.target.closest("[data-remove-learner]");
+  if (removeLearnerBtn) {
+    return openRemoveLearnerModal(removeLearnerBtn.dataset.removeLearner);
+  }
+
   if (e.target.closest("[data-close-modal]")) {
     closeModals();
   }
@@ -3711,6 +3798,7 @@ document.getElementById("quizBackToClassBtn").addEventListener("click", returnTo
 document.getElementById("quizTryAgainBtn").addEventListener("click", tryQuizAgain);
 
 document.getElementById("refreshLearnersBtn").addEventListener("click", loadLearners);
+document.getElementById("confirmRemoveLearnerBtn").addEventListener("click", confirmRemoveLearner);
 
 document.getElementById("revealBtn").addEventListener("click", e => {
   e.stopPropagation();
