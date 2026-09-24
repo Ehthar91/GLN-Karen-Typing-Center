@@ -46,6 +46,7 @@ const state = {
   archivedClasses: [],
   archivedDecks: [],
   sharedClasses: [],
+  sidebarClassOrder: [],
   selectedClass: null,
   decks: [],
   progressMap: new Map(),
@@ -615,9 +616,92 @@ async function routeAfterAuth() {
 }
 
 async function loadLibrary() {
-  await Promise.all([loadOwnedClasses(), loadSharedClasses(), loadSidebarStats()]);
+  await Promise.all([
+    loadOwnedClasses(),
+    loadSharedClasses(),
+    loadSidebarStats(),
+    loadSidebarClassOrder()
+  ]);
+  await normalizeSidebarClassOrder();
   renderSidebar();
   renderLibrary();
+}
+
+async function loadSidebarClassOrder() {
+  try {
+    const snap = await getDoc(doc(state.db, "users", state.user.uid));
+    const saved = snap.exists() ? snap.data().sidebarClassOrder : [];
+    state.sidebarClassOrder = Array.isArray(saved)
+      ? saved.filter(id => typeof id === "string" && id)
+      : [];
+  } catch (err) {
+    console.warn("Could not load sidebar class order.", err);
+    state.sidebarClassOrder = [];
+  }
+}
+
+function sidebarClassesInSavedOrder() {
+  const classes = [...state.ownedClasses, ...state.sharedClasses];
+  const byId = new Map(classes.map(c => [c.id, c]));
+  const ordered = [];
+
+  for (const id of state.sidebarClassOrder) {
+    const c = byId.get(id);
+    if (!c) continue;
+    ordered.push(c);
+    byId.delete(id);
+  }
+
+  const remaining = [...byId.values()].sort((a, b) =>
+    String(a.name).localeCompare(String(b.name))
+  );
+
+  return [...ordered, ...remaining];
+}
+
+async function normalizeSidebarClassOrder() {
+  const normalized = sidebarClassesInSavedOrder().map(c => c.id);
+  const changed =
+    normalized.length !== state.sidebarClassOrder.length ||
+    normalized.some((id, index) => id !== state.sidebarClassOrder[index]);
+
+  state.sidebarClassOrder = normalized;
+  if (!changed || !state.user) return;
+
+  try {
+    await setDoc(doc(state.db, "users", state.user.uid), {
+      sidebarClassOrder: normalized,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.warn("Could not normalize sidebar class order.", err);
+  }
+}
+
+async function moveSidebarClass(classId, direction) {
+  const ids = sidebarClassesInSavedOrder().map(c => c.id);
+  const from = ids.indexOf(classId);
+  if (from < 0) return;
+
+  const delta = direction === "up" ? -1 : direction === "down" ? 1 : 0;
+  const to = from + delta;
+  if (!delta || to < 0 || to >= ids.length) return;
+
+  [ids[from], ids[to]] = [ids[to], ids[from]];
+  state.sidebarClassOrder = ids;
+  renderSidebar();
+
+  try {
+    await setDoc(doc(state.db, "users", state.user.uid), {
+      sidebarClassOrder: ids,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.error(err);
+    showMessage("Could not save the class order.", "error");
+    await loadSidebarClassOrder();
+    renderSidebar();
+  }
 }
 
 async function loadOwnedClasses() {
@@ -691,7 +775,7 @@ async function loadSidebarStats() {
 }
 
 function renderSidebar() {
-  const classes = [...state.ownedClasses, ...state.sharedClasses];
+  const classes = sidebarClassesInSavedOrder();
   const host = document.getElementById("classSidebarList");
 
   if (!classes.length) {
@@ -699,9 +783,11 @@ function renderSidebar() {
     return;
   }
 
-  host.innerHTML = classes.map(c => {
+  host.innerHTML = classes.map((c, index) => {
     const active = state.selectedClass?.id === c.id;
     const owned = c.libraryType === "owned";
+    const isFirst = index === 0;
+    const isLast = index === classes.length - 1;
 
     return `
       <div class="sidebar-class-row ${active ? "active" : ""}">
@@ -717,6 +803,27 @@ function renderSidebar() {
           </span>
         </button>
 
+        <span class="sidebar-class-move-controls" role="group" aria-label="Reorder ${escapeHtml(c.name)}">
+          <button
+            class="sidebar-class-move-btn"
+            data-move-sidebar-class="${c.id}"
+            data-move-direction="up"
+            type="button"
+            title="Move ${escapeHtml(c.name)} up"
+            aria-label="Move ${escapeHtml(c.name)} up"
+            ${isFirst ? "disabled" : ""}
+          >▲</button>
+          <button
+            class="sidebar-class-move-btn"
+            data-move-sidebar-class="${c.id}"
+            data-move-direction="down"
+            type="button"
+            title="Move ${escapeHtml(c.name)} down"
+            aria-label="Move ${escapeHtml(c.name)} down"
+            ${isLast ? "disabled" : ""}
+          >▼</button>
+        </span>
+
         ${owned ? `
           <button
             class="sidebar-class-archive-btn"
@@ -727,7 +834,7 @@ function renderSidebar() {
           >
             ▣
           </button>
-        ` : ""}
+        ` : `<span class="sidebar-class-action-spacer" aria-hidden="true"></span>`}
       </div>
     `;
   }).join("");
@@ -3060,6 +3167,17 @@ async function initializeFirebase() {
 }
 
 document.addEventListener("click", async e => {
+  const sidebarMoveClass = e.target.closest("[data-move-sidebar-class]");
+  if (sidebarMoveClass) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (sidebarMoveClass.disabled) return;
+    return moveSidebarClass(
+      sidebarMoveClass.dataset.moveSidebarClass,
+      sidebarMoveClass.dataset.moveDirection
+    );
+  }
+
   const sidebarArchiveClass = e.target.closest("[data-archive-sidebar-class]");
   if (sidebarArchiveClass) {
     e.preventDefault();

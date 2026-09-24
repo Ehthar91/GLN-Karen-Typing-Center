@@ -2907,16 +2907,69 @@ body.dark .archive-btn {
 
 
 /* =========================================================
-   ARCHIVE CLASS DIRECTLY FROM SIDEBAR
+   SIDEBAR CLASS REORDER + ARCHIVE CONTROLS
    ========================================================= */
 
 .sidebar-class-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 32px;
+  grid-template-columns: minmax(0, 1fr) 22px 32px;
   gap: 4px;
   align-items: center;
   margin-bottom: 5px;
   border-radius: 12px;
+}
+
+.sidebar-class-move-controls {
+  width: 22px;
+  height: 34px;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  opacity: .38;
+  transition: opacity .15s ease;
+}
+
+.sidebar-class-row:hover .sidebar-class-move-controls,
+.sidebar-class-row.active .sidebar-class-move-controls,
+.sidebar-class-move-controls:focus-within {
+  opacity: 1;
+}
+
+.sidebar-class-move-btn {
+  width: 22px;
+  min-width: 22px;
+  height: 16px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 5px;
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.72);
+  font-size: .46rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, transform .15s ease;
+}
+
+.sidebar-class-move-btn:hover:not(:disabled) {
+  background: rgba(72,190,225,.2);
+  color: #dff8ff;
+  transform: translateY(-1px);
+}
+
+.sidebar-class-move-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.sidebar-class-move-btn:disabled {
+  opacity: .18;
+  cursor: default;
+}
+
+.sidebar-class-action-spacer {
+  width: 30px;
+  height: 30px;
 }
 
 .sidebar-class-row .sidebar-class-item {
@@ -2962,7 +3015,8 @@ body.dark .archive-btn {
 }
 
 @media (max-width: 760px) {
-  .sidebar-class-archive-btn {
+  .sidebar-class-archive-btn,
+  .sidebar-class-move-controls {
     opacity: .8;
   }
 }
