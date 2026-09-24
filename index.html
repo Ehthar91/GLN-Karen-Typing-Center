@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
   <link rel="stylesheet" href="race-features.css?v=20260911-11" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
-  <link rel="stylesheet" href="quiz.css?v=20260916-all-points-1" />
+  <link rel="stylesheet" href="quiz.css?v=20260924-google-script-copy-1" />
   <link rel="stylesheet" href="quiz-classroom.css?v=20260913-17" />
   <link rel="stylesheet" href="quiz-kiosk.css?v=20260913-1" />
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
@@ -359,7 +359,18 @@ Fish = ညၣ်</textarea>
 
         <p class="quiz-error" id="quizError" role="alert"></p>
         <div class="quiz-preview" id="quizPreview" hidden>
-          <div class="quiz-preview-head"><div><span>QUESTION PREVIEW</span><strong id="quizPreviewCount">0 questions</strong></div><div class="quiz-preview-actions"><div class="quiz-bulk-points" role="group" aria-label="Set points for all questions"><label>Points each<input id="quizAllPoints" type="number" min="0" max="100" step="1" inputmode="numeric" value="1" aria-label="Points for every question" /></label><button class="button ghost" id="applyQuizAllPoints" type="button">Set all</button></div><button class="button ghost" id="startQuiz" type="button">Practice solo</button><button class="button ghost" id="exportGoogleQuiz" type="button">Export to Google Forms</button><button class="button primary" id="createClassQuiz" type="button">Create classroom quiz →</button></div></div>
+          <div class="quiz-preview-head"><div><span>QUESTION PREVIEW</span><strong id="quizPreviewCount">0 questions</strong></div><div class="quiz-preview-actions"><div class="quiz-bulk-points" role="group" aria-label="Set points for all questions"><label>Points each<input id="quizAllPoints" type="number" min="0" max="100" step="1" inputmode="numeric" value="1" aria-label="Points for every question" /></label><button class="button ghost" id="applyQuizAllPoints" type="button">Set all</button></div><button class="button ghost" id="startQuiz" type="button">Practice solo</button><button class="button ghost" id="generateGoogleQuizScript" type="button">Generate Google Forms Script</button><button class="button primary" id="createClassQuiz" type="button">Create classroom quiz →</button></div></div>
+          <div class="quiz-google-script-panel" id="quizGoogleScriptPanel" hidden>
+            <div class="quiz-google-script-head">
+              <div><span>GOOGLE FORMS SCRIPT</span><strong id="quizGoogleScriptSummary">Ready to copy or download</strong></div>
+              <button class="quiz-google-script-close" id="closeGoogleQuizScript" type="button" aria-label="Close generated script">×</button>
+            </div>
+            <textarea id="quizGoogleScriptOutput" class="quiz-google-script-output" readonly spellcheck="false" aria-label="Generated Google Forms Apps Script"></textarea>
+            <div class="quiz-google-script-actions">
+              <button class="button primary" id="copyGoogleQuizScript" type="button">Copy Script</button>
+              <button class="button ghost" id="downloadGoogleQuizScript" type="button">Download .gs</button>
+            </div>
+          </div>
           <ol id="quizPreviewList"></ol>
         </div>
         <div class="quiz-join-card">
@@ -991,7 +1002,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="race.js?v=20260915-unified-keyboard-1"></script>
   <script src="bus-call.js?v=20260917-lineup-toggle-1"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>
-  <script src="quiz.js?v=20260916-all-points-1"></script>
+  <script src="quiz.js?v=20260924-google-script-copy-1"></script>
   <script src="quiz-classroom.js?v=20260916-paste-import-1"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
   <script src="calculator.js?v=20260923-flashcards-fullscreen-1"></script>
