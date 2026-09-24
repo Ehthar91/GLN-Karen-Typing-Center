@@ -2011,6 +2011,51 @@ body.dark .deck-quiz {
   width: min(720px, 100%);
 }
 
+.quiz-default-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 14px 0 18px;
+  padding: 12px 13px;
+  border: 1px solid var(--app-line, var(--line));
+  border-radius: 12px;
+  background: var(--panel-soft);
+}
+
+.quiz-default-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.quiz-default-copy strong {
+  color: var(--ink, var(--text));
+  font-size: .86rem;
+}
+
+.quiz-default-copy small {
+  color: var(--ink-soft, var(--muted));
+  font-size: .76rem;
+  line-height: 1.35;
+}
+
+.quiz-default-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.quiz-save-default-btn {
+  font-weight: 850;
+}
+
+.quiz-default-actions button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 .quiz-setup-section {
   margin: 21px 0;
 }
@@ -4505,4 +4550,21 @@ body.guest-study-mode .sidebar-title-row h3::after {
   font-size: .72em;
   font-weight: 600;
   opacity: .7;
+}
+
+
+@media (max-width: 640px) {
+  .quiz-default-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quiz-default-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .quiz-default-actions button {
+    flex: 1 1 150px;
+  }
 }

@@ -2,6 +2,7 @@ import { firebaseConfig } from "./flashcards-firebase-config.js";
 
 const FIREBASE_VERSION = "12.19.0";
 const THEME_KEY = "flashcards_brainscape_theme";
+const QUIZ_DEFAULTS_KEY_PREFIX = "flashcards_quiz_defaults_v1";
 const EMBEDDED_CLASSROOM_MODE = new URLSearchParams(window.location.search).get("embedded") === "classroom";
 
 const [appModule, authModule, firestoreModule] = await Promise.all([
@@ -79,6 +80,7 @@ const state = {
     order: "progressive",
     inclusionMode: "count",
     questionCount: 0,
+    questionCountMode: "all",
     manualCardKeys: [],
     points: 1
   },
@@ -488,6 +490,117 @@ function clearClassParam() {
 
 function isOwner() {
   return Boolean(state.selectedClass && state.user && state.selectedClass.ownerId === state.user.uid);
+}
+
+function quizDefaultsStorageKey() {
+  const uid = String(state.user?.uid || "teacher");
+  return `${QUIZ_DEFAULTS_KEY_PREFIX}:${uid}`;
+}
+
+function readQuizDefaults() {
+  if (!isOwner()) return null;
+
+  try {
+    const raw = localStorage.getItem(quizDefaultsStorageKey());
+    if (!raw) return null;
+
+    const saved = JSON.parse(raw);
+    if (!saved || typeof saved !== "object") return null;
+
+    const allowed = {
+      questionStyle: new Set(["standard", "custom"]),
+      direction: new Set(["frontBack", "backFront", "mixed"]),
+      answerMode: new Set(["multiple", "typed", "mixed"]),
+      order: new Set(["progressive", "random"]),
+      inclusionMode: new Set(["count", "manual"]),
+      questionCountMode: new Set(["all", "fixed"])
+    };
+
+    const defaults = {
+      questionStyle: allowed.questionStyle.has(saved.questionStyle) ? saved.questionStyle : "standard",
+      template: typeof saved.template === "string" && saved.template.trim()
+        ? saved.template.trim()
+        : "What is the answer for {term}?",
+      direction: allowed.direction.has(saved.direction) ? saved.direction : "frontBack",
+      answerMode: allowed.answerMode.has(saved.answerMode) ? saved.answerMode : "multiple",
+      order: allowed.order.has(saved.order) ? saved.order : "progressive",
+      inclusionMode: allowed.inclusionMode.has(saved.inclusionMode) ? saved.inclusionMode : "count",
+      questionCountMode: allowed.questionCountMode.has(saved.questionCountMode)
+        ? saved.questionCountMode
+        : "fixed",
+      questionCount: Math.max(1, Math.floor(Number(saved.questionCount) || 1)),
+      points: Math.max(0, Math.min(100, Number(saved.points ?? 1)))
+    };
+
+    return defaults;
+  } catch (err) {
+    console.warn("Could not read quiz defaults", err);
+    return null;
+  }
+}
+
+function updateQuizDefaultControls(hasSavedDefault = Boolean(readQuizDefaults())) {
+  const controls = document.getElementById("quizDefaultControls");
+  const status = document.getElementById("quizDefaultStatus");
+  const resetButton = document.getElementById("resetQuizDefaultBtn");
+  if (!controls) return;
+
+  controls.classList.toggle("hidden", !isOwner());
+  if (!isOwner()) return;
+
+  if (status) {
+    status.textContent = hasSavedDefault
+      ? "Your saved quiz setup loads automatically on this device."
+      : "No custom default saved yet. The built-in quiz setup is being used.";
+  }
+  if (resetButton) resetButton.disabled = !hasSavedDefault;
+}
+
+function saveQuizDefaults() {
+  if (!isOwner()) return;
+
+  syncQuizSetupInputs();
+
+  if (state.quizConfig.questionStyle === "custom") {
+    if (!state.quizConfig.template || !state.quizConfig.template.includes("{term}")) {
+      showMessage('Custom questions must include {term} before saving a default.', "error");
+      return;
+    }
+  }
+
+  const payload = {
+    questionStyle: state.quizConfig.questionStyle,
+    template: state.quizConfig.template || "What is the answer for {term}?",
+    direction: state.quizConfig.direction,
+    answerMode: state.quizConfig.answerMode,
+    order: state.quizConfig.order,
+    inclusionMode: state.quizConfig.inclusionMode,
+    questionCountMode: state.quizConfig.questionCountMode || "fixed",
+    questionCount: Math.max(1, Math.floor(Number(state.quizConfig.questionCount) || 1)),
+    points: Math.max(0, Math.min(100, Number(state.quizConfig.points ?? 1)))
+  };
+
+  try {
+    localStorage.setItem(quizDefaultsStorageKey(), JSON.stringify(payload));
+    updateQuizDefaultControls(true);
+    showMessage("Quiz setup saved as your default.", "success");
+  } catch (err) {
+    console.warn("Could not save quiz defaults", err);
+    showMessage("This browser could not save your quiz default.", "error");
+  }
+}
+
+function resetQuizDefaults() {
+  if (!isOwner()) return;
+
+  try {
+    localStorage.removeItem(quizDefaultsStorageKey());
+    updateQuizDefaultControls(false);
+    showMessage("Quiz default reset. Built-in settings will be used next time.", "success");
+  } catch (err) {
+    console.warn("Could not reset quiz defaults", err);
+    showMessage("This browser could not reset your quiz default.", "error");
+  }
 }
 
 function isGuestStudent() {
@@ -2949,16 +3062,23 @@ function chooseQuizSetup(scope, deckId = null) {
 
   state.pendingQuiz = { scope, deckId };
   const availableQuestionCount = collectQuizCards(scope, deckId).length;
+  const savedDefaults = readQuizDefaults();
+  const useAllQuestions = !savedDefaults || savedDefaults.questionCountMode === "all";
+  const savedQuestionCount = savedDefaults?.questionCount || availableQuestionCount;
+
   state.quizConfig = {
-    questionStyle: "standard",
-    template: "What is the answer for {term}?",
-    direction: "frontBack",
-    answerMode: "multiple",
-    order: "progressive",
-    inclusionMode: "count",
-    questionCount: availableQuestionCount,
+    questionStyle: savedDefaults?.questionStyle || "standard",
+    template: savedDefaults?.template || "What is the answer for {term}?",
+    direction: savedDefaults?.direction || "frontBack",
+    answerMode: savedDefaults?.answerMode || "multiple",
+    order: savedDefaults?.order || "progressive",
+    inclusionMode: savedDefaults?.inclusionMode || "count",
+    questionCount: useAllQuestions
+      ? availableQuestionCount
+      : Math.max(1, Math.min(availableQuestionCount, savedQuestionCount)),
+    questionCountMode: useAllQuestions ? "all" : "fixed",
     manualCardKeys: [],
-    points: 1
+    points: savedDefaults?.points ?? 1
   };
 
   document.getElementById("quizSetupTarget").textContent =
@@ -2974,11 +3094,14 @@ function chooseQuizSetup(scope, deckId = null) {
   });
 
   document.getElementById("quizTemplateInput").value = state.quizConfig.template;
-  document.getElementById("quizTemplateField").classList.add("hidden");
+  document.getElementById("quizTemplateField").classList.toggle(
+    "hidden",
+    state.quizConfig.questionStyle !== "custom"
+  );
 
   const questionCountInput = document.getElementById("quizQuestionCountInput");
   questionCountInput.max = String(Math.max(1, availableQuestionCount));
-  questionCountInput.value = String(Math.max(1, availableQuestionCount));
+  questionCountInput.value = String(Math.max(1, state.quizConfig.questionCount));
   document.getElementById("quizQuestionCountHelp").textContent =
     `${availableQuestionCount} card${availableQuestionCount === 1 ? "" : "s"} available. ` +
     `Progressive uses the first questions; Random chooses from across the set.`;
@@ -2987,6 +3110,7 @@ function chooseQuizSetup(scope, deckId = null) {
 
   document.getElementById("quizPointsInput").value = state.quizConfig.points;
   document.getElementById("exportGoogleFormsBtn").classList.toggle("hidden", !isOwner());
+  updateQuizDefaultControls(Boolean(savedDefaults));
   resetGoogleFormsGeneratedScript();
 
   openModal("quizSetupModal");
@@ -4416,6 +4540,8 @@ document.getElementById("deckRows").addEventListener("change", e => {
 document.getElementById("studyClassBtn").addEventListener("click", () => chooseStudyOrder("class"));
 document.getElementById("quizClassBtn").addEventListener("click", () => chooseQuizSetup("class"));
 document.getElementById("startQuizBtn").addEventListener("click", startConfiguredQuiz);
+document.getElementById("saveQuizDefaultBtn").addEventListener("click", saveQuizDefaults);
+document.getElementById("resetQuizDefaultBtn").addEventListener("click", resetQuizDefaults);
 document.getElementById("exportGoogleFormsBtn").addEventListener("click", generateQuizGoogleFormsScript);
 document.getElementById("copyGoogleFormsScriptBtn").addEventListener("click", copyGeneratedGoogleFormsScript);
 document.getElementById("downloadGoogleFormsScriptBtn").addEventListener("click", downloadGeneratedGoogleFormsScript);
@@ -4432,6 +4558,7 @@ document.getElementById("quizQuestionCountInput").addEventListener("input", e =>
   const value = Number(e.target.value);
   if (Number.isFinite(value) && value > 0) {
     state.quizConfig.questionCount = Math.min(availableCount, Math.floor(value));
+    state.quizConfig.questionCountMode = "fixed";
     resetGoogleFormsGeneratedScript();
   }
 });
@@ -4442,6 +4569,7 @@ document.getElementById("quizUseAllQuestionsBtn").addEventListener("click", () =
     state.pendingQuiz.deckId
   ).length;
   state.quizConfig.questionCount = availableCount;
+  state.quizConfig.questionCountMode = "all";
   document.getElementById("quizQuestionCountInput").value = String(availableCount);
   resetGoogleFormsGeneratedScript();
 });
