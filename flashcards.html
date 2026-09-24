@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-bulk-remove-learners-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20260923-multi-deck-study-1" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
   <style>
     html.flashcards-embedded .creator-credit { display: none !important; }
@@ -249,9 +249,17 @@
 
         <section id="decksTab" class="tab-panel">
           <div class="deck-toolbar">
-            <div class="toolbar-left">
-              <span class="check-circle">✓</span>
-              <strong>All</strong>
+            <div class="toolbar-left deck-toolbar-left">
+              <strong>Decks</strong>
+              <div id="deckStudySelector" class="deck-study-selector hidden">
+                <label class="deck-select-all">
+                  <input id="selectAllStudyDecks" type="checkbox" />
+                  <span>Select all</span>
+                </label>
+                <span id="selectedDeckCount" class="selected-deck-count">Choose two or more decks to study together</span>
+                <button id="studySelectedDecksBtn" class="study-selected-decks-btn" type="button" disabled>Study Selected</button>
+                <button id="clearDeckSelectionBtn" class="clear-deck-selection-btn" type="button" disabled>Clear</button>
+              </div>
             </div>
             <div id="ownerDeckTools" class="toolbar-right hidden">
               <button id="newDeckBtn" class="new-deck-link">＋ Create New Deck</button>
@@ -846,6 +854,6 @@
       closeButton.addEventListener('click', () => badge.classList.add('is-dismissed'));
     })();
   </script>
-  <script type="module" src="flashcards-app.js?v=20260923-bulk-remove-learners-1"></script>
+  <script type="module" src="flashcards-app.js?v=20260923-multi-deck-study-1"></script>
 </body>
 </html>

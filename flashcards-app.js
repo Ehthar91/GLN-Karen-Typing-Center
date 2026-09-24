@@ -59,6 +59,8 @@ const state = {
   progressMap: new Map(),
   selectedDeck: null,
   editingDeckId: null,
+  selectedStudyDeckIds: new Set(),
+  studySelectionDeckIds: [],
   studyMode: "standard",
   studyScope: "deck",
   sessionCards: [],
@@ -1197,6 +1199,8 @@ async function openClass(classId) {
     }
 
     state.selectedClass = { id: snap.id, ...snap.data() };
+    state.selectedStudyDeckIds.clear();
+    state.studySelectionDeckIds = [];
 
     await Promise.all([loadDecks(), loadCurrentUserProgress()]);
     renderSidebar();
@@ -1298,11 +1302,20 @@ function renderDeckRows() {
   const host = document.getElementById("deckRows");
   const owner = isOwner();
 
+  // Keep only selections that still exist and contain cards.
+  const studyableIds = new Set(
+    state.decks.filter(deck => (deck.cards?.length || 0) > 0).map(deck => deck.id)
+  );
+  state.selectedStudyDeckIds = new Set(
+    [...state.selectedStudyDeckIds].filter(id => studyableIds.has(id))
+  );
+
   if (!state.decks.length) {
     host.innerHTML = `
       <div class="empty-state">
         ${owner ? "No decks yet. Create the first deck for this class." : "The owner has not added any decks yet."}
       </div>`;
+    updateDeckStudySelectionUi();
     return;
   }
 
@@ -1319,14 +1332,25 @@ function renderDeckRows() {
         </div>
 
         <div class="deck-main">
-          <h3>
-            ${escapeHtml(deck.name)}
-            ${owner ? `
+          <div class="deck-title-row">
+            <label class="deck-study-select" title="Include this deck in a combined study session">
+              <input
+                type="checkbox"
+                data-select-study-deck="${deck.id}"
+                ${state.selectedStudyDeckIds.has(deck.id) ? "checked" : ""}
+                ${total ? "" : "disabled"}
+              />
+              <span aria-hidden="true"></span>
+            </label>
+            <h3>
+              ${escapeHtml(deck.name)}
+              ${owner ? `
               <span class="deck-status-badge ${deck.published === false ? "hidden" : "visible"}">
                 ${deck.published === false ? "Hidden" : "Visible"}
               </span>
             ` : ""}
-          </h3>
+            </h3>
+          </div>
           <div class="deck-progress-copy">
             <span>${s.unique} of ${total} unique cards studied</span>
           </div>
@@ -1363,6 +1387,47 @@ function renderDeckRows() {
       </article>
     `;
   }).join("");
+
+  updateDeckStudySelectionUi();
+}
+
+function studyableDecks() {
+  return state.decks.filter(deck => (deck.cards?.length || 0) > 0);
+}
+
+function selectedStudyDecks() {
+  const selected = state.selectedStudyDeckIds;
+  return state.decks.filter(deck => selected.has(deck.id) && (deck.cards?.length || 0) > 0);
+}
+
+function updateDeckStudySelectionUi() {
+  const selector = document.getElementById("deckStudySelector");
+  const selectAll = document.getElementById("selectAllStudyDecks");
+  const clearBtn = document.getElementById("clearDeckSelectionBtn");
+  const studyBtn = document.getElementById("studySelectedDecksBtn");
+  const countEl = document.getElementById("selectedDeckCount");
+
+  if (!selector || !selectAll || !clearBtn || !studyBtn || !countEl) return;
+
+  const available = studyableDecks();
+  const selected = selectedStudyDecks();
+  const selectedCards = selected.reduce((sum, deck) => sum + (deck.cards?.length || 0), 0);
+
+  selector.classList.toggle("hidden", state.decks.length < 2);
+
+  selectAll.checked = available.length > 0 && selected.length === available.length;
+  selectAll.indeterminate = selected.length > 0 && selected.length < available.length;
+  selectAll.disabled = available.length === 0;
+  clearBtn.disabled = selected.length === 0;
+  studyBtn.disabled = selected.length === 0;
+
+  countEl.textContent = selected.length
+    ? `${selected.length} selected · ${selectedCards} card${selectedCards === 1 ? "" : "s"}`
+    : "Choose two or more decks to study together";
+
+  studyBtn.textContent = selected.length
+    ? `Study Selected (${selected.length})`
+    : "Study Selected";
 }
 
 function setTab(name) {
@@ -2619,22 +2684,30 @@ async function confirmRemoveLearner() {
   }
 }
 
-function chooseStudyOrder(scope, deckId = null) {
+function chooseStudyOrder(scope, deckId = null, deckIds = null) {
   let targetName = state.selectedClass?.name || "Class";
+  let selectedIds = Array.isArray(deckIds) ? deckIds : [];
 
   if (scope === "deck") {
     const deck = state.decks.find(d => d.id === deckId);
     if (!deck?.cards?.length) return;
     targetName = deck.name;
+  } else if (scope === "selection") {
+    const allowed = new Set(studyableDecks().map(deck => deck.id));
+    selectedIds = selectedIds.filter(id => allowed.has(id));
+    if (!selectedIds.length) return;
+    targetName = `${selectedIds.length} selected deck${selectedIds.length === 1 ? "" : "s"}`;
   } else if (!state.decks.some(deck => deck.cards?.length)) {
     return;
   }
 
-  state.pendingStudy = { scope, deckId };
+  state.pendingStudy = { scope, deckId, deckIds: selectedIds };
   document.getElementById("studyOrderTarget").textContent =
     scope === "deck"
       ? `Study deck: ${targetName}`
-      : `Study class: ${targetName}`;
+      : scope === "selection"
+        ? `Study together: ${targetName}`
+        : `Study class: ${targetName}`;
 
   openModal("studyOrderModal");
 }
@@ -2648,6 +2721,8 @@ function beginPendingStudy(order) {
 
   if (pending.scope === "deck") {
     startDeckStudy(pending.deckId, order);
+  } else if (pending.scope === "selection") {
+    startSelectedDecksStudy(pending.deckIds, order);
   } else {
     startClassStudy(order);
   }
@@ -2677,6 +2752,43 @@ function startDeckStudy(deckId, order = state.studyOrder) {
   prepareSession(
     deck.name,
     order === "random" ? "Deck Study · Random" : "Deck Study · Progressive"
+  );
+}
+
+function startSelectedDecksStudy(deckIds, order = state.studyOrder) {
+  const wanted = new Set(Array.isArray(deckIds) ? deckIds : []);
+  const decks = state.decks.filter(
+    deck => wanted.has(deck.id) && (deck.cards?.length || 0) > 0
+  );
+
+  if (!decks.length) return;
+
+  const cards = [];
+  for (const deck of decks) {
+    for (const card of deck.cards || []) {
+      cards.push({
+        ...card,
+        deckId: deck.id,
+        deckName: deck.name
+      });
+    }
+  }
+
+  if (!cards.length) return;
+
+  state.studyScope = "selection";
+  state.selectedDeck = null;
+  state.studySelectionDeckIds = decks.map(deck => deck.id);
+  state.studyMode = "standard";
+  state.studyOrder = order;
+
+  state.sessionCards = order === "random"
+    ? shuffledCopy(cards)
+    : cards;
+
+  prepareSession(
+    state.selectedClass.name,
+    `${decks.length} Selected Deck${decks.length === 1 ? "" : "s"} · ${order === "random" ? "Random" : "Progressive"}`
   );
 }
 
@@ -3937,6 +4049,38 @@ document.getElementById("copySelectedCardsBtn").addEventListener(
   copySelectedCards
 );
 
+document.getElementById("selectAllStudyDecks").addEventListener("change", e => {
+  if (e.target.checked) {
+    state.selectedStudyDeckIds = new Set(studyableDecks().map(deck => deck.id));
+  } else {
+    state.selectedStudyDeckIds.clear();
+  }
+  renderDeckRows();
+});
+
+document.getElementById("clearDeckSelectionBtn").addEventListener("click", () => {
+  state.selectedStudyDeckIds.clear();
+  renderDeckRows();
+});
+
+document.getElementById("studySelectedDecksBtn").addEventListener("click", () => {
+  const deckIds = selectedStudyDecks().map(deck => deck.id);
+  if (!deckIds.length) return;
+  chooseStudyOrder("selection", null, deckIds);
+});
+
+document.getElementById("deckRows").addEventListener("change", e => {
+  const input = e.target.closest("[data-select-study-deck]");
+  if (!input) return;
+  const deckId = input.dataset.selectStudyDeck;
+  if (input.checked) {
+    state.selectedStudyDeckIds.add(deckId);
+  } else {
+    state.selectedStudyDeckIds.delete(deckId);
+  }
+  updateDeckStudySelectionUi();
+});
+
 document.getElementById("studyClassBtn").addEventListener("click", () => chooseStudyOrder("class"));
 document.getElementById("quizClassBtn").addEventListener("click", () => chooseQuizSetup("class"));
 document.getElementById("startQuizBtn").addEventListener("click", startConfiguredQuiz);
@@ -3973,6 +4117,8 @@ document.getElementById("exitStudyBtn").addEventListener("click", returnToClass)
 document.getElementById("studyAgainBtn").addEventListener("click", () => {
   if (state.studyScope === "class") {
     startClassStudy(state.studyOrder);
+  } else if (state.studyScope === "selection") {
+    startSelectedDecksStudy(state.studySelectionDeckIds, state.studyOrder);
   } else if (state.selectedDeck) {
     startDeckStudy(state.selectedDeck.id, state.studyOrder);
   }
