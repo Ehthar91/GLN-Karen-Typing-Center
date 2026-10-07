@@ -1,0 +1,86 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isTeacher() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && exists(/databases/$(database)/documents/teachers/$(request.auth.uid));
+    }
+
+    function isAnonymousStudent() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    // A student may reclaim a stale session record after moving to a different
+    // Chromebook/browser only when the old attempt is not actively testing and
+    // the student is actually assigned to the still-active session.
+    function canReclaimStudentSession() {
+      let session = get(/databases/$(database)/documents/sessions/$(resource.data.sessionKey));
+      return isAnonymousStudent()
+        && session.data.status == 'Active'
+        && session.data.studentKeys.hasAny([resource.data.studentKey])
+        && resource.data.status in ['waiting', 'paused', 'terminated']
+        && request.resource.data.sessionKey == resource.data.sessionKey
+        && request.resource.data.studentKey == resource.data.studentKey
+        && request.resource.data.authUid == request.auth.uid
+        && request.resource.data.status == 'waiting'
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['authUid', 'status', 'updatedAt']);
+    }
+
+    // Teacher allowlist. Create teacher UID documents from the Firebase Console.
+    match /teachers/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Full roster is teacher-only.
+    match /students/{studentId} {
+      allow read, write: if isTeacher();
+    }
+
+    // Teachers can manage all sessions.
+    // Anonymous students can only read active sessions to join them.
+    match /sessions/{sessionId} {
+      allow read: if isTeacher()
+        || (isAnonymousStudent() && resource.data.status == 'Active');
+      allow create, update, delete: if isTeacher();
+    }
+
+    // Student status documents are normally owned by the anonymous student UID.
+    // A stale UID may be replaced only through the narrow reclaim rule above.
+    match /sessionStudents/{statusId} {
+      allow read: if isTeacher()
+        || (isAnonymousStudent() && resource.data.authUid == request.auth.uid);
+
+      allow create: if isAnonymousStudent()
+        && request.resource.data.authUid == request.auth.uid;
+
+      allow update: if isTeacher()
+        || (isAnonymousStudent()
+            && resource.data.authUid == request.auth.uid
+            && request.resource.data.authUid == resource.data.authUid)
+        || canReclaimStudentSession();
+
+      allow delete: if isTeacher();
+    }
+
+    // Students can submit only their own result.
+    // Teachers can read/export/delete results.
+    match /results/{resultId} {
+      allow read, delete: if isTeacher();
+
+      allow create: if isAnonymousStudent()
+        && request.resource.data.authUid == request.auth.uid;
+
+      allow update: if false;
+    }
+  }
+}
