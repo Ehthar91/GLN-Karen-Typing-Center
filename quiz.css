@@ -76,3 +76,6 @@
 .quiz-google-script-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:11px 14px;background:#fbfdff}
 .quiz-google-script-actions .button{min-height:38px}
 @media(max-width:760px){.quiz-google-script-panel{margin:0 10px 12px}.quiz-google-script-output{height:190px;font-size:.72rem}.quiz-google-script-actions{display:grid;grid-template-columns:1fr 1fr}.quiz-google-script-actions .button{width:100%}}
+
+/* Classroom quiz: Shift/Caps are manually controlled, never suggested from the answer. */
+#quizKeyboard .key.quiz-shift-on { border-color: #2563eb; background: #dcecff; color: #173868; box-shadow: 0 0 0 2px rgba(37,99,235,.22); }

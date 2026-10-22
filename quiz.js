@@ -1,7 +1,7 @@
 const navQuiz=document.querySelector('#navQuiz'),quizView=document.querySelector('#quizView'),quizBuilder=document.querySelector('#quizBuilder'),quizPlayer=document.querySelector('#quizPlayer'),quizResults=document.querySelector('#quizResults');
 const quizPairs=document.querySelector('#quizPairs'),quizRelation=document.querySelector('#quizRelation'),quizDirection=document.querySelector('#quizDirection'),quizAnswerMode=document.querySelector('#quizAnswerMode'),quizTemplate=document.querySelector('#quizTemplate');
 const quizPasteText=document.querySelector('#quizPasteText'),quizPairsPanel=document.querySelector('#quizPairsPanel'),quizPastePanel=document.querySelector('#quizPastePanel'),quizSourcePairs=document.querySelector('#quizSourcePairs'),quizSourcePaste=document.querySelector('#quizSourcePaste');
-let generatedQuiz=[],quizIndex=0,quizPoints=0,quizBuffer='',quizSelected='',quizLocked=false,quizAnswers=[],quizKeyboardLanguage='ksw',quizSourceMode='pairs',generatedGoogleQuizScript='';
+let generatedQuiz=[],quizIndex=0,quizPoints=0,quizBuffer='',quizSelected='',quizLocked=false,quizAnswers=[],quizKeyboardLanguage='ksw',quizKeyboardShifted=false,quizSourceMode='pairs',generatedGoogleQuizScript='';
 
 function openQuiz(){if(typeof openCalculator==='function')openCalculator('quiz');else{typeView.hidden=true;practiceView.hidden=true;gamesView.hidden=true;quizView.hidden=false;navType.classList.remove('active');navPractice.classList.remove('active');navGames.classList.remove('active');navQuiz?.classList.add('active')}if(typeof stopGame==='function')stopGame();if(typeof closeRace==='function')closeRace();quizBuilder.hidden=false;quizPlayer.hidden=true;quizResults.hidden=true;const classRoom=document.querySelector('#quizClassroom');if(classRoom)classRoom.hidden=true;window.scrollTo({top:0,behavior:'smooth'})}
 if(navQuiz)navQuiz.onclick=openQuiz;
@@ -63,7 +63,7 @@ document.querySelector('#generateQuiz').onclick=generateQuestions;
 function startQuiz(){if(!quizEnsureReady())return;quizRestoreLocalHandlers();quizIndex=0;quizPoints=0;quizAnswers=[];quizBuilder.hidden=true;quizResults.hidden=true;quizPlayer.hidden=false;showQuizQuestion();window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelector('#startQuiz').onclick=startQuiz;
 function currentQuiz(){return generatedQuiz[quizIndex]}
-function showQuizQuestion(){const item=currentQuiz();quizBuffer='';quizSelected='';quizLocked=false;quizKeyboardLanguage=quizDefaultKeyboardLanguage(item);document.querySelector('#quizProgress').textContent=`Question ${quizIndex+1} of ${generatedQuiz.length}`;document.querySelector('#quizScore').textContent=`Score: ${quizPoints}`;document.querySelector('#quizProgressBar').style.width=`${quizIndex/generatedQuiz.length*100}%`;document.querySelector('#quizQuestion').textContent=item.question;document.querySelector('#quizType').textContent=item.mode==='choice'?'CHOOSE THE BEST ANSWER':quizAcceptedTypedAnswers(item.answer).length>1?'TYPE ONE CORRECT ANSWER':'TYPE YOUR ANSWER';const typed=document.querySelector('#quizTypedAnswer');typed.textContent='';typed.className='quiz-typed-answer';typed.lang=quizAnswerLanguage(item);typed.hidden=item.mode==='choice';const choices=document.querySelector('#quizChoices');choices.hidden=item.mode!=='choice';document.querySelector('#quizFeedback').textContent='';document.querySelector('#quizFeedback').className='quiz-feedback';document.querySelector('#checkQuizAnswer').hidden=false;document.querySelector('#nextQuizQuestion').hidden=true;if(item.mode==='choice')renderQuizChoices();renderQuizKeyboard();if(item.mode==='typing')typed.focus()}
+function showQuizQuestion(){const item=currentQuiz();quizBuffer='';quizSelected='';quizLocked=false;quizKeyboardLanguage=quizDefaultKeyboardLanguage(item);quizKeyboardShifted=false;document.querySelector('#quizProgress').textContent=`Question ${quizIndex+1} of ${generatedQuiz.length}`;document.querySelector('#quizScore').textContent=`Score: ${quizPoints}`;document.querySelector('#quizProgressBar').style.width=`${quizIndex/generatedQuiz.length*100}%`;document.querySelector('#quizQuestion').textContent=item.question;document.querySelector('#quizType').textContent=item.mode==='choice'?'CHOOSE THE BEST ANSWER':quizAcceptedTypedAnswers(item.answer).length>1?'TYPE ONE CORRECT ANSWER':'TYPE YOUR ANSWER';const typed=document.querySelector('#quizTypedAnswer');typed.textContent='';typed.className='quiz-typed-answer';typed.lang=quizAnswerLanguage(item);typed.hidden=item.mode==='choice';const choices=document.querySelector('#quizChoices');choices.hidden=item.mode!=='choice';document.querySelector('#quizFeedback').textContent='';document.querySelector('#quizFeedback').className='quiz-feedback';document.querySelector('#checkQuizAnswer').hidden=false;document.querySelector('#nextQuizQuestion').hidden=true;if(item.mode==='choice')renderQuizChoices();renderQuizKeyboard();if(item.mode==='typing')typed.focus()}
 function quizDefaultKeyboardLanguage(item){if(!item||!hasMyanmar(item.answer))return'en';return typingLanguage==='pwo'?'pwo':'ksw'}
 function quizKeyboardTag(language=quizKeyboardLanguage){return language==='en'?'en':language==='pwo'?'kjp':'ksw'}
 function quizAnswerLanguage(item){return hasMyanmar(item.answer)?quizKeyboardTag():'en'}
@@ -87,37 +87,33 @@ document.querySelector('#printQuizResults').onclick=()=>{document.body.classList
 window.addEventListener('afterprint',()=>document.body.classList.remove('print-quiz'));
 
 function quizRows(){return rowsForLanguage(quizKeyboardLanguage)}
-function quizExpected(){
-  const item=currentQuiz();if(!item||quizKeyboardLanguage==='en'||!hasMyanmar(item.answer))return null;
-  const prefix=quizBuffer.normalize('NFC'),answers=quizAcceptedTypedAnswers(item.answer).filter(answer=>answer.startsWith(prefix)&&answer.length>prefix.length);
-  if(!answers.length)return null;
-  const mappings=mappingsForLanguage(quizKeyboardLanguage),matches=answers.map(answer=>mappings.find(mapping=>answer.startsWith(mapping.value,prefix.length))||null);
-  // Only highlight a key when it is valid for every still-possible definition.
-  return matches[0]&&matches.every(match=>match&&match.key===matches[0].key&&match.shift===matches[0].shift)?matches[0]:null;
-}
-function setQuizKeyboardLanguage(language){if(!['ksw','pwo','en'].includes(language)||quizLocked)return;quizKeyboardLanguage=language;const typed=document.querySelector('#quizTypedAnswer');if(typed)typed.lang=quizKeyboardTag(language);renderQuizKeyboard();typed?.focus()}
+// Quiz keyboards must never reveal answer-dependent hints, highlights, or automatic Shift changes.
+// Unlike typing practice, students choose their own keys and must recall each answer.
+function setQuizKeyboardLanguage(language){if(!['ksw','pwo','en'].includes(language)||quizLocked)return;quizKeyboardLanguage=language;quizKeyboardShifted=false;const typed=document.querySelector('#quizTypedAnswer');if(typed)typed.lang=quizKeyboardTag(language);renderQuizKeyboard();typed?.focus()}
+function setQuizKeyboardShift(shifted){if(quizLocked||currentQuiz()?.mode!=='typing')return;quizKeyboardShifted=!!shifted;renderQuizKeyboard();document.querySelector('#quizTypedAnswer')?.focus()}
 document.querySelectorAll('[data-quiz-keyboard]').forEach(button=>button.addEventListener('click',()=>setQuizKeyboardLanguage(button.dataset.quizKeyboard)));
 function quizBackspace(){if(quizLocked||!quizBuffer)return;quizBuffer=quizBuffer.slice(0,previousTextBoundary(quizBuffer,quizBuffer.length));document.querySelector('#quizTypedAnswer').textContent=quizBuffer;renderQuizKeyboard()}
 function addQuizCharacter(value){if(quizLocked||currentQuiz().mode!=='typing')return;quizBuffer+=value;document.querySelector('#quizTypedAnswer').textContent=quizBuffer;renderQuizKeyboard()}
-function quizControl(label,action,active=false){const button=document.createElement('button');button.type='button';button.className='key wide';button.textContent=label;button.onclick=action;if(active)button.classList.add('expected');return button}
+function quizControl(label,action,active=null){const button=document.createElement('button');button.type='button';button.className='key wide';button.textContent=label;button.onclick=action;if(active!==null){button.classList.toggle('quiz-shift-on',active);button.setAttribute('aria-pressed',String(active))}return button}
 function renderQuizKeyboard(){
   const box=document.querySelector('#quizKeyboard'),toolbar=document.querySelector('#quizKeyboardToolbar');box.innerHTML='';
   const item=currentQuiz();if(!item||item.mode!=='typing'){box.hidden=true;if(toolbar)toolbar.hidden=true;return}
   box.hidden=false;if(toolbar){toolbar.hidden=false;toolbar.querySelectorAll('[data-quiz-keyboard]').forEach(button=>{const active=button.dataset.quizKeyboard===quizKeyboardLanguage;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));button.disabled=quizLocked})}
-  const expected=quizExpected(),useShift=expected?.shift||false,mobile=phoneKeyboard(),layout=quizRows(),lastRow=layout.length-1;
+  const useShift=quizKeyboardShifted,mobile=phoneKeyboard(),layout=quizRows(),lastRow=layout.length-1;
   if(!mobile){
-    renderUnifiedDesktopKeyboard(box,{language:quizKeyboardLanguage,shifted:useShift,expected,hintShift:useShift,onKey:value=>addQuizCharacter(value),onBackspace:quizBackspace,onEnter:()=>quizLocked?document.querySelector('#nextQuizQuestion').click():submitQuizAnswer()});
+    renderUnifiedDesktopKeyboard(box,{language:quizKeyboardLanguage,shifted:useShift,onShift:setQuizKeyboardShift,onCaps:setQuizKeyboardShift,onKey:value=>addQuizCharacter(value),onBackspace:quizBackspace,onEnter:()=>quizLocked?document.querySelector('#nextQuizQuestion').click():submitQuizAnswer()});
+    box.querySelectorAll('.shift-key,.caps-key').forEach(key=>{key.classList.toggle('quiz-shift-on',useShift);key.setAttribute('aria-pressed',String(useShift))});
     return
   }
   box.classList.remove('real-keyboard');
   layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className='key-row';
-    if(rowIndex===lastRow)line.appendChild(quizControl('Shift',()=>{},useShift));
-    row.forEach(([key,normal,shift])=>{const button=document.createElement('button');button.type='button';button.className='key';button.dataset.code=key;button.innerHTML=`<small>${key}</small>${useShift?shift:normal}`;if(expected?.key===key)button.classList.add('expected');button.onclick=()=>addQuizCharacter(useShift?shift:normal);line.appendChild(button)});
+    if(rowIndex===lastRow)line.appendChild(quizControl('Shift',()=>setQuizKeyboardShift(!quizKeyboardShifted),useShift));
+    row.forEach(([key,normal,shift])=>{const button=document.createElement('button');button.type='button';button.className='key';button.dataset.code=key;button.innerHTML=`<small>${key}</small>${useShift?shift:normal}`;button.onclick=()=>addQuizCharacter(useShift?shift:normal);line.appendChild(button)});
     if(rowIndex===lastRow)line.appendChild(quizControl('⌫',quizBackspace));box.appendChild(line)
   });
   const bottom=document.createElement('div');bottom.className='key-row phone-bottom-row';
-  const space=quizControl('Space',()=>addQuizCharacter(' '),expected?.key==='Space');space.classList.add('space');bottom.appendChild(space);
+  const space=quizControl('Space',()=>addQuizCharacter(' '));space.classList.add('space');bottom.appendChild(space);
   bottom.appendChild(quizControl('Enter',()=>quizLocked?document.querySelector('#nextQuizQuestion').click():submitQuizAnswer()));box.appendChild(bottom)
 }
 document.addEventListener('keydown' ,event=>{if(quizView.hidden||quizPlayer.hidden||currentQuiz()?.mode!=='typing'||event.ctrlKey||event.metaKey||event.altKey)return;if(event.key==='Enter'){event.preventDefault();quizLocked?document.querySelector('#nextQuizQuestion').click():submitQuizAnswer();return}if(quizLocked)return;if(event.key==='Backspace'){event.preventDefault();quizBackspace();return}if(quizKeyboardLanguage!=='en'){if(event.key==='Shift')return;const key=physicalKey(event),match=rowsForLanguage(quizKeyboardLanguage).flat().find(([mapped])=>mapped===key);if(match){event.preventDefault();addQuizCharacter(event.shiftKey?match[2]:match[1])}}else if(event.key.length===1){event.preventDefault();addQuizCharacter(event.key)}});
