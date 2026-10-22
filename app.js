@@ -3,8 +3,8 @@ const editor=document.querySelector('#editor');const keyboard=document.querySele
 const rows=[
 [['`','ပ','ြု'],['1','၁','ည'],['2','၂','ၥ'],['3','၃','£'],['4','၄','၃'],['5','၅','ရ'],['6','၆','၄'],['7','၇','ရ'],['8','၈','ဂ'],['9','၉','('],['0','ဝ',')'],['-','ြ','ြ'],['=','—','ှု']],
 [['q','ဆ','ခ'],['w','တ','တ'],['e','န','န'],['r','မ','ၤ'],['t','အ','၎'],['y','ပ','၌'],['u','က','ၢ'],['i','င','ၢ်'],['o','သ','ၣ်'],['p','စ','ာ်'],['[','ဟ','ဧ'],[']','=','ဂ'],['\\','ၪ','ၑ']],
-[['a','ေ','∕'],['s','ျ','ှ'],['d','ိ','ီ'],['f','်','ၠ'],['g','ါ','ွ'],['h','့','ံ'],['j','ြ','ဲ'],['k','ု','ု'],['l','ူ','ူ'],[';','း','ၤ'],["'",'ဒ','ီ']],
-[['z','ဖ','ဇ'],['x','ထ','ဌ'],['c','ခ','ဃ'],['v','လ','ျ့'],['b','ဘ','ြ'],['n','ည','ဒ'],['m','ာ်','ျ့'],[',','ယ',','],['.','ၣ်','ၢ်'],['/','”','“']]
+[['a','ရှ','∕'],['s','ျ','ှ'],['d','ိ','ီ'],['f','်','ၠ'],['g','ါ','ွ'],['h','့','ံ'],['j','ြ','ဲ'],['k','ု','ု'],['l','ူ','ူ'],[';','း','ၤ'],["'",'ဒ','ီ']],
+[['z','ဖ','ဇ'],['x','ထ','ဌ'],['c','ခ','ဃ'],['v','လ','ျ့'],['b','ဘ','ြ'],['n','ည','ဒ'],['m','ာ်','ျ့'],[',','ယ',','],['.','.','ၢ်'],['/','”','“']]
 ];
 const englishRows=[
 [['`','`','~'],['1','1','!'],['2','2','@'],['3','3','#'],['4','4','$'],['5','5','%'],['6','6','^'],['7','7','&'],['8','8','*'],['9','9','('],['0','0',')'],['-','-','_'],['=','=','+']],
@@ -46,8 +46,8 @@ function unifiedDesktopKey(label,char,value,onKey,expected){
   if(expected?.key===label)b.classList.add('expected');
   b.addEventListener('click',()=>onKey?.(value,label));return b
 }
-function renderUnifiedDesktopKeyboard(box,{language=typingLanguage,shifted=false,expected=null,hintShift=false,onKey=()=>{},onBackspace=()=>{},onEnter=()=>{},onShift=null,onCaps=null,onTab=()=>{}}={}){
-  const layout=rowsForLanguage(language);box.classList.add('real-keyboard');
+function renderUnifiedDesktopKeyboard(box,{language=typingLanguage,shifted=false,expected=null,hintShift=false,onKey=()=>{},onBackspace=()=>{},onEnter=()=>{},onShift=null,onCaps=null,onTab=()=>{},layoutOverride=null}={}){
+  const layout=layoutOverride||rowsForLanguage(language);box.classList.add('real-keyboard');
   const shiftAction=onShift?()=>onShift(!shifted):()=>{};
   const capsAction=onCaps?()=>onCaps(!shifted):shiftAction;
   layout.forEach((row,rowIndex)=>{
