@@ -5,6 +5,7 @@ const calculatorPanel=document.querySelector('#calculatorPanel');
 const numberGeneratorPanel=document.querySelector('#numberGeneratorPanel');
 const scheduleTimerPanel=document.querySelector('#scheduleTimerPanel');
 const wheelPanel=document.querySelector('#wheelPanel');
+const groupingPanel=document.querySelector('#groupingPanel');
 const eventSignupPanel=document.querySelector('#eventSignupPanel');
 const busCallPanel=document.querySelector('#busCallPanel');
 const flashcardsPanel=document.querySelector('#flashcardsPanel');
@@ -19,6 +20,7 @@ const showNumberGenerator=document.querySelector('#showNumberGenerator');
 const showScheduleTimer=document.querySelector('#showScheduleTimer');
 const showQuiz=document.querySelector('#showQuiz');
 const showWheel=document.querySelector('#showWheel');
+const showGrouping=document.querySelector('#showGrouping');
 const showFlashcards=document.querySelector('#showFlashcards');
 const showEventSignup=document.querySelector('#showEventSignup');
 const showBusCall=document.querySelector('#showBusCall');
@@ -33,6 +35,7 @@ function setCalculatorMode(mode){
   const scheduleTimer=mode==='schedule-timer';
   const quiz=mode==='quiz';
   const wheel=mode==='wheel';
+  const grouping=mode==='grouping';
   const flashcards=mode==='flashcards';
   const eventSignup=mode==='event-signup';
   const busCall=mode==='bus-call';
@@ -43,6 +46,7 @@ function setCalculatorMode(mode){
   scheduleTimerPanel.hidden=!scheduleTimer;
   quizView.hidden=!quiz;
   wheelPanel.hidden=!wheel;
+  groupingPanel.hidden=!grouping;
   flashcardsPanel.hidden=!flashcards;
   eventSignupPanel.hidden=!eventSignup;
   busCallPanel.hidden=!busCall;
@@ -53,18 +57,20 @@ function setCalculatorMode(mode){
   showScheduleTimer.classList.toggle('active',scheduleTimer);
   showQuiz.classList.toggle('active',quiz);
   showWheel.classList.toggle('active',wheel);
+  showGrouping.classList.toggle('active',grouping);
   showFlashcards.classList.toggle('active',flashcards);
   showEventSignup.classList.toggle('active',eventSignup);
   showBusCall.classList.toggle('active',busCall);
   showSeating.classList.toggle('active',seating);
-  calculatorTitle.textContent=dashboard?'Classroom Dashboard':seating?'Seating Chart':busCall?'Bus Call':eventSignup?'Conference Sign-Up':flashcards?'Flashcards':wheel?'Name Picker':quiz?'Quiz':scheduleTimer?'Schedule Timer':numberGenerator?'Number Generator':'Graphing & Scientific Calculator';
-  calculatorHint.textContent=dashboard?'Choose a class, see today’s schedule, and open your classroom tools from one place.':seating?'Create, arrange, and print a classroom seating plan.':busCall?'Send a bus number to every classroom listening with the same room code.':eventSignup?'Create conference time slots, share the sign-up link, and link filled times to Special Schedules.':flashcards?'Create classes and decks, study cards, run quizzes, share classes, and export quizzes to Google Forms.':wheel?'Paste a list, spin, and select someone or something at random.':quiz?'Create, practice, and run classroom quizzes.':scheduleTimer?'Create multiple timers that start automatically at their scheduled times.':numberGenerator?'Generate classroom numbers from any range, with an optional no-repeat mode.':'Choose GLN TI-84 or GLN TI-30XS inside the calculator.';
+  calculatorTitle.textContent=dashboard?'Classroom Dashboard':seating?'Seating Chart':busCall?'Bus Call':eventSignup?'Conference Sign-Up':flashcards?'Flashcards':grouping?'Automatic Grouping':wheel?'Name Picker':quiz?'Quiz':scheduleTimer?'Schedule Timer':numberGenerator?'Number Generator':'Graphing & Scientific Calculator';
+  calculatorHint.textContent=dashboard?'Choose a class, see today’s schedule, and open your classroom tools from one place.':seating?'Create, arrange, and print a classroom seating plan.':busCall?'Send a bus number to every classroom listening with the same room code.':eventSignup?'Create conference time slots, share the sign-up link, and link filled times to Special Schedules.':flashcards?'Create classes and decks, study cards, run quizzes, share classes, and export quizzes to Google Forms.':grouping?'Generate balanced student groups from saved class rosters.':wheel?'Paste a list, spin, and select someone or something at random.':quiz?'Create, practice, and run classroom quizzes.':scheduleTimer?'Create multiple timers that start automatically at their scheduled times.':numberGenerator?'Generate classroom numbers from any range, with an optional no-repeat mode.':'Choose GLN TI-84 or GLN TI-30XS inside the calculator.';
   if(classroomAccountBar)classroomAccountBar.hidden=flashcards;
   if(flashcards&&flashcardsFrame&&flashcardsFrame.dataset.src&&flashcardsFrame.getAttribute('src')==='about:blank')flashcardsFrame.src=flashcardsFrame.dataset.src;
   if(dashboard)setTimeout(()=>{refreshDashboardClasses();updateClassroomDashboard()},0);
   if(numberGenerator)setTimeout(()=>{numberGeneratorMin.focus();queueFitNumberGeneratorResult()},0);
   if(scheduleTimer)setTimeout(()=>{renderScheduleTimers();updateScheduleTimerClock()},0);
   if(wheel)setTimeout(()=>{refreshWheelSeatingClasses();drawWheel()},0);
+  if(grouping)setTimeout(()=>window.refreshClassroomGrouping?.(),0);
   if(eventSignup)setTimeout(()=>window.refreshEventSignupManager?.(),0);
   if(busCall)setTimeout(()=>window.refreshBusCall?.(),0);
   if(seating)setTimeout(()=>window.renderSeatingChart?.(),0);
@@ -75,6 +81,7 @@ showNumberGenerator.onclick=()=>setCalculatorMode('number-generator');
 showScheduleTimer.onclick=()=>setCalculatorMode('schedule-timer');
 showQuiz.onclick=()=>openQuiz();
 showWheel.onclick=()=>setCalculatorMode('wheel');
+showGrouping.onclick=()=>setCalculatorMode('grouping');
 showFlashcards.onclick=()=>setCalculatorMode('flashcards');
 
 function flashcardsIsFullscreen(){
@@ -1270,7 +1277,8 @@ window.getClassroomToolsSyncData=()=>({
     weights:wheelWeights,
     colorMode:wheelColorMode,
     colors:wheelManualColors
-  }
+  },
+  grouping:window.getClassroomGroupingSyncData?.()||{}
 });
 window.applyClassroomToolsSyncData=data=>{
   if(!data||typeof data!=='object')return;
@@ -1282,6 +1290,7 @@ window.applyClassroomToolsSyncData=data=>{
       localStorage.setItem(SCHEDULE_TIMER_STORAGE_KEY,JSON.stringify(classroomSchedules));
       renderScheduleTimers();updateScheduleTimerClock();
     }
+    if(data.grouping&&typeof data.grouping==='object')window.applyClassroomGroupingSyncData?.(data.grouping);
     if(data.wheel&&typeof data.wheel==='object'){
       if(typeof data.wheel.entries==='string'){wheelEntries.value=data.wheel.entries;localStorage.setItem('glnWheelEntries',data.wheel.entries)}
       if(data.wheel.spinTime!==undefined){wheelSpinTime.value=String(data.wheel.spinTime);localStorage.setItem('glnWheelSpinTime',wheelSpinTime.value)}

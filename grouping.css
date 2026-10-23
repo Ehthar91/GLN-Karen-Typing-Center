@@ -1,0 +1,39 @@
+/* Automatic Grouping: intentionally scoped to the Classroom Tools UI */
+.grouping-panel{width:100%;min-width:0;color:#173868}.grouping-panel[hidden]{display:none!important}
+.grouping-intro{border:1px solid #d2e0ec;background:linear-gradient(115deg,#f9fcff,#ebf6ff 58%,#eafaf6);padding:23px 26px;border-radius:19px;margin-bottom:16px}
+.grouping-intro h2{font-size:clamp(1.55rem,2.8vw,2.2rem);margin:5px 0 8px;color:#173868}.grouping-intro p{color:#64758c;font-size:.87rem;margin:0;line-height:1.6}
+.grouping-layout{display:grid;grid-template-columns:minmax(290px,355px) minmax(0,1fr);gap:16px;align-items:start}
+.grouping-setup,.grouping-display{min-width:0;border:1px solid #d4e2ef;border-radius:18px;background:#fff;padding:21px;box-shadow:0 8px 23px rgba(18,33,63,.05)}
+.grouping-setup h3,.grouping-display h3{margin:0;color:#173868}
+.grouping-field{display:grid;gap:7px;margin-top:16px;font-weight:800;font-size:.78rem;color:#455e76}
+.grouping-field select,.grouping-field textarea,.grouping-field input{width:100%;min-width:0;border:1px solid #c8d9e6;border-radius:10px;padding:10px 12px;background:#f9fcff;color:#1d3959;font:600 .87rem/1.55 Inter,"Noto Sans Myanmar",system-ui,sans-serif}
+.grouping-field select,.grouping-field input{min-height:46px}.grouping-field textarea{min-height:205px;resize:vertical}
+.grouping-field small{font-weight:500;font-size:.7rem;color:#748397;line-height:1.5}
+.grouping-field-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.grouping-field-header button{border:0;background:transparent;color:#106a9b;font-size:.73rem;font-weight:800;text-decoration:underline;cursor:pointer}
+.grouping-settings{display:grid;grid-template-columns:1.4fr .9fr;gap:10px}
+.grouping-run{margin-top:17px;min-height:47px;width:100%;font-size:.9rem}
+.grouping-message{min-height:16px;margin:12px 0 0;color:#6c8196;font-size:.76rem;font-weight:700}
+.grouping-message[data-kind=error]{color:#b42330}.grouping-message[data-kind=success]{color:#14845d}
+.grouping-topline{display:flex;align-items:start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.grouping-topline small{display:block;color:#748397;margin-top:4px;font-weight:700}
+.grouping-actions{display:flex;gap:6px;flex-wrap:wrap}
+.grouping-actions .button{min-height:34px;padding:6px 10px;font-size:.71rem}
+.grouping-actions .button:disabled{opacity:.46;cursor:not-allowed}
+.grouping-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:13px;align-items:start}
+.grouping-card{min-width:0;overflow:hidden;border:1px solid #d8e5f1;border-radius:14px;background:#fcfdff;break-inside:avoid}
+.grouping-card header{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#edf6ff;border-bottom:1px solid #d8e5f1;padding:13px}
+.grouping-card:nth-child(6n+2) header{background:#edfaf3}.grouping-card:nth-child(6n+3) header{background:#fff6e8}.grouping-card:nth-child(6n+4) header{background:#f5f1ff}.grouping-card:nth-child(6n+5) header{background:#fff0f5}
+.grouping-card h3{font-size:.94rem;margin:0;color:#17456f}.grouping-card header small{font-size:.65rem;color:#557894;white-space:nowrap}
+.grouping-card ol{margin:0;padding:12px 17px 16px 38px}.grouping-card li{margin:4px 0;color:#2a425a;font-weight:700;line-height:1.55;font-size:.91rem;overflow-wrap:anywhere}
+.grouping-card li::marker{color:#8da5b8}
+.grouping-empty{grid-column:1/-1;display:grid;align-content:center;justify-items:center;text-align:center;min-height:270px;gap:10px;border:1px dashed #c1d8e9;border-radius:13px;background:#f8fbff;padding:24px}
+.grouping-empty strong{color:#173868}.grouping-empty p{max-width:350px;margin:0;color:#73869a;font-size:.82rem;line-height:1.5}
+.grouping-display:fullscreen{box-sizing:border-box;overflow:auto;background:#f6faff;padding:clamp(20px,5vw,65px);border:0;border-radius:0}
+.grouping-display:fullscreen .grouping-results{grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:20px}
+.grouping-display:fullscreen .grouping-card li{font-size:clamp(1.1rem,2vw,1.7rem)}
+/* The new tenth visible tool tab fits in two even rows. */
+.calculator-mode-switch{grid-template-columns:repeat(5,minmax(0,1fr));width:min(1100px,100%);max-width:1100px}
+@media(max-width:980px){.grouping-layout{grid-template-columns:1fr}.grouping-field textarea{min-height:150px}.calculator-mode-switch{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.grouping-setup,.grouping-display{padding:15px}.grouping-intro{padding:18px}.grouping-results{grid-template-columns:1fr}.calculator-mode-switch{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{body *{visibility:hidden!important}#groupingDisplay,#groupingDisplay *{visibility:visible!important}#groupingDisplay{position:absolute!important;top:0!important;left:0!important;width:100%!important;border:0!important;padding:0!important;box-shadow:none!important}.grouping-actions{display:none!important}.grouping-results{grid-template-columns:repeat(2,minmax(0,1fr))!important}}

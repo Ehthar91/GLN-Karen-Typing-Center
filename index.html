@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="calculator.css?v=20260923-flashcards-fullscreen-1" />
   <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
   <link rel="stylesheet" href="bus-call.css?v=20260917-google-recovery-1" />
+  <link rel="stylesheet" href="grouping.css?v=20261022-auto-grouping-1" />
   <link rel="stylesheet" href="seating.css?v=20260916-quiz-disabled-desks-1" />
   <link rel="stylesheet" href="rgb-theme.css?v=20260916-all-points-1" />
   <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
@@ -217,6 +218,7 @@
         <button id="showSeating" type="button">Seating Chart</button>
         <button id="showScheduleTimer" type="button">Schedule Timer</button>
         <button id="showWheel" type="button">Name Picker</button>
+        <button id="showGrouping" type="button">Automatic Grouping</button>
         <button id="showFlashcards" type="button">Flashcards</button>
         <button id="showQuiz" type="button">Quiz</button>
         <button id="showNumberGenerator" type="button">Number Generator</button>
@@ -290,6 +292,7 @@
               <button type="button" data-dashboard-tool="seating"><span>▦</span><strong>Seating Chart</strong><small>Classes &amp; room layout</small></button>
               <button type="button" data-dashboard-tool="schedule-timer"><span>◷</span><strong>Schedule Timer</strong><small>Automatic class timers</small></button>
               <button type="button" data-dashboard-tool="wheel"><span>◉</span><strong>Name Picker</strong><small>Pick names at random</small></button>
+              <button type="button" data-dashboard-tool="grouping"><span>☷</span><strong>Automatic Grouping</strong><small>Balanced student teams</small></button>
               <button type="button" data-dashboard-tool="flashcards"><span>▤</span><strong>Flashcards</strong><small>Classes, decks &amp; study</small></button>
               <button type="button" data-dashboard-tool="quiz"><span>?</span><strong>Quiz</strong><small>Create &amp; run quizzes</small></button>
               <button type="button" data-dashboard-tool="number-generator"><span>#</span><strong>Number Generator</strong><small>Random classroom numbers</small></button>
@@ -874,6 +877,25 @@ Fish = ညၣ်</textarea>
           </form>
         </section>
       </section>
+      <section class="grouping-panel classroom-tool-panel" id="groupingPanel" aria-labelledby="groupingTitle" hidden>
+  <div class="grouping-intro"><p class="eyebrow">CLASSROOM TOOLS</p><h2 id="groupingTitle">Automatic Grouping</h2><p>Make balanced student groups using your saved class roster or a temporary list.</p></div>
+  <div class="grouping-layout">
+    <section class="grouping-setup" aria-labelledby="groupingSetupTitle">
+      <h3 id="groupingSetupTitle">Set up groups</h3>
+      <label class="grouping-field">Choose a class<select id="groupingClass"><option value="manual">Custom roster (paste names)</option></select><small id="groupingRosterHelp">Enter one name per line.</small></label>
+      <div class="grouping-field"><div class="grouping-field-header"><span>Student names <strong id="groupingStudentCount">0 students</strong></span><button id="groupingReload" type="button">Reload class roster</button></div><textarea id="groupingRoster" aria-label="Student names, one per line" rows="10" spellcheck="false" placeholder="Enter one student name per line"></textarea><small>Remove absent students from this list without changing your saved class. Maximum 100 students.</small></div>
+      <div class="grouping-settings"><label class="grouping-field">Group by<select id="groupingMode"><option value="size">Students per group</option><option value="count">Number of groups</option></select></label><label class="grouping-field"><span id="groupingNumberLabel">Students per group</span><input id="groupingNumber" type="number" min="1" max="100" step="1" inputmode="numeric" value="4" /></label></div>
+      <p class="grouping-message" id="groupingMethodHelp">Creates balanced groups without leaving anyone out.</p>
+      <button class="button primary grouping-run" type="button" id="groupingCreate">✦ Create Groups</button>
+      <p class="grouping-message" id="groupingMessage" role="status" aria-live="polite"></p>
+    </section>
+    <section class="grouping-display" id="groupingDisplay" aria-label="Automatic grouping results">
+      <div class="grouping-topline"><div><h3>Student Groups</h3><small id="groupingSummary">No groups created</small></div><div class="grouping-actions"><button type="button" class="button ghost" id="groupingShuffle">↻ Reshuffle</button><button type="button" class="button ghost" id="groupingCopy">Copy</button><button type="button" class="button ghost" id="groupingCsv">Export CSV</button><button type="button" class="button ghost" id="groupingPrint">Print</button><button type="button" class="button primary" id="groupingFull">⛶ Full Screen</button></div></div>
+      <div class="grouping-results" id="groupingResults" aria-live="polite"></div>
+    </section>
+  </div>
+</section>
+
       <section class="seating-card" id="seatingPanel" aria-labelledby="seatingTitle" hidden>
         <div class="seating-toolbar">
           <div><button class="seating-mobile-panel" id="toggleClassPanel" type="button" aria-label="Show classes">☰</button><div><p class="eyebrow">CLASSROOM LAYOUT</p><h2 id="seatingTitle">Seating Chart</h2></div></div>
@@ -1006,8 +1028,9 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="quiz.js?v=20261022-sgaw-a-global-fix-2"></script>
   <script src="quiz-classroom.js?v=20261022-classroom-upgrade-1"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
-  <script src="calculator.js?v=20260923-flashcards-fullscreen-1"></script>
+  <script src="calculator.js?v=20261022-auto-grouping-1"></script>
   <script src="event-signup.js?v=20260917-conference-signup-1"></script>
+  <script src="grouping.js?v=20261022-auto-grouping-1"></script>
   <script src="seating.js?v=20260916-classroom-rules-physical-1"></script>
   <script src="rgb-theme.js?v=20260911-2"></script>
 </body>
