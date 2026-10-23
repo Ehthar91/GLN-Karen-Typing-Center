@@ -67,3 +67,84 @@
   body.print-grouping #groupingDisplay .grouping-card{break-inside:avoid-page}
 }
 
+
+/* Gaming RGB theme: Automatic Grouping has its own light surfaces, so give all
+   grouping controls, result cards, and headings a coherent dark-mode palette.
+   Scope these rules to the grouping tool; Classic Light remains untouched. */
+@media screen {
+  body.theme-rgb .grouping-panel { color:#e7f2ff; }
+  body.theme-rgb .grouping-intro {
+    background:linear-gradient(115deg,#11263c 0%,#112b46 58%,#14273b 100%);
+    border-color:#345572;
+    box-shadow:0 12px 30px rgba(0,0,0,.24);
+  }
+  body.theme-rgb .grouping-intro h2 { color:#f6fbff; }
+  body.theme-rgb .grouping-intro p:not(.eyebrow) { color:#b8cbde; }
+  body.theme-rgb .grouping-setup,
+  body.theme-rgb .grouping-display {
+    color:#e7f2ff;
+    background:linear-gradient(145deg,#111f35,#0d192c);
+    border-color:#345173;
+    box-shadow:0 18px 42px rgba(0,0,0,.29);
+  }
+  body.theme-rgb .grouping-setup h3,
+  body.theme-rgb .grouping-display h3 { color:#f5f9ff; }
+  body.theme-rgb .grouping-field { color:#ccdbeb; }
+  body.theme-rgb .grouping-field small,
+  body.theme-rgb .grouping-topline small,
+  body.theme-rgb .grouping-message { color:#aabdd3; }
+  body.theme-rgb .grouping-field-header button { color:#75e5ff; }
+  body.theme-rgb .grouping-field-header button:hover { color:#b0f4ff; }
+  body.theme-rgb .grouping-field select,
+  body.theme-rgb .grouping-field textarea,
+  body.theme-rgb .grouping-field input {
+    background:#09182b;
+    border-color:#395777;
+    color:#f4f8ff;
+    color-scheme:dark;
+  }
+  body.theme-rgb .grouping-message[data-kind=error] { color:#ff99a8; }
+  body.theme-rgb .grouping-message[data-kind=success] { color:#74eabb; }
+  body.theme-rgb .grouping-card {
+    color:#eef5ff;
+    background:#12253c;
+    border-color:#365573;
+    box-shadow:0 5px 15px rgba(0,0,0,.14);
+  }
+  body.theme-rgb .grouping-card header {
+    background:#163753;
+    border-bottom-color:#365573;
+  }
+  body.theme-rgb .grouping-card:nth-child(6n+2) header { background:#153c39; }
+  body.theme-rgb .grouping-card:nth-child(6n+3) header { background:#403320; }
+  body.theme-rgb .grouping-card:nth-child(6n+4) header { background:#31294a; }
+  body.theme-rgb .grouping-card:nth-child(6n+5) header { background:#43283e; }
+  body.theme-rgb .grouping-card:nth-child(6n+6) header { background:#253c4b; }
+  body.theme-rgb .grouping-card h3 { color:#f5f9ff; }
+  body.theme-rgb .grouping-card header small { color:#bbcee2; }
+  body.theme-rgb .grouping-card li { color:#e8f1fc; }
+  body.theme-rgb .grouping-card li::marker { color:#7be6ff; }
+  body.theme-rgb .grouping-empty {
+    background:#102137;
+    border-color:#3c5877;
+  }
+  body.theme-rgb .grouping-empty strong { color:#f5f9ff; }
+  body.theme-rgb .grouping-empty p { color:#b2c6da; }
+  body.theme-rgb .grouping-display:fullscreen {
+    background:radial-gradient(circle at 15% 6%,rgba(22,224,255,.08),transparent 27%),#0a1528;
+    color:#f5f9ff;
+  }
+}
+
+/* Printed results stay ink-friendly, even if Gaming RGB is selected. */
+@media print {
+  body.theme-rgb.print-grouping .grouping-display,
+  body.theme-rgb.print-grouping .grouping-card { background:#fff!important;color:#173868!important;border-color:#d8e5f1!important;box-shadow:none!important; }
+  body.theme-rgb.print-grouping .grouping-display h3,
+  body.theme-rgb.print-grouping .grouping-card h3 { color:#173868!important; }
+  body.theme-rgb.print-grouping .grouping-topline small,
+  body.theme-rgb.print-grouping .grouping-card header small { color:#557894!important; }
+  body.theme-rgb.print-grouping .grouping-card header { background:#edf6ff!important;border-bottom-color:#d8e5f1!important; }
+  body.theme-rgb.print-grouping .grouping-card li { color:#2a425a!important; }
+  body.theme-rgb.print-grouping .grouping-card li::marker { color:#7e94a9!important; }
+}
