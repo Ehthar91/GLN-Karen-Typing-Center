@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#091629" />
+  <meta name="description" content="Type Sgaw Karen, Pwo Karen or English Unicode with the GLN keyboard." />
+  <title>Type · GLN Karen Typing Center</title>
+  <link rel="icon" type="image/png" href="../logo.png" />
+  <link rel="stylesheet" href="../padauk.css?v=20261023-1" />
+  <link rel="stylesheet" href="../creator-credit.css?v=20260912-1" />
+  <link rel="stylesheet" href="../type-page.css?v=20261023-1" />
+  <script src="../typing-layouts.js?v=20261023-1" defer></script>
+  <script src="../type-page.js?v=20261023-1" defer></script>
+</head>
+<body class="gln-type-page">
+  <div class="type-shell" id="typeShell">
+    <header class="type-header">
+      <a class="type-brand" href="../" aria-label="GLN Karen Typing Center home">
+        <img src="../logo.png" alt="" />
+        <span><strong>GLN Karen Typing Center</strong><small>Unicode Typing Studio</small></span>
+      </a>
+      <nav class="type-nav" aria-label="Site sections">
+        <a href="./" aria-current="page">Type</a>
+        <a href="../#practice">Practice</a>
+        <a href="../#games">Games</a>
+        <a href="../#tools/dashboard">Classroom Tools</a>
+        <a href="../flashcards.html">Flashcards</a>
+      </nav>
+      <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle Gaming RGB theme">Gaming RGB</button>
+    </header>
+
+    <main class="type-main">
+      <section class="type-hero" aria-labelledby="typeTitle">
+        <div><p class="type-eyebrow">GLN · UNICODE TYPING STUDIO</p><h1 id="typeTitle">Type in Sgaw Karen</h1>
+          <p id="typeSubheading">Type directly with your keyboard or use the on-screen keys. Copy your Unicode text wherever you need it.</p></div>
+        <div class="type-info-pill"><span class="type-info-dot"></span> No account needed · Private on this device</div>
+      </section>
+
+      <section class="type-toolbar" aria-label="Typing settings">
+        <div class="type-setting-group"><span class="type-setting-label">Language</span><div class="segmented" id="languageSelector" role="group" aria-label="Typing language">
+          <button type="button" data-language="ksw" aria-pressed="true">Sgaw Karen</button>
+          <button type="button" data-language="pwo" aria-pressed="false">Pwo Karen</button>
+          <button type="button" data-language="en" aria-pressed="false">English</button>
+        </div></div>
+        <div class="type-setting-group type-font-setting"><label class="type-setting-label" for="fontSize">Font size</label><select id="fontSize"><option value="24">Small</option><option value="32" selected>Medium</option><option value="40">Large</option><option value="48">Extra large</option></select></div>
+        <div class="type-toolbar-spacer"></div>
+        <button id="focusMode" type="button" class="control-btn" aria-pressed="false">⛶ Full screen</button>
+      </section>
+
+      <section class="type-editor-card" aria-label="Typing editor">
+        <div class="type-editor-meta"><span><span class="type-status-dot"></span><span id="draftStatus">Ready to type</span></span><span id="characterCount">0 characters</span></div>
+        <label class="sr-only" for="typeEditor">Type your text here</label>
+        <textarea id="typeEditor" lang="ksw" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="တီၢ်လံာ်ဖဲအံၤ…"></textarea>
+        <div class="type-editor-actions">
+          <div class="type-editor-action-left"><button type="button" id="undoBtn" class="control-btn">↶ Undo</button><button type="button" id="selectAllBtn" class="control-btn">Select all</button><button type="button" id="clearBtn" class="control-btn danger">Clear</button></div>
+          <div class="type-editor-action-right"><button type="button" id="downloadBtn" class="control-btn">↓ Download .txt</button><button type="button" id="copyBtn" class="primary-btn">▣ Copy text</button></div>
+        </div>
+      </section>
+
+      <section class="type-keyboard-panel" aria-label="On-screen Unicode keyboard">
+        <div class="type-keyboard-head"><div><h2>Keyboard</h2><p id="keyboardDescription">Sgaw Karen layout · physical English keys</p></div>
+          <div class="keyboard-controls"><div class="segmented" role="group" aria-label="Keyboard layer"><button type="button" id="normalLayer" aria-pressed="true">Normal</button><button type="button" id="shiftLayer" aria-pressed="false">Shift</button></div><button type="button" id="keyboardVisibility" class="control-btn" aria-expanded="true">Hide keyboard</button></div>
+        </div>
+        <div id="keyboardWrap" class="keyboard-viewport"><div id="typeKeyboard" class="type-keyboard"></div></div>
+        <p class="keyboard-help" id="keyboardHelp">Keyboard follows the GLN Sgaw Karen Unicode layout. Hold Shift for the second layer.</p>
+      </section>
+      <div id="typeToast" class="type-toast" role="status" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <aside class="creator-credit" id="typeCreatorCredit" aria-label="Website creator">
+    <button class="creator-credit-close" id="dismissTypeCreatorCredit" type="button" aria-label="Hide creator badge" title="Hide creator badge">×</button>
+    <img src="../creator-ehthar.png?v=20260910-6" alt="Ehthar Htain (Aung Naing)" />
+    <span>Created by<strong>Ehthar Htain (Aung Naing)</strong></span>
+  </aside>
+</body>
+</html>
