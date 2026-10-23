@@ -111,7 +111,12 @@
   get('groupingReload').addEventListener('click',()=>{const cl=classes().find(x=>x.id===active);if(!cl)return;roster.value=(cl.roster||[]).join('\n');dirty();info('Class roster reloaded.','success')});
   get('groupingCreate').addEventListener('click',generate);get('groupingShuffle').addEventListener('click',generate);
   get('groupingCopy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(asText());info('Groups copied to clipboard.','success')}catch{info('Clipboard unavailable. Try Export CSV.','error')}});
-  get('groupingCsv').addEventListener('click',csv);get('groupingPrint').addEventListener('click',()=>window.print());
+  get('groupingCsv').addEventListener('click',csv);
+  get('groupingPrint').addEventListener('click',()=>{
+    document.body.classList.add('print-grouping');
+    window.print();
+  });
+  window.addEventListener('afterprint',()=>document.body.classList.remove('print-grouping'));
   get('groupingFull').addEventListener('click',async()=>{try{if(document.fullscreenElement===get('groupingDisplay'))await document.exitFullscreen();else await get('groupingDisplay').requestFullscreen()}catch{info('Full screen is unavailable on this device.','error')}});
   document.addEventListener('fullscreenchange',()=>{const full=document.fullscreenElement===get('groupingDisplay');get('groupingFull').textContent=full?'✕ Exit Full Screen':'⛶ Full Screen'});
   window.refreshClassroomGrouping=refreshSources;
