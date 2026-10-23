@@ -1,0 +1,15 @@
+FLASHCARDS AUTHENTICATION ISOLATION
+
+When Flashcards is opened inside Classroom Tools, the iframe loads:
+  flashcards.html?embedded=classroom
+
+Embedded Flashcards uses its own named Firebase app with LOCAL authentication persistence.
+This means:
+- After a teacher signs in once, embedded Flashcards remembers that login on the same browser/device.
+- Reopening Classroom Tools or returning to Flashcards does NOT require signing in again.
+- The remembered embedded login remains until the teacher explicitly clicks Sign out (or clears browser site data).
+- Signing in/out of embedded Flashcards does not sign the standalone Flashcards page in/out.
+- The standalone Flashcards page keeps its own normal remembered Firebase login.
+- Classroom Tools' This device / Google account setting remains independent.
+
+No Firebase rules change is required for this update.

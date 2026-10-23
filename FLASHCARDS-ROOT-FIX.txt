@@ -1,0 +1,21 @@
+GLN CLASSROOM TOOLS — FLASHCARDS 404 FIX
+
+This version keeps the Flashcards runtime files directly in the GLN repository root.
+No /flashcards folder is required.
+
+The Classroom Tools Flashcards tab loads:
+  /flashcards.html
+
+Runtime files in the repo root:
+  flashcards.html
+  flashcards-app.js
+  flashcards-styles.css
+  flashcards-firebase-config.js
+
+Firestore rules reference only:
+  flashcards-firestore.rules
+
+For Google sign-in, ensure your deployed GitHub Pages domain is listed in the
+Flashcards Firebase project under Authentication > Settings > Authorized domains.
+
+The normal Classroom Tools account/sync bar is also hidden while Flashcards is open.
