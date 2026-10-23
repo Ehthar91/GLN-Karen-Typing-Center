@@ -1,0 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&display=swap');
+
+[lang="ksw"], textarea, .key, .brand-mark, .brand small, .eyebrow {
+  font-family: "Padauk", "Noto Sans Myanmar", "Myanmar Text", sans-serif;
+  font-language-override: "ksw";
+}
