@@ -1,19 +1,31 @@
-GLN Flashcards — Quiz Question Count Patch
+GLN Karen Typing Center — Type Tab Return Fix
+================================================
 
-Upload these four files to the ROOT of the existing website repository and replace the current copies:
-- index.html
-- flashcards.html
-- flashcards-app.js
-- flashcards-styles.css
+WHY THE PROBLEM HAPPENED
+The main website's Type tab was deliberately changed to redirect visitors to
+/type/ when the standalone typing page was first added.
 
-New behavior:
-- Quiz Setup now includes "Questions to include".
-- Enter any number from 1 up to the number of available flashcards.
-- Use All restores the full available count.
-- Progressive uses the first N cards in the current deck/class order.
-- Random shuffles the available cards and then chooses N questions.
-- The same question count is used by live quizzes and Google Forms .gs exports.
-- Multiple-choice distractors can still come from the full available card set, even when only a smaller number of questions is selected.
+WHAT CHANGED
+- Main website Type tab now switches back to the original embedded typing view.
+- The "Open dedicated Type page" button still opens /type/ when desired.
+- The standalone /type/index.html is not changed.
+- The quiz physical-Shift keyboard-display fix stays intact.
+- index.html updates the practice.js cache version for GitHub Pages.
 
-No Firebase or Firestore rules changes are required for this update.
-After GitHub Pages redeploys, do one hard refresh if the old Quiz Setup is still cached.
+INSTALLATION (PATCH ONLY)
+Upload these two files to your repository root, replacing the existing ones:
+  - practice.js
+  - index.html
+
+DO NOT upload these files inside the type/ folder.
+DO NOT delete type/index.html or other website files.
+
+EXPECTED RESULT
+- Click Type in main GLN site -> original embedded Type section.
+- Click Open dedicated Type page -> standalone /type/ page.
+- Practice/Games/Classroom Tools remain accessible in the main site.
+
+TEST
+After GitHub Pages publishes, refresh the main site (Shift+Reload).
+Open Classroom Tools, then click Type: the original editor should appear.
+Open the standalone page with its dedicated link: it should remain tab-free.
