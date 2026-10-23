@@ -35,7 +35,7 @@
 @media(max-width:850px){.seating-layout{grid-template-columns:1fr}.seating-setup{max-width:620px;width:100%;margin:auto}.seating-board-wrap{min-height:500px}}
 @media(max-width:620px){.seating-card{padding:18px 10px;border-radius:16px}.seating-toolbar{align-items:flex-start;flex-direction:column}.seating-toolbar>div:last-child{width:100%;flex-wrap:wrap}.seating-toolbar>div:last-child .button{flex:1}.seating-board-wrap{padding:13px}.seating-actions{grid-template-columns:1fr}.seating-board{min-width:500px}.student-seat{min-height:64px}}
 @media print{
-  @page{size:landscape;margin:.35in}
+  /* Page orientation and margins are chosen in the browser Print dialog. */
   body.print-seating{background:#fff!important}
   body.print-seating::before,body.print-seating::after,
   body.print-seating .topbar,
