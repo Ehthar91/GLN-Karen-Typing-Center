@@ -1,24 +1,8 @@
 const editor=document.querySelector('#editor');const keyboard=document.querySelector('#keyboard');const count=document.querySelector('#count');const toast=document.querySelector('#toast');let shifted=false;let savedLanguage=localStorage.getItem('typingLanguage');let typingLanguage=['ksw','pwo','en'].includes(savedLanguage)?savedLanguage:'ksw';
-// KarenKNU S'gaw Karen Unicode map: [English key, normal, shifted].
-const rows=[
-[['`','ပ','ြု'],['1','၁','ည'],['2','၂','ၥ'],['3','၃','£'],['4','၄','၃'],['5','၅','ရ'],['6','၆','၄'],['7','၇','ရ'],['8','၈','ဂ'],['9','၉','('],['0','ဝ',')'],['-','ြ','ြ'],['=','—','ှု']],
-[['q','ဆ','ခ'],['w','တ','တ'],['e','န','န'],['r','မ','ၤ'],['t','အ','၎'],['y','ပ','၌'],['u','က','ၢ'],['i','င','ၢ်'],['o','သ','ၣ်'],['p','စ','ာ်'],['[','ဟ','ဧ'],[']','=','ဂ'],['\\','ၪ','ၑ']],
-[['a','ရှ','∕'],['s','ျ','ှ'],['d','ိ','ီ'],['f','်','ၠ'],['g','ါ','ွ'],['h','့','ံ'],['j','ြ','ဲ'],['k','ု','ု'],['l','ူ','ူ'],[';','း','ၤ'],["'",'ဒ','ီ']],
-[['z','ဖ','ဇ'],['x','ထ','ဌ'],['c','ခ','ဃ'],['v','လ','ျ့'],['b','ဘ','ြ'],['n','ည','ဒ'],['m','ာ်','ျ့'],[',','ယ',','],['.','.','ၢ်'],['/','”','“']]
-];
-const englishRows=[
-[['`','`','~'],['1','1','!'],['2','2','@'],['3','3','#'],['4','4','$'],['5','5','%'],['6','6','^'],['7','7','&'],['8','8','*'],['9','9','('],['0','0',')'],['-','-','_'],['=','=','+']],
-[['q','q','Q'],['w','w','W'],['e','e','E'],['r','r','R'],['t','t','T'],['y','y','Y'],['u','u','U'],['i','i','I'],['o','o','O'],['p','p','P'],['[','[','{'],[']',']','}'],['\\','\\','|']],
-[['a','a','A'],['s','s','S'],['d','d','D'],['f','f','F'],['g','g','G'],['h','h','H'],['j','j','J'],['k','k','K'],['l','l','L'],[';',';',':'],["'","'",'"']],
-[['z','z','Z'],['x','x','X'],['c','c','C'],['v','v','V'],['b','b','B'],['n','n','N'],['m','m','M'],[',',',','<'],['.','.','>'],['/','/','?']]
-];
-// Keyman Eastern Pwo Karen 1.1 Unicode map: [English key, normal, shifted].
-const pwoRows=[
-[['`','`','~'],['1','၁','ဠ'],['2','၂','ဎ'],['3','၃','ဋ'],['4','၄','$'],['5','၅','%'],['6','၆','^'],['7','၇','ရ'],['8','၈','*'],['9','၉','('],['0','ဝ',')'],['-','-','_'],['=','=','+']],
-[['q','ဆ','ဇ'],['w','တ','ဝ'],['e','န','ၞ'],['r','မ','ၟ'],['t','အ','ဍ'],['y','ပ','ါဲ'],['u','က','ဥ'],['i','င','ၚ'],['o','သ','ဳ'],['p','စ','ဏ'],['[','ဟ','ၯ'],[']','☆','ၰ'],['\\','\\','|']],
-[['a','ေ','ဗ'],['s','ျ','ှ'],['d','ိ','ီ'],['f','်','္'],['g','ါ','ွ'],['h','့','ံ'],['j','ြ','ဲ'],['k','ု','ဒ'],['l','ူ','ဓ'],[';','း','ဂ'],["'","'",'"']],
-[['z','ဖ','ဈ'],['x','ထ','ဌ'],['c','ခ','ဃ'],['v','လ','ၠ'],['b','ဘ','ယ'],['n','ည','ဉ'],['m','ာ','ၜ'],[',',',','၊'],['.','ႋ','။'],['/','/','?']]
-];
+// Mappings shared with the dedicated Type page to prevent keyboard-layout drift.
+const rows=window.GLN_TYPING_LAYOUTS.ksw;
+const englishRows=window.GLN_TYPING_LAYOUTS.en;
+const pwoRows=window.GLN_TYPING_LAYOUTS.pwo;
 function rowsForLanguage(language=typingLanguage){return language==='en'?englishRows:language==='pwo'?pwoRows:rows}
 function mappingsForLanguage(language=typingLanguage){return rowsForLanguage(language).flat().flatMap(([key,normal,shift])=>[{key,value:normal,shift:false},{key,value:shift,shift:true}]).sort((a,b)=>b.value.length-a.value.length)}
 const special=[['Backspace','Backspace','⌫'],[' ','Space','Space'],['Enter','Enter','↵ Enter']];
