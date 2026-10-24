@@ -804,3 +804,16 @@ body.theme-rgb #customGameKeyboard.real-keyboard .system-key{color:#9fb0c8}
 
 /* Desktop/Chromebook learning hint: both Shift keys glow only when Shift is required. */
 .keyboard .key.desktop-shift-hint{border-color:#f0b429!important;background:#fff1b8!important;color:#6b4600!important;box-shadow:0 0 0 3px rgba(240,180,41,.24),0 0 18px rgba(240,180,41,.34)!important}
+
+/* Tug of War's room language is selected by the host (independent of site tabs). */
+.tug-host-settings label:last-child{grid-column:auto}
+.tug-language-note{margin:0;padding:9px 12px;border:1px solid #cde3f4;border-radius:10px;background:#eaf6ff;color:#275579;font-size:.84rem;line-height:1.45}
+.tug-language-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;margin:4px 0 10px;padding:6px 11px;border:1px solid #9cdbda;border-radius:999px;background:rgba(27,174,168,.11);color:#12635e;font-size:.78rem;font-weight:800;letter-spacing:.01em}
+.tug-lobby-copy>.tug-language-badge{margin:0 0 13px}
+.tug-teacher-head .tug-language-badge{margin:7px 0 0}
+.custom-challenge>.tug-language-badge{display:flex;margin:10px auto 6px}
+body.theme-rgb .tug-language-note{border-color:#375a76;background:#122e42;color:#b3e1e9}
+body.theme-rgb .tug-language-badge{border-color:#2d8f94;background:rgba(20,174,178,.12);color:#8ee7ec}
+@media(max-width:620px){.tug-host-settings label:last-child{grid-column:auto}}
+
+.tug-language-note[hidden],.tug-language-badge[hidden]{display:none!important}

@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="styles.css?v=20261023-type-studio-link-polish-1" />
   <link rel="stylesheet" href="practice.css?v=20260915-shift-hint-1" />
   <link rel="stylesheet" href="games.css?v=20260915-game-contrast-1" />
-  <link rel="stylesheet" href="custom-games.css?v=20260915-game-contrast-1" />
+  <link rel="stylesheet" href="custom-games.css?v=20261024-tug-three-languages-1" />
   <link rel="stylesheet" href="race.css?v=20260911-8" />
   <link rel="stylesheet" href="mobile-keyboard.css?v=20260910-6" />
   <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
@@ -136,10 +136,12 @@
               <div class="tug-option-heading"><span>👩‍🏫</span><div><strong>Host</strong><p>Paste your own list, choose the team setup, then create a room.</p></div></div>
               <label>Word or sentence list<textarea id="tugWordsInput" rows="7" maxlength="4000" lang="ksw" placeholder="Enter or paste your own words or sentences" required></textarea><small>One word or sentence per line. Commas in sentences are preserved; single-line comma lists also work.</small></label>
               <div class="tug-host-settings">
+                <label>Keyboard language<select id="tugLanguage"><option value="ksw">Sgaw Karen · GLN layout</option><option value="pwo">Pwo Karen · GLN layout</option><option value="en">English · QWERTY</option></select></label>
                 <label>Difficulty<select id="tugDifficulty"><option value="easy">Easy · guided keyboard · bonus at 20 WPM</option><option value="medium" selected>Medium · keyboard only · bonus at 30 WPM</option><option value="hard">Hard · no keyboard · bonus at 40 WPM</option></select></label>
                 <label>Challenges<input id="tugChallengeCount" type="number" min="1" max="50" value="10"></label>
                 <label>Team setup<select id="tugTeamMode"><option value="random" selected>Random teams</option><option value="choose">Students choose</option><option value="host">Host assigns</option></select></label>
               </div>
+              <p class="tug-language-note" id="tugLanguageNote">Everyone in this room will use the Sgaw Karen keyboard.</p>
               <p class="tug-rule-note">Each correct prompt earns 1 pull point. Fast, error-free typing earns 1 bonus point. The rope reaches the end when a team leads by 5 average pull points.</p>
               <button class="button primary" type="submit">Create Tug of War room</button>
             </form>
@@ -149,6 +151,7 @@
               <label>Your name<input id="tugNameInput" maxlength="24" autocomplete="name" placeholder="Player name" required></label>
               <fieldset class="tug-avatar-field"><legend>Choose your avatar</legend><div class="tug-avatar-picker" id="tugAvatarPicker" role="radiogroup" aria-label="Choose your avatar"></div></fieldset>
               <fieldset class="tug-team-field" id="tugTeamField" hidden><legend>Choose your team</legend><div class="tug-team-picker"><button class="tug-team-choice red" id="tugChooseRed" type="button">Ⓐ Team A</button><button class="tug-team-choice blue" id="tugChooseBlue" type="button">Ⓑ Team B</button></div></fieldset>
+              <p class="tug-language-note" id="tugJoinLanguage" hidden></p>
               <p class="tug-team-note" id="tugJoinTeamNote">Enter a room code to see how teams are assigned.</p>
               <button class="button primary" type="submit">Join Tug of War</button>
             </form>
@@ -157,11 +160,11 @@
         </div>
         <div class="tug-lobby" id="tugLobby" hidden>
           <div class="tug-room-code"><span>ROOM CODE</span><strong id="tugRoomCode">—</strong><button class="button ghost" id="copyTugCode" type="button">Copy code</button></div>
-          <div class="tug-lobby-copy"><h2 id="tugLobbyTitle">Waiting for players</h2><p id="tugLobbyHint">Share the room code with your players.</p><strong id="tugPlayerCount">Joined: 0 players</strong><button class="button primary" id="startTugRoom" type="button" hidden>Start Tug of War</button></div>
+          <div class="tug-lobby-copy"><span class="tug-language-badge" id="tugLobbyLanguage">Keyboard: Sgaw Karen</span><h2 id="tugLobbyTitle">Waiting for players</h2><p id="tugLobbyHint">Share the room code with your players.</p><strong id="tugPlayerCount">Joined: 0 players</strong><button class="button primary" id="startTugRoom" type="button" hidden>Start Tug of War</button></div>
           <div class="tug-lobby-teams" id="tugLobbyTeams"></div>
         </div>
         <div class="tug-teacher-live" id="tugTeacherLive" hidden>
-          <div class="tug-teacher-head"><div><span>LIVE TUG OF WAR</span><h2>Team battle</h2></div><div><span>ROOM <strong id="tugLiveCode">—</strong></span><button class="button danger" id="endTugRoom" type="button">End game</button></div></div>
+          <div class="tug-teacher-head"><div><span>LIVE TUG OF WAR</span><h2>Team battle</h2><span class="tug-language-badge" id="tugTeacherLanguage">Keyboard: Sgaw Karen</span></div><div><span>ROOM <strong id="tugLiveCode">—</strong></span><button class="button danger" id="endTugRoom" type="button">End game</button></div></div>
           <div class="tug-teacher-arena" id="tugTeacherArena">
             <div class="tug-arena-score red"><span>TEAM A</span><strong id="tugTeacherRedScore">0.0</strong><small>avg pulls</small></div>
             <div class="tug-rope-wrap"><div class="tug-rope-line"><span class="tug-rope-knot" id="tugTeacherRopeMarker">🪢</span><i class="tug-finish red"></i><i class="tug-center"></i><i class="tug-finish blue"></i></div><div class="tug-live-avatars"><span id="tugTeacherRedAvatars"></span><span id="tugTeacherBlueAvatars"></span></div></div>
@@ -174,7 +177,7 @@
           <div class="custom-game-stats"><div><span>Score</span><strong id="customScore">0</strong></div><div><span id="customStatusLabel">Checkpoint</span><strong id="customRound">1 / 10</strong></div><div><span id="customLifeLabel">Stars</span><strong id="customLives">★★★</strong></div></div>
           <div class="adventure-world" id="adventureWorld"><div class="adventure-sky">Typing Trail</div><div class="adventure-path" id="adventurePath"><span class="adventure-player" id="adventurePlayer">🧭</span><i></i><i></i><i></i><i></i><i></i></div></div>
           <div class="tug-world" id="tugWorld" hidden><div class="tug-player-team red"><span>TEAM A</span><div id="tugRedAvatars"></div></div><div class="tug-player-rope"><div class="tug-rope-line"><span class="tug-rope-knot" id="tugPlayerRopeMarker">🪢</span><i class="tug-finish red"></i><i class="tug-center"></i><i class="tug-finish blue"></i></div><p id="tugPlayerStatus">Pull for your team!</p></div><div class="tug-player-team blue"><span>TEAM B</span><div id="tugBlueAvatars"></div></div></div>
-          <div class="custom-challenge"><span>TYPE THIS</span><div class="custom-target" id="customTarget" lang="ksw"></div><div class="custom-typed" id="customTyped" lang="ksw"></div><p>Start typing with your English keyboard.</p></div><div class="game-keyboard keyboard" id="customGameKeyboard"></div>
+          <div class="custom-challenge"><span>TYPE THIS</span><span class="tug-language-badge" id="tugPlayerLanguage" hidden>Keyboard: Sgaw Karen</span><div class="custom-target" id="customTarget" lang="ksw"></div><div class="custom-typed" id="customTyped" lang="ksw"></div><p>Start typing with your English keyboard.</p></div><div class="game-keyboard keyboard" id="customGameKeyboard"></div>
         </div>
         <div class="custom-game-results" id="customGameResults" hidden><span id="customResultIcon">🏆</span><h2 id="customResultTitle">Adventure complete!</h2><p id="customResultSummary"></p><div id="customResultActions"><button class="button primary" id="customPlayAgain" type="button">Play again</button><button class="button ghost" id="customNewList" type="button">Change list</button></div></div>
       </section>
@@ -1031,7 +1034,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="app.js?v=20261023-typing-placeholder-1"></script>
   <script src="practice.js?v=20261023-type-tab-return-fix-1"></script>
   <script src="games.js?v=20260915-unified-keyboard-1"></script>
-  <script src="custom-games.js?v=20261024-reactive-motion-v4"></script>
+  <script src="custom-games.js?v=20261024-tug-three-languages-1"></script>
   <script src="race.js?v=20260915-unified-keyboard-1"></script>
   <script src="bus-call.js?v=20260917-lineup-toggle-1"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>

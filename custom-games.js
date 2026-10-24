@@ -64,8 +64,37 @@ function refreshCustomLists(){
   Object.keys(lists).sort().forEach(name=>menu.add(new Option(name,name)));
   if(lists[current])menu.value=current;
 }
+function normalizeTugLanguage(language){return ['ksw','pwo','en'].includes(language)?language:'ksw'}
+function tugLanguageName(language){return {ksw:'Sgaw Karen',pwo:'Pwo Karen',en:'English'}[normalizeTugLanguage(language)]}
 function languageTagFor(language){return language==='en'?'en':language==='pwo'?'kjp':'ksw'}
-function customGameLanguage(){return customMode==='tug'&&tugRole==='player'?customLanguage:typingLanguage}
+// A Tug of War room has ONE host-selected language for all students, regardless
+// of the language their browser was using before joining.
+function customGameLanguage(){
+  if(customMode==='tug'){
+    if(tugRole==='host'||tugRole==='player')return normalizeTugLanguage(tugRoom?.language||customLanguage);
+    return normalizeTugLanguage(cq('#tugLanguage')?.value||typingLanguage);
+  }
+  return typingLanguage;
+}
+function tugUpdateRoomLanguage(language){
+  const selected=normalizeTugLanguage(language),label=tugLanguageName(selected);
+  ['#tugLobbyLanguage','#tugTeacherLanguage','#tugPlayerLanguage'].forEach(selector=>{
+    const badge=cq(selector);if(badge)badge.textContent=`Keyboard: ${label}`;
+  });
+}
+function tugSyncHeaderLanguage(language){
+  const selected=normalizeTugLanguage(language);
+  customLanguage=selected;
+  tugUpdateRoomLanguage(selected);
+  if(typingLanguage!==selected&&typeof setTypingLanguage==='function')setTypingLanguage(selected);
+}
+function tugUpdateDraftLanguage(){
+  const lang=normalizeTugLanguage(cq('#tugLanguage').value);
+  cq('#tugWordsInput').lang=languageTagFor(lang);
+  const note=cq('#tugLanguageNote');
+  if(note)note.textContent=`Everyone in this room will use the ${tugLanguageName(lang)} keyboard. Paste ${tugLanguageName(lang)} text; the game does not translate prompts.`;
+}
+cq('#tugLanguage').addEventListener('change',tugUpdateDraftLanguage);
 function normalizeTugDifficulty(value){const mode=String(value||'medium').toLowerCase();return mode==='normal'?'medium':(['easy','medium','hard'].includes(mode)?mode:'medium')}
 function customDifficulty(){return customMode==='tug'&&tugRole==='player'?normalizeTugDifficulty(customDifficultyMode):cq('#customDifficulty').value}
 function shuffledChallenges(source,count){
@@ -342,7 +371,7 @@ function openCustomGame(mode){
   }else{
     customSetup.hidden=true;cq('#tugClassSetup').hidden=false;tugError('');
     cq('#tugConnection').textContent='Connecting…';
-    cq('#tugWordsInput').lang=languageTag();
+    cq('#tugLanguage').value=normalizeTugLanguage(typingLanguage);tugUpdateDraftLanguage();
     cq('#tugCodeInput').value='';cq('#tugNameInput').value='';
     cq('#tugTeamField').hidden=true;cq('#tugJoinTeamNote').textContent='Enter a room code to see how teams are assigned.';
     tugAvatarIndex=0;tugSelectedTeam='';renderTugAvatarPicker();renderTugTeamChoice();
@@ -375,6 +404,7 @@ function beginCustomGame(){
   if(!source.length)return customError('Add at least one word or sentence.');
   const count=Math.max(1,Math.min(50,Number(cq('#customChallengeCount').value)||10));
   customMode='adventure';customItems=shuffledChallenges(source,count);customIndex=0;customScore=0;customLives=3;customValue='';
+  cq('#tugPlayerLanguage').hidden=true;
   customLanguage=typingLanguage;customDifficultyMode=cq('#customDifficulty').value;
   customSetup.hidden=true;customResults.hidden=true;cq('#customResultActions').hidden=false;customLive.hidden=false;
   cq('#adventureWorld').hidden=false;cq('#tugWorld').hidden=true;
@@ -550,6 +580,7 @@ function chooseBalancedTeam(players){
 cq('#tugCreateForm').onsubmit=async event=>{
   event.preventDefault();tugError('');
   const source=parseTugItems(cq('#tugWordsInput').value);
+  const selectedLanguage=normalizeTugLanguage(cq('#tugLanguage').value);
   const count=Math.max(1,Math.min(50,Number(cq('#tugChallengeCount').value)||10));
   try{
     if(!source.length)throw new Error('Paste at least one word or sentence.');
@@ -560,11 +591,11 @@ cq('#tugCreateForm').onsubmit=async event=>{
       const code=makeTugCode(),ref=tugRoomRef(code),existing=await fb.get(ref);
       if(existing.exists())continue;
       const now=Date.now(),items=shuffledChallenges(source,count);
-      await fb.set(ref,{hostUid:currentUser.uid,items,difficulty:normalizeTugDifficulty(cq('#tugDifficulty').value),challengeCount:items.length,language:typingLanguage,teamMode:cq('#tugTeamMode').value,winLead:TUG_WIN_LEAD,status:'waiting',winner:'',createdAt:now,expiresAt:now+14400000,startedAt:0,finishedAt:0,players:{}});
+      await fb.set(ref,{hostUid:currentUser.uid,items,difficulty:normalizeTugDifficulty(cq('#tugDifficulty').value),challengeCount:items.length,language:selectedLanguage,teamMode:cq('#tugTeamMode').value,winLead:TUG_WIN_LEAD,status:'waiting',winner:'',createdAt:now,expiresAt:now+14400000,startedAt:0,finishedAt:0,players:{}});
       tugCode=code;created=true;
     }
     if(!created)throw new Error('Could not create a room. Please try again.');
-    tugRole='host';tugPlayerId='';showTugLobby({players:[]});watchTugRoom();
+    tugRole='host';tugPlayerId='';tugSyncHeaderLanguage(selectedLanguage);showTugLobby({players:[]});watchTugRoom();
   }catch(error){tugError(error.message||'Could not create the Tug of War room.')}
 };
 
@@ -573,11 +604,14 @@ async function previewTugRoom(){
   cq('#tugCodeInput').value=code;
   const token=++tugPreviewToken;
   tugSelectedTeam='';renderTugTeamChoice();cq('#tugTeamField').hidden=true;
+  cq('#tugJoinLanguage').hidden=true;
   if(code.length!==5){cq('#tugJoinTeamNote').textContent='Enter a room code to see how teams are assigned.';return}
   try{
     await initRaceFirebase();const snap=await fb.get(tugRoomRef(code));if(token!==tugPreviewToken)return;
     if(!snap.exists()){cq('#tugJoinTeamNote').textContent='Room not found yet. Check the code.';return}
     const room=snap.val(),players=Object.values(room.players||{}),stats=tugTeamStats(players);
+    cq('#tugJoinLanguage').textContent=`This room uses the ${tugLanguageName(room.language)} keyboard. Your keyboard will switch automatically when you join.`;
+    cq('#tugJoinLanguage').hidden=false;
     if(room.teamMode==='choose'){
       cq('#tugTeamField').hidden=false;
       const redBlocked=stats.red.players.length>stats.blue.players.length;
@@ -614,7 +648,7 @@ cq('#tugJoinForm').onsubmit=async event=>{
       if(tugSelectedTeam==='blue'&&stats.blue.players.length>stats.red.players.length)throw new Error('Team B is full right now. Choose Team A.');
       team=tugSelectedTeam;
     }
-    tugCode=code;tugRole='player';tugPlayerId=currentUser.uid;tugPlayerName=rawName;tugTeam=team;customLanguage=room.language||typingLanguage;
+    tugCode=code;tugRole='player';tugPlayerId=currentUser.uid;tugPlayerName=rawName;tugTeam=team;tugSyncHeaderLanguage(room.language);
     const player={id:currentUser.uid,name:rawName,avatar:tugAvatarIndex,team,score:0,index:0,finished:false,joinedAt:Date.now(),finishedAt:0,correctChars:0,attemptedChars:0,errors:0,wpm:0,accuracy:100};
     await fb.set(tugPlayerRef(code,currentUser.uid),player);
     showTugLobby({players:[...players.filter(p=>p.id!==currentUser.uid),player]});watchTugRoom();
@@ -624,6 +658,7 @@ cq('#tugJoinForm').onsubmit=async event=>{
 function showTugLobby(data){
   cq('#tugClassSetup').hidden=true;customSetup.hidden=true;customLive.hidden=true;customResults.hidden=true;cq('#tugTeacherLive').hidden=true;cq('#tugLobby').hidden=false;
   cq('#tugRoomCode').textContent=tugCode;
+  tugUpdateRoomLanguage(tugRoom?.language||customLanguage);
   const host=tugRole==='host';
   cq('#startTugRoom').hidden=!host;
   cq('#tugLobbyTitle').textContent=host?'Waiting for players':tugTeam==='unassigned'?'You joined! Waiting for a team':'You joined '+teamLabel(tugTeam)+'!';
@@ -685,6 +720,7 @@ function watchTugRoom(){
   tugUnsubscribe=fb.onValue(tugRoomRef(tugCode),snap=>{
     if(!snap.exists()){tugError('This Tug of War room is no longer available.');return}
     tugRoom=snap.val();cq('#tugConnection').textContent='Online';
+    if(tugRole==='host'||tugRole==='player')tugSyncHeaderLanguage(tugRoom.language);
     const players=Object.values(tugRoom.players||{});
     if(tugRoom.status==='waiting'){
       tugClassStarted=false;
@@ -719,11 +755,12 @@ function beginTugPlayer(room){
   customResults.querySelector('.tug-celebration-confetti')?.remove();delete customResults.dataset.tugVictoryKey;
   customItems=Array.isArray(room.items)?room.items:Object.values(room.items||{});
   customIndex=Math.max(0,Math.min(customItems.length,Number(me.index)||0));
-  customScore=Number(me.score)||0;customValue='';customLanguage=room.language||typingLanguage;customDifficultyMode=normalizeTugDifficulty(room.difficulty);customKeyboardShifted=false;
+  customScore=Number(me.score)||0;customValue='';customLanguage=normalizeTugLanguage(room.language);customDifficultyMode=normalizeTugDifficulty(room.difficulty);customKeyboardShifted=false;
   tugTeam=me.team;tugCorrectChars=Number(me.correctChars)||0;tugAttemptedChars=Number(me.attemptedChars)||0;tugErrors=Number(me.errors)||0;tugGameStartedAt=room.startedAt||Date.now();
   cq('#tugLobby').hidden=true;cq('#tugClassSetup').hidden=true;cq('#tugTeacherLive').hidden=true;customResults.hidden=true;cq('#customResultActions').hidden=true;customLive.hidden=false;
   cq('#adventureWorld').hidden=true;cq('#tugWorld').hidden=false;cq('#customStatusLabel').textContent='Prompt';cq('#customLifeLabel').textContent='Team';
   cq('#customTarget').lang=languageTagFor(customLanguage);cq('#customTyped').lang=languageTagFor(customLanguage);
+  tugUpdateRoomLanguage(customLanguage);cq('#tugPlayerLanguage').hidden=false;
   updateTugPlayerArena(room,Object.values(room.players||{}));nextCustomChallenge();
 }
 function updateTugAvatarRow(selector,players,team,pulseMap={}){
@@ -861,6 +898,18 @@ document.addEventListener('keyup',e=>{
   if(customMode==='tug'&&normalizeTugDifficulty(customDifficulty())==='medium'&&customKeyboardShifted){customKeyboardShifted=false;renderCustomKeyboard()}
 });
 window.addEventListener('typinglanguagechange',()=>{
-  cq('#customWordsInput').lang=languageTag();cq('#tugWordsInput').lang=languageTag();
-  if(!(customMode==='tug'&&tugRole==='player')){cq('#customTarget').lang=languageTag();cq('#customTyped').lang=languageTag()}
+  cq('#customWordsInput').lang=languageTag();
+  if(customMode==='tug'&&['host','player'].includes(tugRole)&&!customStage.hidden&&!gamesView.hidden){
+    const locked=customGameLanguage();
+    if(typingLanguage!==locked){tugSyncHeaderLanguage(locked);return;}
+    cq('#tugWordsInput').lang=languageTagFor(locked);
+    cq('#customTarget').lang=languageTagFor(locked);
+    cq('#customTyped').lang=languageTagFor(locked);
+    return;
+  }
+  // While creating a room, the host's independent language selector wins.
+  if(customMode==='tug'&&!cq('#tugClassSetup').hidden)tugUpdateDraftLanguage();
+  if(customMode!=='tug'||!['host','player'].includes(tugRole)){
+    cq('#customTarget').lang=languageTag();cq('#customTyped').lang=languageTag();
+  }
 });
