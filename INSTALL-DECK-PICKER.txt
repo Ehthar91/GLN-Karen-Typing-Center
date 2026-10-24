@@ -1,0 +1,30 @@
+GLN Karen Typing Center — Flashcards Class Study/Quiz Deck Picker
+
+NEW FEATURE
+- Clicking the class-level STUDY or QUIZ button opens a deck picker.
+- Choose any combination of nonempty decks or choose Select All.
+- Clear Selection and the live deck/card counter are provided.
+- Continue opens the original Study Order or Quiz Setup screen.
+- Question count, manual card picking, retry, and Google Forms export all use the chosen decks.
+- Individual deck Study/Quiz still works as before.
+- Existing Flashcards Unicode on-screen quiz keyboard, comma-separated Type Answer acceptance,
+  creator badge, original website Type navigation, and Classroom Quiz Shift fix are retained.
+
+PATCH INSTALLATION (GitHub web interface)
+1. Extract the PATCH ONLY ZIP on your computer.
+2. In the root of your existing GLN Karen Typing Center GitHub repository,
+   upload/replace these exact THREE files (not in the type/ subfolder):
+   - flashcards-app.js
+   - flashcards.html
+   - flashcards-styles.css
+3. Commit changes; after GitHub Pages deploys, refresh the Flashcards page.
+4. Open a class -> press the large STUDY or QUIZ button -> choose decks -> Continue.
+
+NOTES
+- Nothing needs changing in type/index.html or Firebase rules.
+- No data, classes, decks, scores, or card definitions are deleted.
+- Classes still only combine decks inside the selected class, not across classes.
+- Empty decks are visible but disabled in the deck picker.
+- Browser visual testing was unavailable in this execution environment.
+- Verified: Node JS syntax and functional tests for none/one/some/all selection,
+  quiz card-pool filtering, Study selection, and preservation of other controls.

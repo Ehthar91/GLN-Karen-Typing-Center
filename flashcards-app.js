@@ -63,6 +63,8 @@ const state = {
   selectedDeck: null,
   editingDeckId: null,
   selectedStudyDeckIds: new Set(),
+  deckPickerMode: "study",
+  deckPickerSelection: new Set(),
   studySelectionDeckIds: [],
   studyMode: "standard",
   studyScope: "deck",
@@ -1372,6 +1374,7 @@ async function openClass(classId) {
 
     state.selectedClass = { id: snap.id, ...snap.data() };
     state.selectedStudyDeckIds.clear();
+    state.deckPickerSelection.clear();
     state.studySelectionDeckIds = [];
 
     await Promise.all([loadDecks(), loadCurrentUserProgress()]);
@@ -1457,8 +1460,9 @@ function renderClass() {
   document.getElementById("removeSharedClassBtn").classList.toggle("hidden", owner || isGuestStudent());
 
   document.getElementById("shareClassBtn").disabled = owner && !state.selectedClass.published;
-  document.getElementById("studyClassBtn").disabled = state.decks.length === 0;
-  document.getElementById("quizClassBtn").disabled = state.decks.length === 0;
+  const hasCards = state.decks.some(deck => (deck.cards?.length || 0) > 0);
+  document.getElementById("studyClassBtn").disabled = !hasCards;
+  document.getElementById("quizClassBtn").disabled = !hasCards;
 
   applyClassDocumentTitle(state.selectedClass.name);
   syncLinkPreviewTitleUi();
@@ -1700,11 +1704,87 @@ function updateDeckStudySelectionUi() {
 
   countEl.textContent = selected.length
     ? `${selected.length} selected · ${selectedCards} card${selectedCards === 1 ? "" : "s"}`
-    : "Choose two or more decks to study together";
+    : "Choose decks to study together";
 
   studyBtn.textContent = selected.length
     ? `Study Selected (${selected.length})`
     : "Study Selected";
+}
+
+// Both class-level actions use the same explicit, per-class deck picker.
+// Never silently quiz or study every deck: the user must choose or Select All.
+function openClassDeckPicker(mode) {
+  const available = studyableDecks();
+  if (!available.length) {
+    showMessage("Add cards to a deck before starting a session.", "error");
+    return;
+  }
+
+  state.deckPickerMode = mode === "quiz" ? "quiz" : "study";
+  const allowed = new Set(available.map(deck => deck.id));
+  // Honor any boxes previously selected in the class deck list. A fresh
+  // class visit otherwise starts with nothing selected.
+  state.deckPickerSelection = new Set(
+    [...state.selectedStudyDeckIds].filter(id => allowed.has(id))
+  );
+
+  document.getElementById("deckPickerTitle").textContent =
+    state.deckPickerMode === "quiz" ? "Choose decks to quiz" : "Choose decks to study";
+  document.getElementById("deckPickerHint").textContent =
+    `Combine decks from ${state.selectedClass?.name || "this class"}. Select individual decks or all decks.`;
+
+  document.getElementById("deckPickerList").innerHTML = state.decks.map(deck => {
+    const count = deck.cards?.length || 0;
+    const checked = state.deckPickerSelection.has(deck.id);
+    return `
+      <label class="deck-picker-row ${count ? "" : "deck-picker-row-empty"}">
+        <input type="checkbox" data-deck-picker-id="${escapeHtml(deck.id)}"
+          ${checked ? "checked" : ""} ${count ? "" : "disabled"} />
+        <span class="deck-picker-name">${escapeHtml(deck.name || "Untitled deck")}</span>
+        <span class="deck-picker-cards">${count} card${count === 1 ? "" : "s"}</span>
+      </label>`;
+  }).join("");
+
+  updateClassDeckPicker();
+  openModal("deckPickerModal");
+}
+
+function updateClassDeckPicker() {
+  const allowed = studyableDecks();
+  const selectedIds = state.deckPickerSelection;
+  const chosen = allowed.filter(deck => selectedIds.has(deck.id));
+  const count = chosen.length;
+  const cards = chosen.reduce((total, deck) => total + deck.cards.length, 0);
+
+  const summary = document.getElementById("deckPickerSummary");
+  const start = document.getElementById("deckPickerContinueBtn");
+  const selectAll = document.getElementById("deckPickerSelectAllBtn");
+  const clear = document.getElementById("deckPickerClearBtn");
+
+  summary.textContent = `${count} of ${allowed.length} decks selected · ${cards} card${cards === 1 ? "" : "s"}`;
+  start.textContent = `Continue to ${state.deckPickerMode === "quiz" ? "Quiz" : "Study"} setup`;
+  start.disabled = count === 0;
+  selectAll.disabled = allowed.length === 0 || count === allowed.length;
+  clear.disabled = count === 0;
+}
+
+function confirmClassDeckPicker() {
+  const allowed = studyableDecks();
+  const selectedIds = allowed
+    .filter(deck => state.deckPickerSelection.has(deck.id))
+    .map(deck => deck.id);
+  if (!selectedIds.length) return;
+
+  // Remember the choice in the current class, so the deck-list checkboxes
+  // and subsequent class-level Study/Quiz actions remain in sync.
+  state.selectedStudyDeckIds = new Set(selectedIds);
+  renderDeckRows();
+  closeModals();
+  if (state.deckPickerMode === "quiz") {
+    chooseQuizSetup("selection", null, selectedIds);
+  } else {
+    chooseStudyOrder("selection", null, selectedIds);
+  }
 }
 
 function setTab(name) {
@@ -3125,19 +3205,25 @@ function startClassStudy(order = state.studyOrder, direction = state.studyDirect
 }
 
 
-function chooseQuizSetup(scope, deckId = null) {
+function chooseQuizSetup(scope, deckId = null, deckIds = null) {
   let targetName = state.selectedClass?.name || "Class";
+  let selectedIds = Array.isArray(deckIds) ? deckIds : [];
 
   if (scope === "deck") {
     const deck = state.decks.find(d => d.id === deckId);
     if (!deck?.cards?.length) return;
     targetName = deck.name;
+  } else if (scope === "selection") {
+    const allowed = new Set(studyableDecks().map(deck => deck.id));
+    selectedIds = [...new Set(selectedIds.filter(id => allowed.has(id)))];
+    if (!selectedIds.length) return;
+    targetName = `${selectedIds.length} selected deck${selectedIds.length === 1 ? "" : "s"}`;
   } else if (!state.decks.some(deck => deck.cards?.length)) {
     return;
   }
 
-  state.pendingQuiz = { scope, deckId };
-  const availableQuestionCount = collectQuizCards(scope, deckId).length;
+  state.pendingQuiz = { scope, deckId, deckIds: selectedIds };
+  const availableQuestionCount = collectQuizCards(scope, deckId, selectedIds).length;
   const savedDefaults = readQuizDefaults();
   const useAllQuestions = !savedDefaults || savedDefaults.questionCountMode === "all";
   const savedQuestionCount = savedDefaults?.questionCount || availableQuestionCount;
@@ -3161,7 +3247,9 @@ function chooseQuizSetup(scope, deckId = null) {
   document.getElementById("quizSetupTarget").textContent =
     scope === "deck"
       ? `Quiz deck: ${targetName}`
-      : `Quiz class: ${targetName}`;
+      : scope === "selection"
+        ? `Quiz together: ${targetName}`
+        : `Quiz class: ${targetName}`;
 
   document.querySelectorAll("[data-quiz-setting]").forEach(group => {
     const setting = group.dataset.quizSetting;
@@ -3193,7 +3281,7 @@ function chooseQuizSetup(scope, deckId = null) {
   openModal("quizSetupModal");
 }
 
-function collectQuizCards(scope, deckId = null) {
+function collectQuizCards(scope, deckId = null, deckIds = null) {
   const cards = [];
 
   if (scope === "deck") {
@@ -3211,7 +3299,11 @@ function collectQuizCards(scope, deckId = null) {
     return cards;
   }
 
+  const selected = scope === "selection"
+    ? new Set(Array.isArray(deckIds) ? deckIds : [])
+    : null;
   for (const deck of state.decks) {
+    if (selected && !selected.has(deck.id)) continue;
     for (const card of deck.cards || []) {
       cards.push({
         ...card,
@@ -3230,7 +3322,7 @@ function quizCardKey(card) {
 
 function availableQuizCards() {
   if (!state.pendingQuiz) return [];
-  return collectQuizCards(state.pendingQuiz.scope, state.pendingQuiz.deckId);
+  return collectQuizCards(state.pendingQuiz.scope, state.pendingQuiz.deckId, state.pendingQuiz.deckIds);
 }
 
 function normalizeManualQuizSelection() {
@@ -3325,8 +3417,8 @@ function buildMultipleChoiceOptions(card, direction, allCards) {
   return shuffledCopy([correct, ...distractors]);
 }
 
-function buildQuizQuestions(scope, deckId, config) {
-  const allCards = collectQuizCards(scope, deckId);
+function buildQuizQuestions(scope, deckId, config, deckIds = null) {
+  const allCards = collectQuizCards(scope, deckId, deckIds);
   let cards;
 
   if (config.inclusionMode === "manual") {
@@ -3389,7 +3481,7 @@ function syncQuizSetupInputs() {
   state.quizConfig.template = document.getElementById("quizTemplateInput").value.trim();
 
   const availableCount = state.pendingQuiz
-    ? collectQuizCards(state.pendingQuiz.scope, state.pendingQuiz.deckId).length
+    ? collectQuizCards(state.pendingQuiz.scope, state.pendingQuiz.deckId, state.pendingQuiz.deckIds).length
     : 0;
 
   if (state.quizConfig.inclusionMode === "manual") {
@@ -3440,7 +3532,8 @@ function startConfiguredQuiz() {
   const questions = buildQuizQuestions(
     pending.scope,
     pending.deckId,
-    state.quizConfig
+    state.quizConfig,
+    pending.deckIds
   );
 
   if (!questions.length) {
@@ -3461,7 +3554,8 @@ function startConfiguredQuiz() {
 
   document.getElementById("quizTitle").textContent = title;
   document.getElementById("quizScopeLabel").textContent =
-    pending.scope === "deck" ? "Deck Quiz" : "Class Quiz";
+    pending.scope === "deck" ? "Deck Quiz"
+      : pending.scope === "selection" ? "Selected Decks Quiz" : "Class Quiz";
 
   closeModals();
   showPanel("quizView");
@@ -3638,7 +3732,8 @@ function buildGsQuizPayload() {
   const questions = buildQuizQuestions(
     state.pendingQuiz.scope,
     state.pendingQuiz.deckId,
-    state.quizConfig
+    state.quizConfig,
+    state.pendingQuiz.deckIds
   );
 
   if (!questions.length) return null;
@@ -4278,13 +4373,15 @@ function tryQuizAgain() {
   state.quizAnswered = false;
 
   document.getElementById("quizScopeLabel").textContent =
-    state.pendingQuiz?.scope === "deck" ? "Deck Quiz" : "Class Quiz";
+    state.pendingQuiz?.scope === "deck" ? "Deck Quiz"
+      : state.pendingQuiz?.scope === "selection" ? "Selected Decks Quiz" : "Class Quiz";
 
   if (state.quizConfig.order === "random" && state.pendingQuiz) {
     const rebuilt = buildQuizQuestions(
       state.pendingQuiz.scope,
       state.pendingQuiz.deckId,
-      state.quizConfig
+      state.quizConfig,
+      state.pendingQuiz.deckIds
     );
     state.quizQuestions = rebuilt;
     state.quizOriginalQuestions = rebuilt.map(question => ({ ...question }));
@@ -4954,8 +5051,28 @@ document.getElementById("deckRows").addEventListener("change", e => {
   updateDeckStudySelectionUi();
 });
 
-document.getElementById("studyClassBtn").addEventListener("click", () => chooseStudyOrder("class"));
-document.getElementById("quizClassBtn").addEventListener("click", () => chooseQuizSetup("class"));
+document.getElementById("studyClassBtn").addEventListener("click", () => openClassDeckPicker("study"));
+document.getElementById("quizClassBtn").addEventListener("click", () => openClassDeckPicker("quiz"));
+document.getElementById("deckPickerSelectAllBtn").addEventListener("click", () => {
+  state.deckPickerSelection = new Set(studyableDecks().map(deck => deck.id));
+  document.querySelectorAll("[data-deck-picker-id]").forEach(input => {
+    if (!input.disabled) input.checked = true;
+  });
+  updateClassDeckPicker();
+});
+document.getElementById("deckPickerClearBtn").addEventListener("click", () => {
+  state.deckPickerSelection.clear();
+  document.querySelectorAll("[data-deck-picker-id]").forEach(input => { input.checked = false; });
+  updateClassDeckPicker();
+});
+document.getElementById("deckPickerList").addEventListener("change", e => {
+  const input = e.target.closest("[data-deck-picker-id]");
+  if (!input || input.disabled) return;
+  if (input.checked) state.deckPickerSelection.add(input.dataset.deckPickerId);
+  else state.deckPickerSelection.delete(input.dataset.deckPickerId);
+  updateClassDeckPicker();
+});
+document.getElementById("deckPickerContinueBtn").addEventListener("click", confirmClassDeckPicker);
 document.getElementById("startQuizBtn").addEventListener("click", startConfiguredQuiz);
 document.getElementById("saveQuizDefaultBtn").addEventListener("click", saveQuizDefaults);
 document.getElementById("resetQuizDefaultBtn").addEventListener("click", resetQuizDefaults);
@@ -4970,7 +5087,8 @@ document.getElementById("quizQuestionCountInput").addEventListener("input", e =>
   if (!state.pendingQuiz) return;
   const availableCount = collectQuizCards(
     state.pendingQuiz.scope,
-    state.pendingQuiz.deckId
+    state.pendingQuiz.deckId,
+    state.pendingQuiz.deckIds
   ).length;
   const value = Number(e.target.value);
   if (Number.isFinite(value) && value > 0) {
@@ -4983,7 +5101,8 @@ document.getElementById("quizUseAllQuestionsBtn").addEventListener("click", () =
   if (!state.pendingQuiz) return;
   const availableCount = collectQuizCards(
     state.pendingQuiz.scope,
-    state.pendingQuiz.deckId
+    state.pendingQuiz.deckId,
+    state.pendingQuiz.deckIds
   ).length;
   state.quizConfig.questionCount = availableCount;
   state.quizConfig.questionCountMode = "all";

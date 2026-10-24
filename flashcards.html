@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20261023-flash-quiz-kbd" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20261023-deck-picker-1" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&amp;display=swap" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
   <style>
@@ -170,10 +170,10 @@
 
             <div class="class-actions">
               <div class="class-primary-actions">
-                <button id="studyClassBtn" class="study-main-btn">
+                <button id="studyClassBtn" class="study-main-btn" title="Choose decks to study together">
                   STUDY <span>▶</span>
                 </button>
-                <button id="quizClassBtn" class="quiz-main-btn">
+                <button id="quizClassBtn" class="quiz-main-btn" title="Choose decks for a combined quiz">
                   QUIZ <span>?</span>
                 </button>
 
@@ -258,7 +258,7 @@
                   <input id="selectAllStudyDecks" type="checkbox" />
                   <span>Select all</span>
                 </label>
-                <span id="selectedDeckCount" class="selected-deck-count">Choose two or more decks to study together</span>
+                <span id="selectedDeckCount" class="selected-deck-count">Select decks below to study together</span>
                 <button id="studySelectedDecksBtn" class="study-selected-decks-btn" type="button" disabled>Study Selected</button>
                 <button id="clearDeckSelectionBtn" class="clear-deck-selection-btn" type="button" disabled>Clear</button>
               </div>
@@ -608,6 +608,29 @@
       </div>
 
       <p class="modal-hint">Use <strong>=</strong>, a tab, or a comma between the front and back.</p>
+    </div>
+
+    <div id="deckPickerModal" class="modal deck-picker-modal hidden" role="dialog" aria-modal="true" aria-labelledby="deckPickerTitle">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">Combined session</span>
+          <h2 id="deckPickerTitle">Choose decks</h2>
+        </div>
+        <button type="button" class="modal-close" data-close-modal aria-label="Close deck selection">×</button>
+      </div>
+      <p id="deckPickerHint" class="study-order-target">Choose the decks to include.</p>
+      <div class="deck-picker-tools">
+        <button id="deckPickerSelectAllBtn" type="button" class="secondary-btn">Select All</button>
+        <button id="deckPickerClearBtn" type="button" class="secondary-btn">Clear Selection</button>
+      </div>
+      <div id="deckPickerList" class="deck-picker-list" role="group" aria-label="Available decks"></div>
+      <div class="deck-picker-footer">
+        <p id="deckPickerSummary" class="deck-picker-summary" role="status" aria-live="polite">0 decks selected</p>
+        <div class="modal-actions">
+          <button id="deckPickerContinueBtn" type="button" class="primary-btn" disabled>Continue</button>
+          <button type="button" class="secondary-btn" data-close-modal>Cancel</button>
+        </div>
+      </div>
     </div>
 
     <div id="studyOrderModal" class="modal study-order-modal hidden">
@@ -975,6 +998,6 @@
     })();
   </script>
   <script src="typing-layouts.js?v=20261023-flash-quiz-kbd"></script>
-  <script type="module" src="flashcards-app.js?v=20261023-flash-quiz-comma-answer"></script>
+  <script type="module" src="flashcards-app.js?v=20261023-deck-picker-1"></script>
 </body>
 </html>
