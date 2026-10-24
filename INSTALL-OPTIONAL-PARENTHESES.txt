@@ -1,0 +1,41 @@
+GLN KAREN TYPING CENTER — OPTIONAL PARENTHESES QUIZ GRADING
+==========================================================
+
+PURPOSE
+Both built-in quiz systems (Classroom Quiz and Flashcards Quiz) now accept
+answers with or without parenthetical phrases in Type Answer questions.
+
+EXAMPLES
+Correct answer: Run (quickly)
+Accept: Run / Run quickly / Run (quickly)
+Reject: quickly / Running
+
+Correct answer: Run (quickly), Jog (slowly)
+Accept: Run / Run quickly / Jog / Jog slowly / Jog (slowly)
+Reject: quickly / slowly / Walk
+
+Multiple Choice grading is unchanged. The original teacher vocabulary,
+flashcard text, feedback, keyboard, and on-screen display are unchanged.
+
+INSTALLATION ON GITHUB
+1. Extract this patch ZIP.
+2. In the GitHub repository's main (root) directory, replace:
+   - quiz.js
+   - index.html   (MAIN website file, NOT type/index.html)
+   - flashcards-app.js
+   - flashcards.html
+3. Commit the files. Wait for GitHub Pages to publish changes.
+4. Hard-refresh both the Classroom Quiz page and the Flashcards page.
+
+No changes to Firebase, CSS, typing layouts, or the standalone Type page.
+The included HTML files update script cache versions so browsers load the fix.
+
+TESTING
+115 targeted assertions for both quiz grading functions passed, plus
+JavaScript syntax checks and package integrity tests.
+This change applies to the built-in website quizzes, not to grading
+within quizzes exported to Google Forms.
+
+BASELINE
+GLN-FLASHCARDS-CLEAN-DECKS-FULL-UPDATED.zip: the most recent full
+project archive available for this modification.

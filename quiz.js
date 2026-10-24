@@ -70,10 +70,95 @@ function quizAnswerLanguage(item){return hasMyanmar(item.answer)?quizKeyboardTag
 function hasMyanmar(value){return /[\u1000-\u109f\ua9e0-\ua9ff\uaa60-\uaa7f]/iu.test(value)}
 function shuffled(values){const copy=[...values];for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
 function renderQuizChoices(){const item=currentQuiz(),pool=generatedQuiz.map(question=>question.answer).filter((answer,index,array)=>array.indexOf(answer)===index),choices=Array.isArray(item.choices)&&item.choices.length?[...item.choices]:shuffled([item.answer,...shuffled(pool.filter(answer=>answer!==item.answer)).slice(0,3)]);const box=document.querySelector('#quizChoices');box.innerHTML='';choices.forEach(value=>{const button=document.createElement('button');button.type='button';button.className='quiz-choice';button.textContent=value;button.onclick=()=>{if(quizLocked)return;quizSelected=value;box.querySelectorAll('.quiz-choice').forEach(choice=>choice.classList.toggle('selected',choice===button))};box.appendChild(button)})}
+// Parenthetical phrases are optional in typed answers only. Split definitions on
+// commas outside parentheses, so "fast (quickly, rapidly), rapid" stays two options.
+function glnSplitTypedDefinitions(answer) {
+  const text = String(answer ?? "");
+  const definitions = [];
+  let start = 0;
+  let depth = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === "(") depth += 1;
+    else if (char === ")") depth = Math.max(0, depth - 1);
+    else if (char === "," && depth === 0) {
+      definitions.push(text.slice(start, index));
+      start = index + 1;
+    }
+  }
+  definitions.push(text.slice(start));
+  return definitions.filter(value => value.trim());
+}
+
+// Parentheses around a *typed* phrase are presentation punctuation, not content.
+// Do not remove any unmatched parentheses, which could otherwise allow typos.
+function glnUnwrapTypedParentheses(text) {
+  let value = String(text ?? "");
+  let previous;
+  do {
+    previous = value;
+    value = value.replace(/\(([^()]*)\)/g, "$1");
+  } while (previous !== value);
+  return value;
+}
+
+function glnOptionalTypedVariants(definition) {
+  const answer = String(definition ?? "");
+  const sections = [];
+  let fixed = "";
+  let hasOptional = false;
+  for (let index = 0; index < answer.length;) {
+    if (answer[index] !== "(") {
+      fixed += answer[index++];
+      continue;
+    }
+    let depth = 1;
+    let end = index + 1;
+    for (; end < answer.length && depth > 0; end += 1) {
+      if (answer[end] === "(") depth += 1;
+      else if (answer[end] === ")") depth -= 1;
+    }
+    if (depth !== 0) { // An unmatched '(' stays part of the required answer.
+      fixed += answer[index++];
+      continue;
+    }
+    if (fixed) sections.push({ text: fixed, optional: false });
+    fixed = "";
+    sections.push({ text: glnUnwrapTypedParentheses(answer.slice(index + 1, end - 1)), optional: true });
+    hasOptional = true;
+    index = end;
+  }
+  if (fixed) sections.push({ text: fixed, optional: false });
+  let variants = new Set([""]);
+  for (const section of sections) {
+    const next = new Set();
+    for (const beginning of variants) {
+      if (section.optional) next.add(beginning);
+      next.add(beginning + section.text);
+    }
+    variants = next;
+  }
+  return { hasOptional, variants };
+}
+
+function glnTypedMatchesOptionalDefinition(answer, response, normalize) {
+  const typed = normalize(response);
+  if (!typed) return false;
+  for (const definition of glnSplitTypedDefinitions(answer)) {
+    const { hasOptional, variants } = glnOptionalTypedVariants(definition);
+    const comparable = hasOptional ? normalize(glnUnwrapTypedParentheses(response)) : typed;
+    for (const candidate of variants) {
+      if (normalize(candidate) && comparable === normalize(candidate)) return true;
+    }
+  }
+  return false;
+}
+
 function normalizeQuizAnswer(value){return value.normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase()}
-// Typed questions accept any one comma-separated definition; multiple-choice remains an exact, full-choice match.
-function quizAcceptedTypedAnswers(answer){return String(answer??'').split(',').map(part=>normalizeQuizAnswer(part)).filter(Boolean)}
-function quizIsCorrectAnswer(item,response){const typed=normalizeQuizAnswer(response);return item.mode==='typing'?quizAcceptedTypedAnswers(item.answer).includes(typed):typed===normalizeQuizAnswer(item.answer)}
+// Typed questions accept any one comma-separated definition, with optional
+// parenthetical text. Multiple-choice still requires an exact full-choice match.
+function quizAcceptedTypedAnswers(answer){return glnSplitTypedDefinitions(answer).map(part=>normalizeQuizAnswer(part)).filter(Boolean)}
+function quizIsCorrectAnswer(item,response){const typed=normalizeQuizAnswer(response);return item.mode==='typing'?glnTypedMatchesOptionalDefinition(item.answer,response,normalizeQuizAnswer):typed===normalizeQuizAnswer(item.answer)}
 function submitQuizAnswer(){const inClassroom=typeof quizClassRole!=='undefined'&&quizClassRole==='student'&&quizClassCode&&typeof checkClassQuizAnswer==='function';if(inClassroom)checkClassQuizAnswer();else checkQuiz()}
 function checkQuiz(){if(quizLocked)return;const item=currentQuiz(),response=item.mode==='choice'?quizSelected:quizBuffer;if(!response){document.querySelector('#quizFeedback').textContent=item.mode==='choice'?'Choose an answer first.':'Type an answer first.';return}quizLocked=true;const correct=quizIsCorrectAnswer(item,response);if(correct)quizPoints++;quizAnswers.push({question:item.question,response,answer:item.answer,correct});const feedback=document.querySelector('#quizFeedback');feedback.textContent=correct?'Correct!':`Correct answer: ${item.answer}`;feedback.className=`quiz-feedback ${correct?'correct':'wrong'}`;if(item.mode==='typing'){document.querySelector('#quizTypedAnswer').classList.add(correct?'correct':'wrong')}else{document.querySelectorAll('.quiz-choice').forEach(choice=>{if(normalizeQuizAnswer(choice.textContent)===normalizeQuizAnswer(item.answer))choice.classList.add('correct');else if(choice.classList.contains('selected'))choice.classList.add('wrong')})}document.querySelector('#quizScore').textContent=`Score: ${quizPoints}`;document.querySelector('#checkQuizAnswer').hidden=true;document.querySelector('#nextQuizQuestion').hidden=false;document.querySelector('#nextQuizQuestion').textContent=quizIndex===generatedQuiz.length-1?'See results →':'Next question →'}
 function nextLocalQuizQuestion(){if(quizIndex<generatedQuiz.length-1){quizIndex++;showQuizQuestion()}else finishQuiz()}

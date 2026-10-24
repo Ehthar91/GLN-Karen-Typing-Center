@@ -4119,13 +4119,94 @@ function showQuizFeedback(correct, given, question) {
   updateQuizLiveMetric(state.quizIndex + 1);
 }
 
+// Parenthetical phrases are optional in typed answers only. Split definitions on
+// commas outside parentheses, so "fast (quickly, rapidly), rapid" stays two options.
+function glnSplitTypedDefinitions(answer) {
+  const text = String(answer ?? "");
+  const definitions = [];
+  let start = 0;
+  let depth = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === "(") depth += 1;
+    else if (char === ")") depth = Math.max(0, depth - 1);
+    else if (char === "," && depth === 0) {
+      definitions.push(text.slice(start, index));
+      start = index + 1;
+    }
+  }
+  definitions.push(text.slice(start));
+  return definitions.filter(value => value.trim());
+}
+
+// Parentheses around a *typed* phrase are presentation punctuation, not content.
+// Do not remove any unmatched parentheses, which could otherwise allow typos.
+function glnUnwrapTypedParentheses(text) {
+  let value = String(text ?? "");
+  let previous;
+  do {
+    previous = value;
+    value = value.replace(/\(([^()]*)\)/g, "$1");
+  } while (previous !== value);
+  return value;
+}
+
+function glnOptionalTypedVariants(definition) {
+  const answer = String(definition ?? "");
+  const sections = [];
+  let fixed = "";
+  let hasOptional = false;
+  for (let index = 0; index < answer.length;) {
+    if (answer[index] !== "(") {
+      fixed += answer[index++];
+      continue;
+    }
+    let depth = 1;
+    let end = index + 1;
+    for (; end < answer.length && depth > 0; end += 1) {
+      if (answer[end] === "(") depth += 1;
+      else if (answer[end] === ")") depth -= 1;
+    }
+    if (depth !== 0) { // An unmatched '(' stays part of the required answer.
+      fixed += answer[index++];
+      continue;
+    }
+    if (fixed) sections.push({ text: fixed, optional: false });
+    fixed = "";
+    sections.push({ text: glnUnwrapTypedParentheses(answer.slice(index + 1, end - 1)), optional: true });
+    hasOptional = true;
+    index = end;
+  }
+  if (fixed) sections.push({ text: fixed, optional: false });
+  let variants = new Set([""]);
+  for (const section of sections) {
+    const next = new Set();
+    for (const beginning of variants) {
+      if (section.optional) next.add(beginning);
+      next.add(beginning + section.text);
+    }
+    variants = next;
+  }
+  return { hasOptional, variants };
+}
+
+function glnTypedMatchesOptionalDefinition(answer, response, normalize) {
+  const typed = normalize(response);
+  if (!typed) return false;
+  for (const definition of glnSplitTypedDefinitions(answer)) {
+    const { hasOptional, variants } = glnOptionalTypedVariants(definition);
+    const comparable = hasOptional ? normalize(glnUnwrapTypedParentheses(response)) : typed;
+    for (const candidate of variants) {
+      if (normalize(candidate) && comparable === normalize(candidate)) return true;
+    }
+  }
+  return false;
+}
+
 // Match any ONE complete comma-separated definition for Type Answer questions.
-// Multiple Choice must still match the full selected option exactly.
+// Text inside parentheses may be present or omitted. Multiple Choice stays exact.
 function flashQuizAcceptedTypedAnswers(answer) {
-  return String(answer ?? "")
-    .split(",")
-    .map(part => normalizeText(part))
-    .filter(Boolean);
+  return glnSplitTypedDefinitions(answer).map(part => normalizeText(part)).filter(Boolean);
 }
 
 function flashQuizIsCorrectAnswer(question, given) {
@@ -4133,7 +4214,7 @@ function flashQuizIsCorrectAnswer(question, given) {
   if (!typed) return false;
   return question.type === "typed"
     ? (typed === normalizeText(question.answer) ||
-       flashQuizAcceptedTypedAnswers(question.answer).includes(typed))
+       glnTypedMatchesOptionalDefinition(question.answer, given, normalizeText))
     : typed === normalizeText(question.answer);
 }
 
