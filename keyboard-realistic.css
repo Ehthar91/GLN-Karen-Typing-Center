@@ -1,0 +1,170 @@
+/* GLN desktop/Chromebook realistic keyboard treatment.
+   Applied only when app.js marks the device as desktop keyboard UI.
+   Phone/mobile keyboard layouts are intentionally untouched. */
+
+body.desktop-keyboard-ui .keyboard{
+  --gln-key-height:58px;
+  --gln-key-face:#f8fafc;
+  --gln-key-face-top:#ffffff;
+  --gln-key-edge:#aab4c1;
+  --gln-key-side:#8f9aa8;
+  --gln-key-ink:#16233a;
+  --gln-key-legend:#68778a;
+  --gln-board-top:#e5e9ef;
+  --gln-board-bottom:#cfd6df;
+  gap:7px;
+  padding:16px 16px 20px;
+  border:1px solid #b7c0cb;
+  border-radius:16px;
+  background:linear-gradient(180deg,var(--gln-board-top),var(--gln-board-bottom));
+  box-shadow:
+    inset 0 2px 2px rgba(255,255,255,.85),
+    inset 0 -2px 4px rgba(91,105,122,.18),
+    0 10px 22px rgba(15,23,42,.12);
+  scrollbar-color:#a8b3c1 transparent;
+  scrollbar-width:thin;
+}
+
+/* Keycap body: raised face + visible side wall, like a physical keyboard. */
+:where(body.desktop-keyboard-ui) :where(.keyboard) .key{
+  position:relative;
+  min-width:50px;
+  height:var(--gln-key-height);
+  max-width:78px;
+  padding:12px 7px 6px;
+  border:1px solid var(--gln-key-edge);
+  border-bottom:1px solid var(--gln-key-edge);
+  border-radius:8px;
+  background:linear-gradient(180deg,var(--gln-key-face-top) 0%,var(--gln-key-face) 72%,#edf1f5 100%);
+  color:var(--gln-key-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 -1px 0 rgba(127,140,155,.13),
+    0 4px 0 var(--gln-key-side),
+    0 6px 8px rgba(15,23,42,.15);
+  transform:translateY(0);
+  transform-origin:center bottom;
+  line-height:1.05;
+  text-shadow:0 1px 0 rgba(255,255,255,.75);
+  transition:transform .075s ease,box-shadow .075s ease,filter .1s ease,border-color .1s ease;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+:where(body.desktop-keyboard-ui) :where(.keyboard) .key:hover{
+  filter:brightness(1.025);
+  border-color:#8997a8;
+}
+
+:where(body.desktop-keyboard-ui) :where(.keyboard) .key:active,
+:where(body.desktop-keyboard-ui) :where(.keyboard) .key.pressed{
+  transform:translateY(3px);
+  box-shadow:
+    inset 0 1px 2px rgba(15,23,42,.08),
+    inset 0 -1px 0 rgba(255,255,255,.6),
+    0 1px 0 var(--gln-key-side),
+    0 2px 4px rgba(15,23,42,.13);
+}
+
+/* English hardware-key legend in the top-left corner. */
+:where(body.desktop-keyboard-ui) :where(.keyboard) .key small{
+  top:5px;
+  left:7px;
+  color:var(--gln-key-legend);
+  font:700 .59rem/1 Inter,ui-sans-serif,sans-serif;
+  letter-spacing:.01em;
+  text-shadow:none;
+}
+
+/* Modifier keys use realistic widths instead of stretching like letter keys. */
+body.desktop-keyboard-ui .keyboard .modifier,
+body.desktop-keyboard-ui .keyboard .game-control,
+body.desktop-keyboard-ui .keyboard .key.wide:not(.space){
+  max-width:none;
+  flex:0 0 auto;
+  padding-left:10px;
+  padding-right:10px;
+  font-family:Inter,ui-sans-serif,sans-serif;
+  font-size:.72rem;
+  font-weight:800;
+  color:#435064;
+  white-space:nowrap;
+}
+body.desktop-keyboard-ui .keyboard .modifier small{display:none}
+body.desktop-keyboard-ui .keyboard .backspace-key{width:118px}
+body.desktop-keyboard-ui .keyboard .tab-key{width:88px}
+body.desktop-keyboard-ui .keyboard .caps-key{width:106px}
+body.desktop-keyboard-ui .keyboard .enter-key{width:112px}
+body.desktop-keyboard-ui .keyboard .shift-key{width:132px}
+body.desktop-keyboard-ui .keyboard .system-key{width:72px;color:#667386;font-size:.66rem}
+body.desktop-keyboard-ui .keyboard .space{
+  width:min(430px,42vw);
+  max-width:430px;
+  flex:1 1 330px;
+  font-family:Inter,ui-sans-serif,sans-serif;
+  font-size:.72rem;
+  font-weight:700;
+  color:#667386;
+}
+
+/* The home-row tactile bars make F/J look like real touch-typing keys. */
+body.desktop-keyboard-ui .keyboard .key[data-code="f"]::after,
+body.desktop-keyboard-ui .keyboard .key[data-code="j"]::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:5px;
+  width:15px;
+  height:2px;
+  border-radius:999px;
+  background:#8190a2;
+  transform:translateX(-50%);
+  box-shadow:0 1px 0 rgba(255,255,255,.7);
+  opacity:.82;
+}
+
+/* Preserve learning states but give them the same physical key depth. */
+body.desktop-keyboard-ui .keyboard .key.expected{
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.8),
+    0 4px 0 #6c91c9,
+    0 0 0 3px rgba(37,99,235,.14),
+    0 7px 12px rgba(30,64,175,.18);
+}
+body.desktop-keyboard-ui .keyboard .key.desktop-shift-hint,
+body.desktop-keyboard-ui .keyboard .key.shift-required{
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.8),
+    0 4px 0 #c38b17,
+    0 0 0 3px rgba(240,180,41,.22),
+    0 7px 12px rgba(146,94,0,.16)!important;
+}
+
+/* RGB mode: dark physical keycaps on a dark metal deck. */
+body.theme-rgb.desktop-keyboard-ui .keyboard{
+  --gln-key-face:#18263b;
+  --gln-key-face-top:#22344e;
+  --gln-key-edge:#4c6280;
+  --gln-key-side:#07101d;
+  --gln-key-ink:#eef5ff;
+  --gln-key-legend:#9fb0c8;
+  --gln-board-top:#101d30;
+  --gln-board-bottom:#081321;
+  border-color:#2f4562;
+  box-shadow:inset 0 2px 2px rgba(255,255,255,.045),inset 0 -2px 4px rgba(0,0,0,.34),0 12px 28px rgba(0,0,0,.3);
+}
+body.theme-rgb.desktop-keyboard-ui .keyboard .modifier,
+body.theme-rgb.desktop-keyboard-ui .keyboard .game-control,
+body.theme-rgb.desktop-keyboard-ui .keyboard .key.wide:not(.space),
+body.theme-rgb.desktop-keyboard-ui .keyboard .space{color:#c3d0e2}
+body.theme-rgb.desktop-keyboard-ui .keyboard .key[data-code="f"]::after,
+body.theme-rgb.desktop-keyboard-ui .keyboard .key[data-code="j"]::after{background:#91a4bd;box-shadow:none}
+
+/* Keep the physical keyboard usable on narrow Chromebook split windows.
+   Actual phones never receive desktop-keyboard-ui, so their existing CSS is unchanged. */
+body.desktop-keyboard-ui .keyboard .key-row{min-height:calc(var(--gln-key-height) + 4px)}
+body.desktop-keyboard-ui .keyboard{overflow-x:auto}
+
+@media (prefers-reduced-motion:reduce){
+  :where(body.desktop-keyboard-ui) :where(.keyboard) .key{transition:none}
+}

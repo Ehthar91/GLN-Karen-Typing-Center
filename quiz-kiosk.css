@@ -1,0 +1,47 @@
+/* Dedicated student-only Classroom Quiz shell.
+   Use https://glnkarentypingcenter.com/?kiosk=quiz for a ChromeOS web/PWA kiosk target. */
+html.quiz-kiosk-document,
+html.quiz-kiosk-document body{min-height:100%;background:#07111f}
+body.quiz-kiosk-mode{min-height:100vh;margin:0;background:radial-gradient(circle at top,#17335f 0,#0b1730 38%,#07111f 100%);overflow-x:hidden}
+body.quiz-kiosk-mode .topbar,
+body.quiz-kiosk-mode .creator-credit,
+body.quiz-kiosk-mode #calculatorView>.calculator-heading,
+body.quiz-kiosk-mode #classroomToolSwitch,
+body.quiz-kiosk-mode #classroomAccountBar,
+body.quiz-kiosk-mode #classroomDashboardPanel,
+body.quiz-kiosk-mode #calculatorPanel,
+body.quiz-kiosk-mode #numberGeneratorPanel,
+body.quiz-kiosk-mode #scheduleTimerPanel,
+body.quiz-kiosk-mode #wheelPanel,
+body.quiz-kiosk-mode #eventSignupPanel,
+body.quiz-kiosk-mode #seatingPanel,
+body.quiz-kiosk-mode #calculatorView>.privacy,
+body.quiz-kiosk-mode #quizView>.quiz-heading,
+body.quiz-kiosk-mode #quizBuilder>.quiz-builder-grid,
+body.quiz-kiosk-mode #quizPreview{display:none!important}
+body.quiz-kiosk-mode .app-shell{width:100%;max-width:none;min-height:100vh;margin:0;padding:0;background:transparent}
+body.quiz-kiosk-mode #typeView,
+body.quiz-kiosk-mode #practiceView,
+body.quiz-kiosk-mode #gamesView{display:none!important}
+body.quiz-kiosk-mode #calculatorView{display:block!important;width:100%;max-width:none;min-height:100vh;margin:0;padding:0;background:transparent}
+body.quiz-kiosk-mode #quizView{display:block!important;width:100%;max-width:none;margin:0;padding:0;background:transparent}
+body.quiz-kiosk-mode #quizBuilder{width:min(760px,calc(100% - 28px));margin:0 auto;padding:clamp(24px,7vh,68px) 0;background:transparent;box-shadow:none}
+body.quiz-kiosk-mode .quiz-join-card{display:block!important;margin:0;padding:0;border:0;background:transparent;box-shadow:none}
+body.quiz-kiosk-mode .quiz-join-card>div:first-child{display:none!important}
+body.quiz-kiosk-mode #joinQuizForm{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:22px;border:1px solid rgba(255,255,255,.13);border-radius:20px;background:rgba(255,255,255,.97);box-shadow:0 24px 70px rgba(0,0,0,.32)}
+body.quiz-kiosk-mode #joinQuizForm label{display:grid;gap:7px;color:#334155;font-weight:800}
+body.quiz-kiosk-mode #joinQuizForm input{min-height:54px;font-size:1.04rem}
+body.quiz-kiosk-mode #joinQuizForm button{grid-column:1/-1;min-height:52px;font-size:1rem}
+body.quiz-kiosk-mode .quiz-kiosk-welcome{width:min(760px,calc(100% - 28px));margin:0 auto 18px;text-align:center;color:#fff}
+body.quiz-kiosk-mode .quiz-kiosk-welcome img{width:76px;height:76px;border-radius:20px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.26))}
+body.quiz-kiosk-mode .quiz-kiosk-welcome p{margin:14px 0 4px;color:#8fd3ff;font-size:.74rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+body.quiz-kiosk-mode .quiz-kiosk-welcome h1{margin:0;font-size:clamp(1.7rem,5vw,2.7rem);line-height:1.05}
+body.quiz-kiosk-mode .quiz-kiosk-welcome small{display:block;margin-top:9px;color:#c7d5e8;font-size:.95rem}
+body.quiz-kiosk-mode #quizClassroom,
+body.quiz-kiosk-mode #quizPlayer,
+body.quiz-kiosk-mode #quizResults{width:100%;max-width:none;margin:0}
+body.quiz-kiosk-mode.quiz-student-locked #quizClassroom,
+body.quiz-kiosk-mode.quiz-student-playing #quizPlayer{min-height:100vh}
+body.quiz-kiosk-mode .quiz-fullscreen-guard{z-index:99999}
+body.quiz-kiosk-mode .quiz-class-error{width:min(760px,calc(100% - 28px));margin:12px auto;color:#fecaca;text-align:center}
+@media(max-width:680px){body.quiz-kiosk-mode #joinQuizForm{grid-template-columns:1fr;padding:17px}body.quiz-kiosk-mode #joinQuizForm button{grid-column:auto}}

@@ -1,0 +1,6 @@
+{
+  "name": "karen-unicode-keyboard",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node build-worker.mjs" }
+}
