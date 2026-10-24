@@ -4011,7 +4011,10 @@ function renderQuizQuestion() {
   document.getElementById("quizQuestionCounter").textContent =
     `Question ${state.quizIndex + 1} of ${state.quizQuestions.length}`;
   document.getElementById("quizQuestionType").textContent =
-    q.type === "multiple" ? "Multiple Choice" : "Type Answer";
+    q.type === "multiple" ? "Multiple Choice" :
+      flashQuizAcceptedTypedAnswers(q.answer).length > 1
+        ? "Type Answer — One Definition"
+        : "Type Answer";
   document.getElementById("quizQuestionText").textContent = q.prompt;
   updateQuizLiveMetric(state.quizIndex);
   document.getElementById("quizProgressFill").style.width =
@@ -4035,6 +4038,9 @@ function renderQuizQuestion() {
   document.getElementById("quizCheckBtn").disabled = false;
   typingInput.disabled = false;
   typingInput.value = "";
+  typingInput.placeholder = q.type === "typed" && flashQuizAcceptedTypedAnswers(q.answer).length > 1
+    ? "Type any one correct definition"
+    : "Type your answer";
   flashQuizVirtualShift = false;
   flashQuizPhysicalShift = false;
   renderFlashQuizKeyboard();
@@ -4080,6 +4086,24 @@ function showQuizFeedback(correct, given, question) {
   updateQuizLiveMetric(state.quizIndex + 1);
 }
 
+// Match any ONE complete comma-separated definition for Type Answer questions.
+// Multiple Choice must still match the full selected option exactly.
+function flashQuizAcceptedTypedAnswers(answer) {
+  return String(answer ?? "")
+    .split(",")
+    .map(part => normalizeText(part))
+    .filter(Boolean);
+}
+
+function flashQuizIsCorrectAnswer(question, given) {
+  const typed = normalizeText(given);
+  if (!typed) return false;
+  return question.type === "typed"
+    ? (typed === normalizeText(question.answer) ||
+       flashQuizAcceptedTypedAnswers(question.answer).includes(typed))
+    : typed === normalizeText(question.answer);
+}
+
 function answerQuizQuestion(given) {
   if (state.quizAnswered) return;
 
@@ -4094,7 +4118,7 @@ function answerQuizQuestion(given) {
 
   state.quizAnswered = true;
 
-  const correct = normalizeText(cleanGiven) === normalizeText(q.answer);
+  const correct = flashQuizIsCorrectAnswer(q, cleanGiven);
   if (correct) state.quizScore += 1;
 
   state.quizResults.push({

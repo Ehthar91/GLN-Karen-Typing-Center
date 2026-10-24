@@ -1,31 +1,19 @@
-GLN Karen Typing Center — Type Tab Return Fix
-================================================
+FLASHCARDS QUIZ — ACCEPT ONE COMMA-SEPARATED DEFINITION
 
-WHY THE PROBLEM HAPPENED
-The main website's Type tab was deliberately changed to redirect visitors to
-/type/ when the standalone typing page was first added.
+This patch modifies only Flashcards -> Quiz -> Type Answer.
+For a flashcard back such as: Happy, Glad, Joyful
+students may type Happy OR Glad OR Joyful for credit.
+Matching trims spaces, is case-insensitive, and preserves NFC Unicode.
+Full definitions must match; substrings do not count.
+Multiple Choice and other site quiz modes are unchanged.
 
-WHAT CHANGED
-- Main website Type tab now switches back to the original embedded typing view.
-- The "Open dedicated Type page" button still opens /type/ when desired.
-- The standalone /type/index.html is not changed.
-- The quiz physical-Shift keyboard-display fix stays intact.
-- index.html updates the practice.js cache version for GitHub Pages.
+GITHUB INSTALLATION
+1. Unzip the PATCH ONLY package.
+2. Upload/replace these TWO files in your GitHub repository ROOT:
+   - flashcards-app.js
+   - flashcards.html
+3. Keep type/index.html, the rest of the files, and Firebase unchanged.
+4. After GitHub Pages finishes deploying, hard-refresh Flashcards.
+5. Test a card with a back like Happy, Glad, Joyful in Type Answer mode.
 
-INSTALLATION (PATCH ONLY)
-Upload these two files to your repository root, replacing the existing ones:
-  - practice.js
-  - index.html
-
-DO NOT upload these files inside the type/ folder.
-DO NOT delete type/index.html or other website files.
-
-EXPECTED RESULT
-- Click Type in main GLN site -> original embedded Type section.
-- Click Open dedicated Type page -> standalone /type/ page.
-- Practice/Games/Classroom Tools remain accessible in the main site.
-
-TEST
-After GitHub Pages publishes, refresh the main site (Shift+Reload).
-Open Classroom Tools, then click Type: the original editor should appear.
-Open the standalone page with its dedicated link: it should remain tab-free.
+The previously added Sgaw/Pwo/English on-screen keyboard and creator badge are preserved.
