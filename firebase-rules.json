@@ -1,0 +1,160 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        "hostUid": {
+          ".write": "auth != null && (!data.exists() && newData.val() === auth.uid || data.val() === auth.uid && newData.val() === auth.uid)"
+        },
+        "passage": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "status": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "createdAt": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "expiresAt": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "startedAt": {
+          ".write": "auth != null && root.child('rooms').child($code).child('hostUid').val() === auth.uid"
+        },
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('rooms').child($code).child('hostUid').val() === auth.uid)",
+            ".validate": "!newData.exists() || (newData.hasChildren(['id','name','progress','wpm','accuracy','color','joinedAt','finishedAt']) && newData.child('id').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 24 && newData.child('progress').isNumber() && newData.child('progress').val() >= 0 && newData.child('progress').val() <= 100)"
+          }
+        },
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || (data.exists() && data.child('hostUid').val() === auth.uid))",
+        "removedPlayers": {
+          "$uid": {
+            ".write": "auth != null && (root.child('rooms').child($code).child('hostUid').val() === auth.uid || (auth.uid === $uid && data.child('allowRejoin').val() === true && !newData.exists()))",
+            ".validate": "!newData.exists() || (newData.hasChildren(['id','name','removedAt','allowRejoin']) && newData.child('id').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 24 && newData.child('removedAt').isNumber() && newData.child('allowRejoin').isBoolean() && (!newData.child('allowedAt').exists() || newData.child('allowedAt').isNumber()))"
+          }
+        }
+      }
+    },
+    "seatingCharts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "quizRooms": {
+      ".read": "auth != null && query.orderByChild == 'hostUid' && query.equalTo == auth.uid",
+      ".indexOn": [
+        "hostUid"
+      ],
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!$code.matches(/^BUS_/) && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || data.child('hostUid').val() === auth.uid)) || ($code.matches(/^BUS_/) && newData.exists() && ((!data.exists() && newData.child('hostUid').val() === auth.uid && newData.child('callerLastActiveAt').val() === now) || data.child('hostUid').val() === auth.uid || (((data.child('callerLastActiveAt').isNumber() && data.child('callerLastActiveAt').val() <= now - 2592000000) || (!data.child('callerLastActiveAt').exists() && ((data.child('lastActivityAt').isNumber() && data.child('lastActivityAt').val() <= now - 2592000000) || (!data.child('lastActivityAt').exists() && data.child('createdAt').isNumber() && data.child('createdAt').val() <= now - 2592000000)))) && newData.child('hostUid').val() === auth.uid && newData.child('callerLastActiveAt').val() === now && newData.child('createdAt').val() === now && newData.child('status').val() === 'open' && !newData.child('history').exists() && !newData.child('currentCall').exists() && !newData.child('players').exists()))))",
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('quizRooms').child($code).child('hostUid').val() === auth.uid)"
+          }
+        },
+        ".validate": "!$code.matches(/^BUS_/) || (newData.child('hostUid').isString() && (!data.child('callerLastActiveAt').exists() || newData.child('callerLastActiveAt').isNumber()) && (!newData.child('callerLastActiveAt').exists() || (newData.child('callerLastActiveAt').isNumber() && newData.child('callerLastActiveAt').val() <= now && (!data.child('callerLastActiveAt').exists() || newData.child('callerLastActiveAt').val() >= data.child('callerLastActiveAt').val()))) && (newData.child('hostUid').val() === data.child('hostUid').val() || newData.child('callerLastActiveAt').val() === now))"
+      }
+    },
+    "tugRooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || data.child('hostUid').val() === auth.uid)",
+        "players": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('tugRooms').child($code).child('hostUid').val() === auth.uid)",
+            ".validate": "!newData.exists() || (newData.hasChildren(['id','name','avatar','team','score','index','finished','joinedAt','finishedAt','correctChars','attemptedChars','errors','wpm','accuracy']) && newData.child('id').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 24 && newData.child('avatar').isNumber() && newData.child('avatar').val() >= 0 && newData.child('avatar').val() <= 11 && newData.child('team').isString() && (newData.child('team').val() === 'red' || newData.child('team').val() === 'blue' || newData.child('team').val() === 'unassigned') && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 100 && newData.child('index').isNumber() && newData.child('index').val() >= 0 && newData.child('index').val() <= 50 && newData.child('correctChars').isNumber() && newData.child('correctChars').val() >= 0 && newData.child('attemptedChars').isNumber() && newData.child('attemptedChars').val() >= 0 && newData.child('errors').isNumber() && newData.child('errors').val() >= 0 && newData.child('wpm').isNumber() && newData.child('wpm').val() >= 0 && newData.child('wpm').val() <= 500 && newData.child('accuracy').isNumber() && newData.child('accuracy').val() >= 0 && newData.child('accuracy').val() <= 100)"
+          }
+        }
+      }
+    },
+    "busCallRooms": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || (data.exists() && data.child('hostUid').val() === auth.uid) || (data.exists() && data.child('expiresAt').isNumber() && data.child('expiresAt').val() < now && newData.child('hostUid').val() === auth.uid))",
+        "listeners": {
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('busCallRooms').child($code).child('hostUid').val() === auth.uid)",
+            ".validate": "!newData.exists() || (newData.hasChildren(['id','name','connected','joinedAt','lastSeen']) && newData.child('id').val() === $uid && newData.child('name').isString() && newData.child('name').val().length <= 32 && newData.child('connected').isBoolean() && newData.child('joinedAt').isNumber())"
+          }
+        }
+      }
+    },
+    "eventSignups": {
+      "$eventId": {
+        ".read": "auth != null && (data.child('ownerUid').val() === auth.uid || (data.child('editorAccess').child('active').val() === true && data.child('editorAccess').child('token').val() === data.child('editorSessions').child(auth.uid).child('token').val()))",
+        ".write": "auth != null && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || data.child('ownerUid').val() === auth.uid)",
+        "title": {
+          ".read": "auth != null"
+        },
+        "date": {
+          ".read": "auth != null"
+        },
+        "description": {
+          ".read": "auth != null"
+        },
+        "status": {
+          ".read": "auth != null"
+        },
+        "allowMultiple": {
+          ".read": "auth != null"
+        },
+        "slots": {
+          ".read": "auth != null",
+          "$slotId": {
+            ".validate": "newData.hasChildren(['id','time','duration','capacity','spots']) && newData.child('id').val() === $slotId && newData.child('time').isString() && newData.child('time').val().length === 5 && newData.child('duration').isNumber() && newData.child('duration').val() >= 1 && newData.child('duration').val() <= 480 && newData.child('capacity').isNumber() && newData.child('capacity').val() >= 1 && newData.child('capacity').val() <= 100 && newData.child('spots').hasChildren() && (!newData.child('label').exists() || (newData.child('label').isString() && newData.child('label').val().length <= 50))",
+            "spots": {
+              "$spotId": {
+                ".validate": "newData.val() === true"
+              }
+            }
+          }
+        },
+        "availability": {
+          ".read": "auth != null",
+          "$slotId": {
+            "$spotId": {
+              ".write": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || (root.child('eventSignups').child($eventId).child('slots').child($slotId).child('spots').child($spotId).val() === true && ((newData.val() === true && root.child('eventSignups').child($eventId).child('claims').child($slotId).child($spotId).child('active').val() === true) || (newData.val() === false && root.child('eventSignups').child($eventId).child('claims').child($slotId).child($spotId).child('active').val() === false))))",
+              ".validate": "newData.isBoolean()"
+            }
+          }
+        },
+        "claims": {
+          "$slotId": {
+            "$spotId": {
+              ".read": "auth != null && root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid",
+              ".write": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || (root.child('eventSignups').child($eventId).child('editorAccess').child('active').val() === true && root.child('eventSignups').child($eventId).child('editorAccess').child('token').val() === root.child('eventSignups').child($eventId).child('editorSessions').child(auth.uid).child('token').val() && root.child('eventSignups').child($eventId).child('slots').child($slotId).child('spots').child($spotId).val() === true && (((!data.exists() || data.child('active').val() === false) && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('active').val() === true) || (data.child('active').val() === true && data.child('token').isString() && newData.child('token').val() === data.child('token').val() && newData.child('active').val() === false))) || (root.child('eventSignups').child($eventId).child('slots').child($slotId).child('spots').child($spotId).val() === true && (((!data.exists() || data.child('active').val() === false) && root.child('eventSignups').child($eventId).child('status').val() === 'open' && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('active').val() === true) || (data.child('active').val() === true && data.child('token').isString() && data.child('token').val().length === 64 && newData.child('token').val() === data.child('token').val() && newData.child('active').val() === false))))",
+              ".validate": "(root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid) || (newData.hasChildren(['token','active']) && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('active').isBoolean())"
+            }
+          }
+        },
+        "reservations": {
+          "$manageToken": {
+            ".read": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || $manageToken.length === 64)",
+            ".write": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || $manageToken.length === 64)",
+            "$reservationId": {
+              ".validate": "(root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid) || (newData.hasChildren(['manageToken','slotId','spotId','name','createdAt']) && newData.child('manageToken').val() === $manageToken && newData.child('slotId').isString() && newData.child('slotId').val().length > 0 && newData.child('slotId').val().length <= 128 && newData.child('spotId').isString() && newData.child('spotId').val().length <= 80 && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 60 && root.child('eventSignups').child($eventId).child('slots').child(newData.child('slotId').val()).child('spots').child(newData.child('spotId').val()).val() === true && root.child('eventSignups').child($eventId).child('claims').child(newData.child('slotId').val()).child(newData.child('spotId').val()).child('token').val() === $manageToken && root.child('eventSignups').child($eventId).child('claims').child(newData.child('slotId').val()).child(newData.child('spotId').val()).child('active').val() === true && (!newData.child('studentName').exists() || (newData.child('studentName').isString() && newData.child('studentName').val().length > 0 && newData.child('studentName').val().length <= 60)) && newData.child('parentName').isString() && newData.child('parentName').val().length > 0 && newData.child('parentName').val().length <= 60 && newData.child('email').isString() && newData.child('email').val().length > 2 && newData.child('email').val().length <= 120 && (!newData.child('phone').exists() || (newData.child('phone').isString() && newData.child('phone').val().length <= 30)))",
+              ".write": "auth != null && (root.child('eventSignups').child($eventId).child('editorAccess').child('active').val() === true && root.child('eventSignups').child($eventId).child('editorAccess').child('token').val() === root.child('eventSignups').child($eventId).child('editorSessions').child(auth.uid).child('token').val()) && !newData.exists()"
+            }
+          }
+        },
+        "editorAccess": {
+          ".read": "auth != null && root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid",
+          ".write": "auth != null && root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid",
+          ".validate": "!newData.exists() || (newData.hasChildren(['token','active']) && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('active').isBoolean())"
+        },
+        "editorSessions": {
+          "$uid": {
+            ".read": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || auth.uid === $uid)",
+            ".write": "auth != null && (root.child('eventSignups').child($eventId).child('ownerUid').val() === auth.uid || (auth.uid === $uid && root.child('eventSignups').child($eventId).child('editorAccess').child('active').val() === true && newData.child('token').val() === root.child('eventSignups').child($eventId).child('editorAccess').child('token').val()))",
+            ".validate": "!newData.exists() || (newData.hasChildren(['token','createdAt']) && newData.child('token').isString() && newData.child('token').val().length === 64 && newData.child('createdAt').isNumber())"
+          }
+        }
+      }
+    }
+  }
+}

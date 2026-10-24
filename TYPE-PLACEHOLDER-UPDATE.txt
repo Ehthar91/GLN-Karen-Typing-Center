@@ -1,0 +1,22 @@
+GLN Karen Typing Center — Sgaw Type Placeholder Update
+
+CHANGE
+Old placeholder: တီၢ်လံာ်ဖဲအံၤ…
+New placeholder: ဒိလီၤလံာ်ဖဲအံၤ...
+
+Applies to:
+- Regular Type page (main site)
+- Standalone Type Studio (/type/)
+
+PATCH INSTALLATION
+Replace these four files in the root of the GitHub repository:
+1. index.html
+2. app.js
+3. type/index.html (inside the type folder)
+4. type-page.js
+
+Note: Do not put type/index.html in the root. Preserve the 'type' folder.
+Other site functionality, typing mappings, quiz code, and creator badge are unchanged.
+
+The new HTML contains updated script versions so cached JS refreshes.
+After GitHub Pages publishes, refresh the pages. Existing typed drafts will not be deleted.
