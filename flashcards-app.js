@@ -3819,6 +3819,185 @@ function updateQuizLiveMetric(answeredCount = state.quizIndex) {
   }
 }
 
+// Flashcards Type Answer keyboard. Uses the same Unicode layout data as the
+// Typing Center / Classroom Quiz; it never examines the correct quiz answer.
+const FLASH_QUIZ_KEYBOARD_STORAGE = "gln_flashcards_quiz_keyboard_v1";
+let flashQuizKeyboardLanguage = "en"; // Preserve English physical typing until a student chooses Karen.
+let flashQuizVirtualShift = false;
+let flashQuizPhysicalShift = false;
+try {
+  const previous = localStorage.getItem(FLASH_QUIZ_KEYBOARD_STORAGE);
+  if (["ksw", "pwo", "en"].includes(previous)) flashQuizKeyboardLanguage = previous;
+} catch (_) { /* Private browsing can disallow storage. */ }
+
+const flashQuizPhysicalCodes = Object.freeze({
+  Backquote: "`", Minus: "-", Equal: "=", BracketLeft: "[", BracketRight: "]",
+  Backslash: "\\", Semicolon: ";", Quote: "'", Comma: ",", Period: ".", Slash: "/"
+});
+
+function flashQuizRows() {
+  return window.GLN_TYPING_LAYOUTS?.[flashQuizKeyboardLanguage] || window.GLN_TYPING_LAYOUTS?.en || [];
+}
+
+function flashQuizShifted() {
+  return flashQuizVirtualShift || flashQuizPhysicalShift;
+}
+
+function flashQuizInsert(text) {
+  if (state.quizAnswered || state.quizQuestions[state.quizIndex]?.type !== "typed") return;
+  const input = document.getElementById("quizTypingInput");
+  if (input.disabled) return;
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? start;
+  input.setRangeText(text, start, end, "end");
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.focus({ preventScroll: true });
+}
+
+function flashQuizBackspace() {
+  if (state.quizAnswered) return;
+  const input = document.getElementById("quizTypingInput");
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? start;
+  let removeFrom = start;
+  if (start === end && start > 0) {
+    if (Intl.Segmenter) {
+      const segments = new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(input.value.slice(0, start));
+      for (const segment of segments) removeFrom = segment.index;
+    } else {
+      removeFrom = start - (start >= 2 && /[\uDC00-\uDFFF]/.test(input.value[start - 1]) ? 2 : 1);
+    }
+  }
+  input.setRangeText("", removeFrom, end, "start");
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.focus({ preventScroll: true });
+}
+
+function flashQuizControlKey(label, action, width = 1, selected = false) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "flash-quiz-control-key";
+  button.textContent = label;
+  button.dataset.flashQuizAction = action;
+  button.style.setProperty("--key-units", width);
+  if (action === "shift") {
+    button.classList.toggle("is-shifted", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  }
+  return button;
+}
+
+function renderFlashQuizKeyboard() {
+  const panel = document.getElementById("flashQuizKeyboardPanel");
+  const container = document.getElementById("flashQuizKeyboardKeys");
+  if (!panel || !container) return;
+  const question = state.quizQuestions[state.quizIndex];
+  const visible = quizViewIsOpen() && question?.type === "typed";
+  panel.hidden = !visible;
+  if (!visible) return;
+
+  const shifted = flashQuizShifted();
+  const locked = state.quizAnswered;
+  const lang = flashQuizKeyboardLanguage === "ksw" ? "ksw" : flashQuizKeyboardLanguage === "pwo" ? "kjp" : "en";
+  const input = document.getElementById("quizTypingInput");
+  input.lang = lang;
+  container.innerHTML = "";
+
+  document.querySelectorAll("[data-flash-quiz-lang]").forEach(button => {
+    const active = button.dataset.flashQuizLang === flashQuizKeyboardLanguage;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+    button.disabled = locked;
+  });
+
+  const rows = flashQuizRows();
+  if (!rows.length) {
+    container.textContent = "Keyboard layout unavailable. Refresh the page.";
+    return;
+  }
+  rows.forEach((row, i) => {
+    const line = document.createElement("div");
+    line.className = "flash-quiz-key-row";
+    // Use consistent staggered rows, plus a control key on the last row.
+    if (i === 1) line.appendChild(flashQuizControlKey("Tab", "tab", 1.5));
+    if (i === 2) line.appendChild(flashQuizControlKey("Caps", "shift", 1.6, shifted));
+    if (i === 3) line.appendChild(flashQuizControlKey("Shift", "shift", 2, shifted));
+    row.forEach(([physical, normal, shiftedValue]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "flash-quiz-letter-key";
+      button.dataset.flashQuizCode = physical;
+      button.disabled = locked;
+      button.title = `${physical}: ${shifted ? shiftedValue : normal}`;
+      button.setAttribute("aria-label", `${physical} key: ${shifted ? shiftedValue : normal}`);
+      const physicalLabel = document.createElement("span");
+      physicalLabel.className = "flash-quiz-physical-label";
+      physicalLabel.textContent = physical.toUpperCase();
+      const mappedLabel = document.createElement("span");
+      mappedLabel.className = "flash-quiz-mapped-label";
+      mappedLabel.lang = lang;
+      mappedLabel.textContent = shifted ? shiftedValue : normal;
+      button.append(physicalLabel, mappedLabel);
+      line.appendChild(button);
+    });
+    if (i === 0) line.appendChild(flashQuizControlKey("⌫", "backspace", 2));
+    if (i === 1) line.appendChild(flashQuizControlKey("Enter ↵", "enter", 1.9));
+    if (i === 2) line.appendChild(flashQuizControlKey("↵", "enter", 1.6));
+    if (i === 3) line.appendChild(flashQuizControlKey("Shift", "shift", 2, shifted));
+    line.querySelectorAll(".flash-quiz-control-key").forEach(button => button.disabled = locked);
+    container.appendChild(line);
+  });
+  const spaceRow = document.createElement("div");
+  spaceRow.className = "flash-quiz-key-row flash-quiz-key-bottom-row";
+  spaceRow.appendChild(flashQuizControlKey("Space", "space", 7));
+  spaceRow.appendChild(flashQuizControlKey("Backspace ⌫", "backspace", 2));
+  spaceRow.appendChild(flashQuizControlKey("Check ↵", "enter", 2));
+  spaceRow.querySelectorAll("button").forEach(button => button.disabled = locked);
+  container.appendChild(spaceRow);
+}
+
+function flashQuizSetKeyboardLanguage(language) {
+  if (state.quizAnswered || !["ksw", "pwo", "en"].includes(language)) return;
+  flashQuizKeyboardLanguage = language;
+  flashQuizVirtualShift = false;
+  try { localStorage.setItem(FLASH_QUIZ_KEYBOARD_STORAGE, language); } catch (_) {}
+  renderFlashQuizKeyboard();
+  document.getElementById("quizTypingInput").focus({ preventScroll: true });
+}
+
+function flashQuizUpdatePhysicalShift(held) {
+  if (flashQuizPhysicalShift === Boolean(held)) return;
+  flashQuizPhysicalShift = Boolean(held);
+  if (quizViewIsOpen() && state.quizQuestions[state.quizIndex]?.type === "typed") renderFlashQuizKeyboard();
+}
+
+function flashQuizPhysicalKey(e) {
+  if (e.key === "Enter" || e.key === "Tab" || e.key === "Backspace" || e.key === "Delete") return;
+  if (e.isComposing || e.key === "Dead" || e.ctrlKey || e.altKey || e.metaKey) return;
+  // The English keyboard keeps native typing unless the student toggled virtual Shift.
+  if (flashQuizKeyboardLanguage === "en" && !flashQuizVirtualShift) return;
+  let physical = flashQuizPhysicalCodes[e.code];
+  if (/^Key[A-Z]$/.test(e.code)) physical = e.code.slice(3).toLowerCase();
+  if (/^Digit[0-9]$/.test(e.code)) physical = e.code.slice(5);
+  if (!physical && e.key?.length === 1) physical = e.key.toLowerCase();
+  const entry = flashQuizRows().flat().find(([code]) => code === physical);
+  if (!entry) return;
+  e.preventDefault();
+  flashQuizInsert((e.shiftKey || flashQuizVirtualShift) ? entry[2] : entry[1]);
+}
+
+function flashQuizKeyboardAction(action) {
+  if (state.quizAnswered) return;
+  if (action === "shift") {
+    flashQuizVirtualShift = !flashQuizVirtualShift;
+    renderFlashQuizKeyboard();
+    document.getElementById("quizTypingInput").focus({ preventScroll: true });
+  } else if (action === "backspace") flashQuizBackspace();
+  else if (action === "space") flashQuizInsert(" ");
+  else if (action === "tab") flashQuizInsert(" ");
+  else if (action === "enter") answerQuizQuestion(document.getElementById("quizTypingInput").value);
+}
+
 function renderQuizQuestion() {
   const q = state.quizQuestions[state.quizIndex];
 
@@ -3856,6 +4035,9 @@ function renderQuizQuestion() {
   document.getElementById("quizCheckBtn").disabled = false;
   typingInput.disabled = false;
   typingInput.value = "";
+  flashQuizVirtualShift = false;
+  flashQuizPhysicalShift = false;
+  renderFlashQuizKeyboard();
 
   if (q.type === "multiple") {
     q.options.forEach((option, index) => {
@@ -3936,6 +4118,7 @@ function answerQuizQuestion(given) {
 
   document.getElementById("quizTypingInput").disabled = true;
   document.getElementById("quizCheckBtn").disabled = true;
+  renderFlashQuizKeyboard();
 
   showQuizFeedback(correct, cleanGiven, q);
 }
@@ -4825,8 +5008,33 @@ document.getElementById("quizTypingInput").addEventListener("keydown", e => {
     e.preventDefault();
     if (state.quizAnswered) nextQuizQuestion();
     else answerQuizQuestion(e.target.value);
+    return;
   }
+  if (!state.quizAnswered) flashQuizPhysicalKey(e);
 });
+// Prevent virtual-key clicks from stealing text selection / the caret.
+document.getElementById("flashQuizKeyboardPanel").addEventListener("pointerdown", e => {
+  if (e.target.closest("button")) e.preventDefault();
+});
+document.getElementById("flashQuizKeyboardPanel").addEventListener("click", e => {
+  const language = e.target.closest("[data-flash-quiz-lang]");
+  if (language) return flashQuizSetKeyboardLanguage(language.dataset.flashQuizLang);
+  const control = e.target.closest("[data-flash-quiz-action]");
+  if (control) return flashQuizKeyboardAction(control.dataset.flashQuizAction);
+  const key = e.target.closest("[data-flash-quiz-code]");
+  if (!key || state.quizAnswered) return;
+  const entry = flashQuizRows().flat().find(([code]) => code === key.dataset.flashQuizCode);
+  if (entry) flashQuizInsert(flashQuizShifted() ? entry[2] : entry[1]);
+});
+document.addEventListener("keydown", e => {
+  if (!quizViewIsOpen() || state.quizAnswered || state.quizQuestions[state.quizIndex]?.type !== "typed") return;
+  if (e.key === "Shift" || e.shiftKey !== flashQuizPhysicalShift) flashQuizUpdatePhysicalShift(e.key === "Shift" || e.shiftKey);
+}, true);
+document.addEventListener("keyup", e => {
+  if (!quizViewIsOpen()) return;
+  if (e.key === "Shift" || e.shiftKey !== flashQuizPhysicalShift) flashQuizUpdatePhysicalShift(e.shiftKey);
+}, true);
+window.addEventListener("blur", () => flashQuizUpdatePhysicalShift(false));
 document.getElementById("quizNextBtn").addEventListener("click", nextQuizQuestion);
 document.getElementById("exitQuizBtn").addEventListener("click", returnToClass);
 document.getElementById("quizBackToClassBtn").addEventListener("click", returnToClass);

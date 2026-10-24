@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#314f73" />
   <title>Flashcards</title>
-  <link rel="stylesheet" href="flashcards-styles.css?v=20260924-guest-study-1" />
+  <link rel="stylesheet" href="flashcards-styles.css?v=20261023-flash-quiz-kbd" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&amp;display=swap" />
   <link rel="stylesheet" href="creator-credit.css?v=20260912-1" />
   <style>
     html.flashcards-embedded .creator-credit { display: none !important; }
@@ -364,8 +365,21 @@
             <div id="quizChoiceArea" class="quiz-choice-grid"></div>
 
             <div id="quizTypingArea" class="quiz-typing-area hidden">
-              <input id="quizTypingInput" type="text" autocomplete="off" placeholder="Type your answer" />
+              <input id="quizTypingInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer" aria-label="Type your quiz answer" />
               <button id="quizCheckBtn" class="primary-btn">Check Answer</button>
+              <div id="flashQuizKeyboardPanel" class="flash-quiz-keyboard-panel" aria-label="Quiz on-screen keyboard">
+                <div class="flash-quiz-keyboard-toolbar">
+                  <div class="flash-quiz-keyboard-languages" role="group" aria-label="Keyboard language">
+                    <button type="button" data-flash-quiz-lang="ksw">Sgaw Karen</button>
+                    <button type="button" data-flash-quiz-lang="pwo">Pwo Karen</button>
+                    <button type="button" data-flash-quiz-lang="en">English</button>
+                  </div>
+                  <span class="flash-quiz-keyboard-note">Select a keyboard · Shift shows alternate keys</span>
+                </div>
+                <div class="flash-quiz-keyboard-scroll" role="group" aria-label="On-screen typing keys">
+                  <div id="flashQuizKeyboardKeys" class="flash-quiz-keyboard-keys"></div>
+                </div>
+              </div>
             </div>
 
             <div id="quizFeedback" class="quiz-feedback hidden">
@@ -960,6 +974,7 @@
       closeButton.addEventListener('click', () => badge.classList.add('is-dismissed'));
     })();
   </script>
-  <script type="module" src="flashcards-app.js?v=20260924-guest-study-1"></script>
+  <script src="typing-layouts.js?v=20261023-flash-quiz-kbd"></script>
+  <script type="module" src="flashcards-app.js?v=20261023-flash-quiz-kbd"></script>
 </body>
 </html>
