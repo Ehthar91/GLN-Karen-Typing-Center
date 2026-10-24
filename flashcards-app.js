@@ -62,7 +62,6 @@ const state = {
   progressMap: new Map(),
   selectedDeck: null,
   editingDeckId: null,
-  selectedStudyDeckIds: new Set(),
   deckPickerMode: "study",
   deckPickerSelection: new Set(),
   studySelectionDeckIds: [],
@@ -1373,7 +1372,6 @@ async function openClass(classId) {
     }
 
     state.selectedClass = { id: snap.id, ...snap.data() };
-    state.selectedStudyDeckIds.clear();
     state.deckPickerSelection.clear();
     state.studySelectionDeckIds = [];
 
@@ -1536,20 +1534,11 @@ function renderDeckRows() {
   const host = document.getElementById("deckRows");
   const owner = isOwner();
 
-  // Keep only selections that still exist and contain cards.
-  const studyableIds = new Set(
-    state.decks.filter(deck => (deck.cards?.length || 0) > 0).map(deck => deck.id)
-  );
-  state.selectedStudyDeckIds = new Set(
-    [...state.selectedStudyDeckIds].filter(id => studyableIds.has(id))
-  );
-
   if (!state.decks.length) {
     host.innerHTML = `
       <div class="empty-state">
         ${owner ? "No decks yet. Create the first deck for this class." : "The owner has not added any decks yet."}
       </div>`;
-    updateDeckStudySelectionUi();
     return;
   }
 
@@ -1561,33 +1550,21 @@ function renderDeckRows() {
     return `
       <article class="deck-row" data-deck-drop-row="${deck.id}">
         <div class="deck-percent">
-          <div class="deck-reorder-start">
-            ${owner ? `
-              <button
-                class="deck-drag-handle"
-                data-deck-drag-handle="${deck.id}"
-                draggable="true"
-                type="button"
-                title="Drag to rearrange ${escapeHtml(deck.name)}"
-                aria-label="Drag to rearrange ${escapeHtml(deck.name)}"
-              >⠿</button>
-            ` : ""}
-            <span class="check-circle">✓</span>
-          </div>
+          ${owner ? `
+            <button
+              class="deck-drag-handle"
+              data-deck-drag-handle="${deck.id}"
+              draggable="true"
+              type="button"
+              title="Drag to rearrange ${escapeHtml(deck.name)}"
+              aria-label="Drag to rearrange ${escapeHtml(deck.name)}"
+            >⠿</button>
+          ` : ""}
           <strong>${s.mastery}%</strong>
         </div>
 
         <div class="deck-main">
           <div class="deck-title-row">
-            <label class="deck-study-select" title="Include this deck in a combined study session">
-              <input
-                type="checkbox"
-                data-select-study-deck="${deck.id}"
-                ${state.selectedStudyDeckIds.has(deck.id) ? "checked" : ""}
-                ${total ? "" : "disabled"}
-              />
-              <span aria-hidden="true"></span>
-            </label>
             <h3>
               ${escapeHtml(deck.name)}
               ${owner ? `
@@ -1635,7 +1612,6 @@ function renderDeckRows() {
     `;
   }).join("");
 
-  updateDeckStudySelectionUi();
 }
 
 function openDeckList(deckId) {
@@ -1676,41 +1652,6 @@ function studyableDecks() {
   return state.decks.filter(deck => (deck.cards?.length || 0) > 0);
 }
 
-function selectedStudyDecks() {
-  const selected = state.selectedStudyDeckIds;
-  return state.decks.filter(deck => selected.has(deck.id) && (deck.cards?.length || 0) > 0);
-}
-
-function updateDeckStudySelectionUi() {
-  const selector = document.getElementById("deckStudySelector");
-  const selectAll = document.getElementById("selectAllStudyDecks");
-  const clearBtn = document.getElementById("clearDeckSelectionBtn");
-  const studyBtn = document.getElementById("studySelectedDecksBtn");
-  const countEl = document.getElementById("selectedDeckCount");
-
-  if (!selector || !selectAll || !clearBtn || !studyBtn || !countEl) return;
-
-  const available = studyableDecks();
-  const selected = selectedStudyDecks();
-  const selectedCards = selected.reduce((sum, deck) => sum + (deck.cards?.length || 0), 0);
-
-  selector.classList.toggle("hidden", state.decks.length < 2);
-
-  selectAll.checked = available.length > 0 && selected.length === available.length;
-  selectAll.indeterminate = selected.length > 0 && selected.length < available.length;
-  selectAll.disabled = available.length === 0;
-  clearBtn.disabled = selected.length === 0;
-  studyBtn.disabled = selected.length === 0;
-
-  countEl.textContent = selected.length
-    ? `${selected.length} selected · ${selectedCards} card${selectedCards === 1 ? "" : "s"}`
-    : "Choose decks to study together";
-
-  studyBtn.textContent = selected.length
-    ? `Study Selected (${selected.length})`
-    : "Study Selected";
-}
-
 // Both class-level actions use the same explicit, per-class deck picker.
 // Never silently quiz or study every deck: the user must choose or Select All.
 function openClassDeckPicker(mode) {
@@ -1722,10 +1663,9 @@ function openClassDeckPicker(mode) {
 
   state.deckPickerMode = mode === "quiz" ? "quiz" : "study";
   const allowed = new Set(available.map(deck => deck.id));
-  // Honor any boxes previously selected in the class deck list. A fresh
-  // class visit otherwise starts with nothing selected.
+  // Preserve prior choices within this class; only the modal selects decks.
   state.deckPickerSelection = new Set(
-    [...state.selectedStudyDeckIds].filter(id => allowed.has(id))
+    [...state.deckPickerSelection].filter(id => allowed.has(id))
   );
 
   document.getElementById("deckPickerTitle").textContent =
@@ -1775,10 +1715,8 @@ function confirmClassDeckPicker() {
     .map(deck => deck.id);
   if (!selectedIds.length) return;
 
-  // Remember the choice in the current class, so the deck-list checkboxes
-  // and subsequent class-level Study/Quiz actions remain in sync.
-  state.selectedStudyDeckIds = new Set(selectedIds);
-  renderDeckRows();
+  // Keep choices for the next Study/Quiz modal in the current class.
+  state.deckPickerSelection = new Set(selectedIds);
   closeModals();
   if (state.deckPickerMode === "quiz") {
     chooseQuizSetup("selection", null, selectedIds);
@@ -5018,38 +4956,6 @@ document.getElementById("copySelectedCardsBtn").addEventListener(
   "click",
   copySelectedCards
 );
-
-document.getElementById("selectAllStudyDecks").addEventListener("change", e => {
-  if (e.target.checked) {
-    state.selectedStudyDeckIds = new Set(studyableDecks().map(deck => deck.id));
-  } else {
-    state.selectedStudyDeckIds.clear();
-  }
-  renderDeckRows();
-});
-
-document.getElementById("clearDeckSelectionBtn").addEventListener("click", () => {
-  state.selectedStudyDeckIds.clear();
-  renderDeckRows();
-});
-
-document.getElementById("studySelectedDecksBtn").addEventListener("click", () => {
-  const deckIds = selectedStudyDecks().map(deck => deck.id);
-  if (!deckIds.length) return;
-  chooseStudyOrder("selection", null, deckIds);
-});
-
-document.getElementById("deckRows").addEventListener("change", e => {
-  const input = e.target.closest("[data-select-study-deck]");
-  if (!input) return;
-  const deckId = input.dataset.selectStudyDeck;
-  if (input.checked) {
-    state.selectedStudyDeckIds.add(deckId);
-  } else {
-    state.selectedStudyDeckIds.delete(deckId);
-  }
-  updateDeckStudySelectionUi();
-});
 
 document.getElementById("studyClassBtn").addEventListener("click", () => openClassDeckPicker("study"));
 document.getElementById("quizClassBtn").addEventListener("click", () => openClassDeckPicker("quiz"));
