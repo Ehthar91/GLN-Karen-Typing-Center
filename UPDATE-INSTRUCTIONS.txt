@@ -1,0 +1,16 @@
+GLN Karen Typing Center — Type Studio Link Polish
+=================================================
+This update makes the "Open Type Studio" link a subtle, right-aligned
+secondary action next to the typing layout note. On mobile it stacks
+neatly beneath the heading. The dedicated /type/ page is unchanged.
+
+PATCH INSTALLATION
+1. Unzip this archive.
+2. Replace these 2 files at your GitHub repository ROOT:
+   - index.html
+   - styles.css
+3. Commit and refresh your site (hard refresh if needed).
+
+Do not upload or replace type/index.html for this update.
+The latest optional-parentheses grading, Flashcards deck controls,
+on-screen keyboards, and creator badge remain unchanged.
