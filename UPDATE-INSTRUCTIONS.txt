@@ -1,16 +1,22 @@
-GLN Karen Typing Center — Type Studio Link Polish
-=================================================
-This update makes the "Open Type Studio" link a subtle, right-aligned
-secondary action next to the typing layout note. On mobile it stacks
-neatly beneath the heading. The dedicated /type/ page is unchanged.
+GLN Karen Typing Center — Sgaw Type Placeholder Update
+
+CHANGE
+Old placeholder: တီၢ်လံာ်ဖဲအံၤ…
+New placeholder: ဒိလီၤလံာ်ဖဲအံၤ...
+
+Applies to:
+- Regular Type page (main site)
+- Standalone Type Studio (/type/)
 
 PATCH INSTALLATION
-1. Unzip this archive.
-2. Replace these 2 files at your GitHub repository ROOT:
-   - index.html
-   - styles.css
-3. Commit and refresh your site (hard refresh if needed).
+Replace these four files in the root of the GitHub repository:
+1. index.html
+2. app.js
+3. type/index.html (inside the type folder)
+4. type-page.js
 
-Do not upload or replace type/index.html for this update.
-The latest optional-parentheses grading, Flashcards deck controls,
-on-screen keyboards, and creator badge remain unchanged.
+Note: Do not put type/index.html in the root. Preserve the 'type' folder.
+Other site functionality, typing mappings, quiz code, and creator badge are unchanged.
+
+The new HTML contains updated script versions so cached JS refreshes.
+After GitHub Pages publishes, refresh the pages. Existing typed drafts will not be deleted.

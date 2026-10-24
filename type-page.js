@@ -5,7 +5,7 @@
   if(!layouts){console.error('The shared GLN keyboard layout did not load.');return;}
   const $=id=>document.getElementById(id);
   const editor=$('typeEditor'), keyboard=$('typeKeyboard'), viewport=$('keyboardWrap');
-  const settings={ksw:{title:'Type in Sgaw Karen',name:'Sgaw Karen',tag:'ksw',placeholder:'တီၢ်လံာ်ဖဲအံၤ…',help:'GLN Sgaw Karen Unicode layout · Hold Shift for the second layer.'},pwo:{title:'Type in Pwo Karen',name:'Pwo Karen',tag:'kjp',placeholder:'Type Pwo Karen here…',help:'Eastern Pwo Karen Unicode layout · Hold Shift for the second layer.'},en:{title:'Type in English',name:'English',tag:'en',placeholder:'Type here…',help:'Standard English QWERTY layout · Hold Shift for capital letters and symbols.'}};
+  const settings={ksw:{title:'Type in Sgaw Karen',name:'Sgaw Karen',tag:'ksw',placeholder:'ဒိလီၤလံာ်ဖဲအံၤ...',help:'GLN Sgaw Karen Unicode layout · Hold Shift for the second layer.'},pwo:{title:'Type in Pwo Karen',name:'Pwo Karen',tag:'kjp',placeholder:'Type Pwo Karen here…',help:'Eastern Pwo Karen Unicode layout · Hold Shift for the second layer.'},en:{title:'Type in English',name:'English',tag:'en',placeholder:'Type here…',help:'Standard English QWERTY layout · Hold Shift for capital letters and symbols.'}};
   const validLang=['ksw','pwo','en'];
   const read=(key,fallback='')=>{try{return localStorage.getItem(key)??fallback}catch{return fallback}};
   const write=(key,value)=>{try{localStorage.setItem(key,value);return true}catch{return false}};
