@@ -381,3 +381,150 @@ body.theme-rgb .tug-score-card:hover{background:rgba(103,181,255,.055)}
  #tugWorld .tug-player-rope>.tug-rope-line{top:62%!important;height:14px!important}
  #tugWorld .tug-player-rope>p{top:42px!important;max-width:65%!important;font-size:.68rem!important}
 }
+
+
+/* GLN Tug of War — reactive pulling and finish celebrations.
+   Visual only. No changes to scoring, position geometry, or Firebase state. */
+.tug-teacher-arena .tug-rope-knot,
+#tugWorld .tug-rope-knot{
+  transition:left .9s cubic-bezier(.2,.83,.25,1),filter .2s ease!important;
+}
+.tug-teacher-arena .tug-rope-line,
+#tugWorld .tug-rope-line{transform-origin:50% 50%}
+@keyframes tugRopeSurgeA{
+  0%,100%{transform:translateX(0) scaleX(1)}
+  27%{transform:translateX(-5px) scaleX(1.012)}
+  55%{transform:translateX(2px) scaleX(.994)}
+  78%{transform:translateX(-1px)}
+}
+@keyframes tugRopeSurgeB{
+  0%,100%{transform:translateX(0) scaleX(1)}
+  27%{transform:translateX(5px) scaleX(1.012)}
+  55%{transform:translateX(-2px) scaleX(.994)}
+  78%{transform:translateX(1px)}
+}
+.tug-teacher-arena.tug-impact-red .tug-rope-line,
+#tugWorld.tug-impact-red .tug-rope-line{animation:tugRopeSurgeA .72s ease-out both}
+.tug-teacher-arena.tug-impact-blue .tug-rope-line,
+#tugWorld.tug-impact-blue .tug-rope-line{animation:tugRopeSurgeB .72s ease-out both}
+
+/* Movement is on the art only: avatars retain their positions and rope alignment. */
+.tug-teacher-arena .tug-character .tug-avatar-art,
+#tugWorld .tug-character .tug-avatar-art{transform-origin:50% 87%}
+@keyframes tugNaturalBrace{
+  0%{transform:translateY(0) rotate(-1deg) scaleX(var(--flip,1))}
+  100%{transform:translateY(-2px) rotate(1deg) scaleX(var(--flip,1))}
+}
+@keyframes tugPullLeft{
+  0%{transform:translate(0,0) rotate(0) scaleX(var(--flip,1))}
+  22%{transform:translate(-8px,2px) rotate(-7deg) scaleX(var(--flip,1))}
+  47%{transform:translate(-5px,-1px) rotate(-3deg) scaleX(var(--flip,1))}
+  74%{transform:translate(1px,0) rotate(2deg) scaleX(var(--flip,1))}
+  100%{transform:translate(0,0) rotate(0) scaleX(var(--flip,1))}
+}
+@keyframes tugPullRight{
+  0%{transform:translate(0,0) rotate(0) scaleX(var(--flip,1))}
+  22%{transform:translate(8px,2px) rotate(7deg) scaleX(var(--flip,1))}
+  47%{transform:translate(5px,-1px) rotate(3deg) scaleX(var(--flip,1))}
+  74%{transform:translate(-1px,0) rotate(-2deg) scaleX(var(--flip,1))}
+  100%{transform:translate(0,0) rotate(0) scaleX(var(--flip,1))}
+}
+@keyframes tugStaggerLeft{
+  0%,100%{transform:translateX(0) rotate(0) scaleX(var(--flip,1))}
+  35%{transform:translateX(-4px) rotate(-3deg) scaleX(var(--flip,1))}
+  67%{transform:translateX(1px) rotate(1deg) scaleX(var(--flip,1))}
+}
+@keyframes tugStaggerRight{
+  0%,100%{transform:translateX(0) rotate(0) scaleX(var(--flip,1))}
+  35%{transform:translateX(4px) rotate(3deg) scaleX(var(--flip,1))}
+  67%{transform:translateX(-1px) rotate(-1deg) scaleX(var(--flip,1))}
+}
+.tug-teacher-arena .tug-character.state-hold:not(.pulse-pull):not(.pulse-power) .tug-avatar-art,
+#tugWorld .tug-character.state-hold:not(.pulse-pull):not(.pulse-power) .tug-avatar-art,
+.tug-teacher-arena .tug-character.state-pull:not(.pulse-pull):not(.pulse-power) .tug-avatar-art,
+#tugWorld .tug-character.state-pull:not(.pulse-pull):not(.pulse-power) .tug-avatar-art{
+  animation:tugNaturalBrace 1.4s ease-in-out infinite alternate;
+}
+.tug-teacher-arena .tug-character.team-red.pulse-pull .tug-avatar-art,
+.tug-teacher-arena .tug-character.team-red.pulse-power .tug-avatar-art,
+#tugWorld .tug-character.team-red.pulse-pull .tug-avatar-art,
+#tugWorld .tug-character.team-red.pulse-power .tug-avatar-art{
+  animation:tugPullLeft .72s cubic-bezier(.23,.75,.28,1) both!important;
+}
+.tug-teacher-arena .tug-character.team-blue.pulse-pull .tug-avatar-art,
+.tug-teacher-arena .tug-character.team-blue.pulse-power .tug-avatar-art,
+#tugWorld .tug-character.team-blue.pulse-pull .tug-avatar-art,
+#tugWorld .tug-character.team-blue.pulse-power .tug-avatar-art{
+  animation:tugPullRight .72s cubic-bezier(.23,.75,.28,1) both!important;
+}
+.tug-teacher-arena.tug-impact-red .tug-character.team-blue:not(.pulse-pull):not(.pulse-power) .tug-avatar-art,
+#tugWorld.tug-impact-red .tug-character.team-blue:not(.pulse-pull):not(.pulse-power) .tug-avatar-art{
+  animation:tugStaggerLeft .66s ease-out both!important;
+}
+.tug-teacher-arena.tug-impact-blue .tug-character.team-red:not(.pulse-pull):not(.pulse-power) .tug-avatar-art,
+#tugWorld.tug-impact-blue .tug-character.team-red:not(.pulse-pull):not(.pulse-power) .tug-avatar-art{
+  animation:tugStaggerRight .66s ease-out both!important;
+}
+.tug-teacher-arena.tug-impact-red .tug-arena-score.red,
+.tug-teacher-arena.tug-impact-blue .tug-arena-score.blue{
+  box-shadow:0 0 0 2px rgba(102,224,232,.23),0 0 24px rgba(79,178,219,.15);
+}
+
+/* Celebrations are short, pointer-transparent overlays; teacher controls remain usable. */
+.tug-teacher-arena{position:relative}
+.tug-celebration-layer{position:absolute;inset:0;overflow:hidden;z-index:12;pointer-events:none;display:grid;place-items:center}
+.tug-celebration-banner{
+  position:relative;z-index:2;display:flex;align-items:center;gap:10px;
+  max-width:90%;padding:13px 19px;border-radius:18px;
+  background:linear-gradient(135deg,rgba(12,44,73,.96),rgba(37,50,90,.96));
+  border:1px solid rgba(245,215,116,.7);box-shadow:0 12px 38px rgba(4,12,25,.32),0 0 0 5px rgba(255,223,125,.07);
+  color:#fff9dd;text-align:center;font-size:clamp(1rem,2vw,1.45rem);
+  letter-spacing:.055em;animation:tugVictoryPop .64s cubic-bezier(.17,1.35,.36,1) both;
+}
+.tug-celebration-banner span{font-size:clamp(1.5rem,3vw,2.35rem)}
+.tug-victory-blue .tug-celebration-banner{border-color:#74dfed}
+.tug-victory-tie .tug-celebration-banner{border-color:#b8a5ee}
+@keyframes tugVictoryPop{0%{transform:scale(.75) translateY(18px);opacity:0}70%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+.tug-celebration-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+.tug-celebration-confetti i{
+  position:absolute;top:-18px;left:var(--tug-x);height:14px;width:9px;
+  border-radius:2px;background:var(--tug-color);
+  opacity:0;animation:tugConfettiFall 2.5s cubic-bezier(.24,.55,.5,1) var(--tug-delay) both;
+}
+@keyframes tugConfettiFall{
+  0%{opacity:0;transform:translate3d(0,-8px,0) rotate(0)}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{opacity:0;transform:translate3d(var(--tug-drift),400px,0) rotate(var(--tug-spin))}
+}
+@keyframes tugWinnerHop{
+  0%,100%{transform:translateY(0) rotate(0)}
+  30%{transform:translateY(-12px) rotate(-4deg) scaleX(var(--flip,1))}
+  64%{transform:translateY(-3px) rotate(3deg) scaleX(var(--flip,1))}
+}
+.tug-teacher-arena.tug-victory-red .tug-character.team-red .tug-avatar-art,
+.tug-teacher-arena.tug-victory-blue .tug-character.team-blue .tug-avatar-art{
+  animation:tugWinnerHop 1s ease-in-out 2!important;
+}
+.custom-game-results.tug-result-finish{position:relative;overflow:hidden;isolation:isolate}
+.custom-game-results.tug-result-finish>.tug-celebration-confetti{z-index:0;display:block}
+.custom-game-results.tug-result-finish>span, .custom-game-results.tug-result-finish>h2,
+.custom-game-results.tug-result-finish>p, .custom-game-results.tug-result-finish>#customResultActions{position:relative;z-index:1}
+.custom-game-results.tug-result-won>span:first-child{
+  display:inline-block;animation:tugVictoryPop .7s cubic-bezier(.17,1.35,.36,1) both;
+}
+.custom-game-results.tug-result-won h2{text-shadow:0 0 16px rgba(247,195,87,.16)}
+.custom-game-results.tug-result-finish>.tug-celebration-confetti i{animation-duration:3.1s}
+@media(max-width:620px){
+ .tug-celebration-banner{gap:6px;padding:9px 12px;border-radius:13px;font-size:.9rem}
+ .tug-celebration-banner span{font-size:1.3rem}
+ .tug-celebration-confetti i{width:7px;height:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ .tug-teacher-arena .tug-rope-knot,#tugWorld .tug-rope-knot{transition:none!important}
+ .tug-teacher-arena .tug-rope-line,#tugWorld .tug-rope-line,
+ .tug-teacher-arena .tug-avatar-art,#tugWorld .tug-avatar-art,
+ .tug-celebration-banner,.tug-celebration-confetti i,
+ .custom-game-results.tug-result-won>span:first-child{animation:none!important}
+ .tug-celebration-confetti{display:none!important}
+}

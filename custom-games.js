@@ -99,6 +99,92 @@ function tugConsumeScoreBursts(players){
   tugLastScores=next;
   return bursts;
 }
+// Visual-only effects: tied to Firebase scores, never used for gameplay decisions.
+// Preserve the prior totals on the arena element to avoid replaying effects on
+// unrelated room updates (accuracy, WPM, player metadata, etc.).
+function tugClearVisualEffects(arena){
+  if(!arena)return;
+  clearTimeout(arena._tugImpactTimer);
+  clearTimeout(arena._tugVictoryTimer);
+  arena.classList.remove('tug-impact-red','tug-impact-blue','tug-victory-red','tug-victory-blue','tug-victory-tie');
+  arena.querySelector('.tug-celebration-layer')?.remove();
+  delete arena.dataset.tugVictoryKey;
+}
+function tugAnimateScoreChange(arena,room,players){
+  if(!arena||!room)return;
+  const roundKey=`${tugCode}:${room.startedAt||0}`;
+  const stats=tugTeamStats(players);
+  const red=stats.red.total,blue=stats.blue.total;
+  if(arena.dataset.tugRoundKey!==roundKey){
+    tugClearVisualEffects(arena);
+    arena.dataset.tugRoundKey=roundKey;
+    arena.dataset.tugRedTotal=String(red);
+    arena.dataset.tugBlueTotal=String(blue);
+    return;
+  }
+  const redGain=Math.max(0,red-Number(arena.dataset.tugRedTotal||0));
+  const blueGain=Math.max(0,blue-Number(arena.dataset.tugBlueTotal||0));
+  arena.dataset.tugRedTotal=String(red);
+  arena.dataset.tugBlueTotal=String(blue);
+  if(!redGain&&!blueGain)return;
+  // When the two sides score simultaneously, show the team with the stronger
+  // burst. Neither team is favored when the bursts are equal.
+  const direction=redGain>blueGain?'red':blueGain>redGain?'blue':'';
+  if(!direction)return;
+  clearTimeout(arena._tugImpactTimer);
+  arena.classList.remove('tug-impact-red','tug-impact-blue');
+  void arena.offsetWidth; // Restart only the small effect, not the game UI.
+  arena.classList.add(`tug-impact-${direction}`);
+  arena._tugImpactTimer=setTimeout(()=>arena.classList.remove('tug-impact-red','tug-impact-blue'),760);
+}
+function tugMakeConfetti(parent){
+  const pieces=document.createElement('div');
+  pieces.className='tug-celebration-confetti';
+  pieces.setAttribute('aria-hidden','true');
+  for(let i=0;i<22;i++){
+    const piece=document.createElement('i');
+    piece.style.setProperty('--tug-x',`${(i*37+9)%96}%`);
+    piece.style.setProperty('--tug-delay',`${((i*7)%13)*0.075}s`);
+    piece.style.setProperty('--tug-drift',`${((i*23)%120)-60}px`);
+    piece.style.setProperty('--tug-spin',`${(i%2?1:-1)*(260+i*19)}deg`);
+    piece.style.setProperty('--tug-color', ['#f9cd52','#5bd9e4','#fc7999','#a89bfa','#7ae5ae'][i%5]);
+    pieces.appendChild(piece);
+  }
+  parent.appendChild(pieces);
+}
+function tugCelebrateArena(arena,room,winner){
+  if(!arena)return;
+  const key=`${tugCode}:${room?.startedAt||0}:${room?.finishedAt||0}:${winner}`;
+  if(arena.dataset.tugVictoryKey===key)return;
+  tugClearVisualEffects(arena);
+  arena.dataset.tugVictoryKey=key;
+  arena.classList.add(`tug-victory-${['red','blue'].includes(winner)?winner:'tie'}`);
+  const layer=document.createElement('div');
+  layer.className='tug-celebration-layer';
+  layer.setAttribute('aria-hidden','true');
+  const banner=document.createElement('div');
+  banner.className='tug-celebration-banner';
+  const icon=document.createElement('span');icon.textContent=winner==='tie'?'🤝':'🏆';
+  const heading=document.createElement('strong');
+  heading.textContent=winner==='tie'?'IT’S A TIE!':`${teamLabel(winner).toUpperCase()} WINS!`;
+  banner.append(icon,heading);layer.appendChild(banner);
+  tugMakeConfetti(layer);
+  arena.appendChild(layer);
+  arena._tugVictoryTimer=setTimeout(()=>{layer.remove()},4200);
+}
+function tugCelebratePlayerResult(result,room,winner,myTeam){
+  if(!result)return;
+  const key=`${tugCode}:${room?.startedAt||0}:${room?.finishedAt||0}:${winner}`;
+  if(result.dataset.tugVictoryKey===key)return;
+  result.querySelector('.tug-celebration-confetti')?.remove();
+  result.dataset.tugVictoryKey=key;
+  result.classList.add('tug-result-finish');
+  result.classList.toggle('tug-result-won',winner===myTeam);
+  result.classList.toggle('tug-result-tie',winner==='tie');
+  tugMakeConfetti(result);
+  clearTimeout(result._tugVictoryTimer);
+  result._tugVictoryTimer=setTimeout(()=>result.querySelector('.tug-celebration-confetti')?.remove(),4200);
+}
 function renderTugAvatarFigure(playerOrIndex,options={}){
   const player=typeof playerOrIndex==='object'&&playerOrIndex?playerOrIndex:{avatar:playerOrIndex,name:options.name||''};
   const avatarIndex=((Number(player.avatar)||0)%tugAvatars.length+tugAvatars.length)%tugAvatars.length;
@@ -226,6 +312,11 @@ cq('#tugChooseBlue').onclick=()=>{if(!cq('#tugChooseBlue').disabled){tugSelected
 
 function closeTugRoom(){
   if(tugUnsubscribe){tugUnsubscribe();tugUnsubscribe=null}
+  tugClearVisualEffects(cq('#tugTeacherArena'));
+  tugClearVisualEffects(cq('#tugWorld'));
+  [cq('#tugTeacherArena'),cq('#tugWorld')].forEach(arena=>{if(arena){delete arena.dataset.tugRoundKey;delete arena.dataset.tugRedTotal;delete arena.dataset.tugBlueTotal}});
+  const result=cq('#customGameResults');
+  if(result){result.classList.remove('tug-result-finish','tug-result-won','tug-result-tie');result.querySelector('.tug-celebration-confetti')?.remove();delete result.dataset.tugVictoryKey;clearTimeout(result._tugVictoryTimer)};
   tugRoom=null;tugClassStarted=false;tugFinishing=false;tugCode='';tugRole='';tugPlayerId='';tugPlayerName='';tugSelectedTeam='';tugTeam='';tugLastScores={};
 }
 function openCustomGame(mode){
@@ -624,6 +715,8 @@ function watchTugRoom(){
 function beginTugPlayer(room){
   const me=room.players?.[tugPlayerId];if(!me)return;
   tugClassStarted=true;customMode='tug';tugLastScores={};
+  customResults.classList.remove('tug-result-finish','tug-result-won','tug-result-tie');
+  customResults.querySelector('.tug-celebration-confetti')?.remove();delete customResults.dataset.tugVictoryKey;
   customItems=Array.isArray(room.items)?room.items:Object.values(room.items||{});
   customIndex=Math.max(0,Math.min(customItems.length,Number(me.index)||0));
   customScore=Number(me.score)||0;customValue='';customLanguage=room.language||typingLanguage;customDifficultyMode=normalizeTugDifficulty(room.difficulty);customKeyboardShifted=false;
@@ -638,6 +731,7 @@ function updateTugAvatarRow(selector,players,team,pulseMap={}){
 }
 function updateTugPlayerArena(room,players){
   const stats=tugTeamStats(players),position=tugRopePosition(players),pulseMap=tugConsumeScoreBursts(players);
+  tugAnimateScoreChange(cq('#tugWorld'),room,players);
   cq('#tugPlayerRopeMarker').style.left=`${position}%`;
   updateTugAvatarRow('#tugRedAvatars',players,'red',pulseMap);updateTugAvatarRow('#tugBlueAvatars',players,'blue',pulseMap);
   const myStats=tugTeam==='red'?stats.red:stats.blue,other=tugTeam==='red'?stats.blue:stats.red;
@@ -712,6 +806,7 @@ function renderTugScoreboard(players,total){
 }
 function renderTugTeacherArena(players){
   const stats=tugTeamStats(players),position=tugRopePosition(players),pulseMap=tugConsumeScoreBursts(players);
+  tugAnimateScoreChange(cq('#tugTeacherArena'),tugRoom,players);
   cq('#tugTeacherRedScore').textContent=stats.red.avg.toFixed(1);cq('#tugTeacherBlueScore').textContent=stats.blue.avg.toFixed(1);cq('#tugTeacherRopeMarker').style.left=`${position}%`;
   updateTugAvatarList(cq('#tugTeacherRedAvatars'),stats.red.players,'red',{pulses:pulseMap});
   updateTugAvatarList(cq('#tugTeacherBlueAvatars'),stats.blue.players,'blue',{pulses:pulseMap});
@@ -725,6 +820,7 @@ function renderTugTeacherResults(room,players){
   cq('#tugClassSetup').hidden=true;cq('#tugLobby').hidden=true;customLive.hidden=true;customResults.hidden=true;cq('#tugTeacherLive').hidden=false;cq('#endTugRoom').hidden=true;cq('#tugTeacherResults').hidden=false;cq('#tugLiveCode').textContent=tugCode;
   renderTugTeacherArena(players);renderTugScoreboard(players,room.challengeCount||room.items?.length||0);
   const stats=tugTeamStats(players),winner=room.winner||tugOutcome(players,true)?.winner||'tie';
+  tugCelebrateArena(cq('#tugTeacherArena'),room,winner);
   cq('#tugTeacherResultTitle').textContent=winner==='tie'?'It’s a tie!':`${teamLabel(winner)} wins!`;
   cq('#tugTeacherSummary').textContent=`Team A: ${stats.red.avg.toFixed(1)} average pulls · Team B: ${stats.blue.avg.toFixed(1)} average pulls.`;
   const awards=cq('#tugAwards');awards.innerHTML='';
@@ -737,6 +833,7 @@ function renderTugPlayerFinished(room,players){
   const won=winner===myTeam,tie=winner==='tie';cq('#customResultIcon').textContent=tie?'🤝':won?'🏆':'🪢';
   cq('#customResultTitle').textContent=tie?'Tug of War tie!':won?`${teamLabel(myTeam)} wins!`:`${teamLabel(winner)} wins!`;
   cq('#customResultSummary').textContent=`You contributed ${score} pull point${score===1?'':'s'} with ${accuracy}% accuracy.`;
+  tugCelebratePlayerResult(customResults,room,winner,myTeam);
 }
 cq('#endTugRoom').onclick=async()=>{
   if(tugRole!=='host'||!tugCode)return;
