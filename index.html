@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="styles.css?v=20261023-type-studio-link-polish-1" />
   <link rel="stylesheet" href="practice.css?v=20260915-shift-hint-1" />
   <link rel="stylesheet" href="games.css?v=20260915-game-contrast-1" />
-  <link rel="stylesheet" href="custom-games.css?v=20261024-tug-three-languages-1" />
+  <link rel="stylesheet" href="custom-games.css?v=20261025-tug-switcher-1" />
   <link rel="stylesheet" href="race.css?v=20260911-8" />
   <link rel="stylesheet" href="mobile-keyboard.css?v=20260910-6" />
   <link rel="stylesheet" href="race-modern.css?v=20260910-6" />
@@ -141,7 +141,7 @@
                 <label>Challenges<input id="tugChallengeCount" type="number" min="1" max="50" value="10"></label>
                 <label>Team setup<select id="tugTeamMode"><option value="random" selected>Random teams</option><option value="choose">Students choose</option><option value="host">Host assigns</option></select></label>
               </div>
-              <p class="tug-language-note" id="tugLanguageNote">Everyone in this room will use the Sgaw Karen keyboard.</p>
+              <p class="tug-language-note" id="tugLanguageNote">The room starts with the Sgaw Karen keyboard. Players can switch their own keyboard during the game.</p>
               <p class="tug-rule-note">Each correct prompt earns 1 pull point. Fast, error-free typing earns 1 bonus point. The rope reaches the end when a team leads by 5 average pull points.</p>
               <button class="button primary" type="submit">Create Tug of War room</button>
             </form>
@@ -177,7 +177,14 @@
           <div class="custom-game-stats"><div><span>Score</span><strong id="customScore">0</strong></div><div><span id="customStatusLabel">Checkpoint</span><strong id="customRound">1 / 10</strong></div><div><span id="customLifeLabel">Stars</span><strong id="customLives">★★★</strong></div></div>
           <div class="adventure-world" id="adventureWorld"><div class="adventure-sky">Typing Trail</div><div class="adventure-path" id="adventurePath"><span class="adventure-player" id="adventurePlayer">🧭</span><i></i><i></i><i></i><i></i><i></i></div></div>
           <div class="tug-world" id="tugWorld" hidden><div class="tug-player-team red"><span>TEAM A</span><div id="tugRedAvatars"></div></div><div class="tug-player-rope"><div class="tug-rope-line"><span class="tug-rope-knot" id="tugPlayerRopeMarker">🪢</span><i class="tug-finish red"></i><i class="tug-center"></i><i class="tug-finish blue"></i></div><p id="tugPlayerStatus">Pull for your team!</p></div><div class="tug-player-team blue"><span>TEAM B</span><div id="tugBlueAvatars"></div></div></div>
-          <div class="custom-challenge"><span>TYPE THIS</span><span class="tug-language-badge" id="tugPlayerLanguage" hidden>Keyboard: Sgaw Karen</span><div class="custom-target" id="customTarget" lang="ksw"></div><div class="custom-typed" id="customTyped" lang="ksw"></div><p>Start typing with your English keyboard.</p></div><div class="game-keyboard keyboard" id="customGameKeyboard"></div>
+          <div class="custom-challenge"><span>TYPE THIS</span><span class="tug-language-badge" id="tugPlayerLanguage" hidden>Keyboard: Sgaw Karen</span><div class="custom-target" id="customTarget" lang="ksw"></div><div class="custom-typed" id="customTyped" lang="ksw"></div><p>Start typing with your English keyboard.</p></div><div class="tug-keyboard-toolbar" id="tugKeyboardToolbar" hidden>
+            <span>Keyboard</span>
+            <div class="tug-keyboard-switch" role="group" aria-label="Tug of War keyboard language">
+              <button type="button" data-tug-keyboard="ksw" aria-pressed="false">S’gaw Karen</button>
+              <button type="button" data-tug-keyboard="pwo" aria-pressed="false">Pwo Karen</button>
+              <button type="button" data-tug-keyboard="en" aria-pressed="false">English</button>
+            </div>
+          </div><div class="game-keyboard keyboard" id="customGameKeyboard"></div>
         </div>
         <div class="custom-game-results" id="customGameResults" hidden><span id="customResultIcon">🏆</span><h2 id="customResultTitle">Adventure complete!</h2><p id="customResultSummary"></p><div id="customResultActions"><button class="button primary" id="customPlayAgain" type="button">Play again</button><button class="button ghost" id="customNewList" type="button">Change list</button></div></div>
       </section>
@@ -1034,7 +1041,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="app.js?v=20261023-typing-placeholder-1"></script>
   <script src="practice.js?v=20261023-type-tab-return-fix-1"></script>
   <script src="games.js?v=20260915-unified-keyboard-1"></script>
-  <script src="custom-games.js?v=20261024-tug-three-languages-1"></script>
+  <script src="custom-games.js?v=20261025-tug-switcher-1"></script>
   <script src="race.js?v=20260915-unified-keyboard-1"></script>
   <script src="bus-call.js?v=20260917-lineup-toggle-1"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>

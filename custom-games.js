@@ -26,6 +26,8 @@ let customLives=3;
 let customValue='';
 let customDifficultyMode='medium',customKeyboardShifted=false;
 let customLanguage=typingLanguage;
+let tugPlayerKeyboardLanguage='ksw';
+let tugPhysicalShiftHeld=false;
 
 let tugCode='';
 let tugRole='';
@@ -71,16 +73,19 @@ function languageTagFor(language){return language==='en'?'en':language==='pwo'?'
 // of the language their browser was using before joining.
 function customGameLanguage(){
   if(customMode==='tug'){
-    if(tugRole==='host'||tugRole==='player')return normalizeTugLanguage(tugRoom?.language||customLanguage);
+    if(tugRole==='player')return normalizeTugLanguage(tugPlayerKeyboardLanguage);
+    if(tugRole==='host')return normalizeTugLanguage(tugRoom?.language||customLanguage);
     return normalizeTugLanguage(cq('#tugLanguage')?.value||typingLanguage);
   }
   return typingLanguage;
 }
 function tugUpdateRoomLanguage(language){
   const selected=normalizeTugLanguage(language),label=tugLanguageName(selected);
-  ['#tugLobbyLanguage','#tugTeacherLanguage','#tugPlayerLanguage'].forEach(selector=>{
+  ['#tugLobbyLanguage','#tugTeacherLanguage'].forEach(selector=>{
     const badge=cq(selector);if(badge)badge.textContent=`Keyboard: ${label}`;
   });
+  const playerLabel=cq('#tugPlayerLanguage');
+  if(playerLabel)playerLabel.textContent=`Practice text: ${label}`;
 }
 function tugSyncHeaderLanguage(language){
   const selected=normalizeTugLanguage(language);
@@ -88,11 +93,36 @@ function tugSyncHeaderLanguage(language){
   tugUpdateRoomLanguage(selected);
   if(typingLanguage!==selected&&typeof setTypingLanguage==='function')setTypingLanguage(selected);
 }
+// Quiz-style local keyboard selection; this never changes the shared room language
+// or the words/scoring stored in Firebase. Students can switch mid-prompt.
+function setTugPlayerKeyboardLanguage(language){
+  if(tugRole!=='player'||customMode!=='tug'||customLive.hidden)return;
+  if(!['ksw','pwo','en'].includes(language))return;
+  tugPlayerKeyboardLanguage=language;
+  customKeyboardShifted=false;
+  tugPhysicalShiftHeld=false;
+  renderCustomKeyboard();
+}
+document.querySelectorAll('[data-tug-keyboard]').forEach(button=>{
+  button.addEventListener('click',()=>setTugPlayerKeyboardLanguage(button.dataset.tugKeyboard));
+});
+function updateTugKeyboardSwitcher(){
+  const toolbar=cq('#tugKeyboardToolbar');
+  if(!toolbar)return;
+  const active=customMode==='tug'&&tugRole==='player'&&!customLive.hidden;
+  toolbar.hidden=!active;
+  if(!active)return;
+  toolbar.querySelectorAll('[data-tug-keyboard]').forEach(button=>{
+    const selected=button.dataset.tugKeyboard===tugPlayerKeyboardLanguage;
+    button.classList.toggle('active',selected);
+    button.setAttribute('aria-pressed',String(selected));
+  });
+}
 function tugUpdateDraftLanguage(){
   const lang=normalizeTugLanguage(cq('#tugLanguage').value);
   cq('#tugWordsInput').lang=languageTagFor(lang);
   const note=cq('#tugLanguageNote');
-  if(note)note.textContent=`Everyone in this room will use the ${tugLanguageName(lang)} keyboard. Paste ${tugLanguageName(lang)} text; the game does not translate prompts.`;
+  if(note)note.textContent=`The room starts with the ${tugLanguageName(lang)} keyboard. Players can switch their own keyboard during the game. Paste ${tugLanguageName(lang)} text; prompts are not translated.`;
 }
 cq('#tugLanguage').addEventListener('change',tugUpdateDraftLanguage);
 function normalizeTugDifficulty(value){const mode=String(value||'medium').toLowerCase();return mode==='normal'?'medium':(['easy','medium','hard'].includes(mode)?mode:'medium')}
@@ -346,7 +376,7 @@ function closeTugRoom(){
   [cq('#tugTeacherArena'),cq('#tugWorld')].forEach(arena=>{if(arena){delete arena.dataset.tugRoundKey;delete arena.dataset.tugRedTotal;delete arena.dataset.tugBlueTotal}});
   const result=cq('#customGameResults');
   if(result){result.classList.remove('tug-result-finish','tug-result-won','tug-result-tie');result.querySelector('.tug-celebration-confetti')?.remove();delete result.dataset.tugVictoryKey;clearTimeout(result._tugVictoryTimer)};
-  tugRoom=null;tugClassStarted=false;tugFinishing=false;tugCode='';tugRole='';tugPlayerId='';tugPlayerName='';tugSelectedTeam='';tugTeam='';tugLastScores={};
+  tugRoom=null;tugClassStarted=false;tugFinishing=false;tugPlayerKeyboardLanguage='ksw';tugPhysicalShiftHeld=false;tugCode='';tugRole='';tugPlayerId='';tugPlayerName='';tugSelectedTeam='';tugTeam='';tugLastScores={};
 }
 function openCustomGame(mode){
   stopGame();
@@ -453,15 +483,15 @@ function makeCustomTypeKey(label,char,value=char){
 }
 function setCustomKeyboardShift(on){customKeyboardShifted=!!on;renderCustomKeyboard()}
 function renderMediumCustomKeyboard(box){
-  const mobile=phoneKeyboard(),layout=rowsForLanguage(customGameLanguage());
+  const mobile=phoneKeyboard(),layout=rowsForLanguage(customGameLanguage()),shifted=customKeyboardShifted||tugPhysicalShiftHeld;
   if(!mobile){
-    renderUnifiedDesktopKeyboard(box,{language:customGameLanguage(),shifted:customKeyboardShifted,onKey:value=>acceptCustomInput(value),onBackspace:customBackspace,onShift:on=>setCustomKeyboardShift(on),onCaps:on=>setCustomKeyboardShift(on)});return
+    renderUnifiedDesktopKeyboard(box,{language:customGameLanguage(),shifted,onKey:value=>acceptCustomInput(value),onBackspace:customBackspace,onShift:on=>setCustomKeyboardShift(on),onCaps:on=>setCustomKeyboardShift(on)});return
   }
   box.classList.remove('real-keyboard');
   layout.forEach((row,rowIndex)=>{
     const line=document.createElement('div');line.className=`key-row keyboard-row-${rowIndex}`;
     if(rowIndex===layout.length-1)line.appendChild(makeCustomTypeControl('Shift','Shift',()=>setCustomKeyboardShift(!customKeyboardShifted),'shift-key'));
-    row.forEach(([key,normal,shift])=>line.appendChild(makeCustomTypeKey(key,customKeyboardShifted?shift:normal,customKeyboardShifted?shift:normal)));
+    row.forEach(([key,normal,shift])=>line.appendChild(makeCustomTypeKey(key,shifted?shift:normal,shifted?shift:normal)));
     if(rowIndex===layout.length-1)line.appendChild(makeCustomTypeControl('Backspace','⌫',customBackspace,'backspace-key'));box.appendChild(line)
   });
   const bottom=document.createElement('div');bottom.className='key-row phone-bottom-row keyboard-row-bottom';
@@ -484,6 +514,7 @@ function renderEasyCustomKeyboard(box){
   bottom.appendChild(customControl('Shift',()=>{},needShift));box.appendChild(bottom)
 }
 function renderCustomKeyboard(){
+  updateTugKeyboardSwitcher();
   const box=cq('#customGameKeyboard');box.innerHTML='';
   const mode=customMode==='tug'?normalizeTugDifficulty(customDifficulty()):customDifficulty();
   if(mode==='hard'){box.hidden=true;box.classList.remove('real-keyboard');return}
@@ -610,7 +641,7 @@ async function previewTugRoom(){
     await initRaceFirebase();const snap=await fb.get(tugRoomRef(code));if(token!==tugPreviewToken)return;
     if(!snap.exists()){cq('#tugJoinTeamNote').textContent='Room not found yet. Check the code.';return}
     const room=snap.val(),players=Object.values(room.players||{}),stats=tugTeamStats(players);
-    cq('#tugJoinLanguage').textContent=`This room uses the ${tugLanguageName(room.language)} keyboard. Your keyboard will switch automatically when you join.`;
+    cq('#tugJoinLanguage').textContent=`This room starts with the ${tugLanguageName(room.language)} keyboard. You can switch your own keyboard during play.`;
     cq('#tugJoinLanguage').hidden=false;
     if(room.teamMode==='choose'){
       cq('#tugTeamField').hidden=false;
@@ -753,14 +784,15 @@ function beginTugPlayer(room){
   tugClassStarted=true;customMode='tug';tugLastScores={};
   customResults.classList.remove('tug-result-finish','tug-result-won','tug-result-tie');
   customResults.querySelector('.tug-celebration-confetti')?.remove();delete customResults.dataset.tugVictoryKey;
+  tugPlayerKeyboardLanguage=normalizeTugLanguage(room.language);tugPhysicalShiftHeld=false;
   customItems=Array.isArray(room.items)?room.items:Object.values(room.items||{});
   customIndex=Math.max(0,Math.min(customItems.length,Number(me.index)||0));
   customScore=Number(me.score)||0;customValue='';customLanguage=normalizeTugLanguage(room.language);customDifficultyMode=normalizeTugDifficulty(room.difficulty);customKeyboardShifted=false;
   tugTeam=me.team;tugCorrectChars=Number(me.correctChars)||0;tugAttemptedChars=Number(me.attemptedChars)||0;tugErrors=Number(me.errors)||0;tugGameStartedAt=room.startedAt||Date.now();
   cq('#tugLobby').hidden=true;cq('#tugClassSetup').hidden=true;cq('#tugTeacherLive').hidden=true;customResults.hidden=true;cq('#customResultActions').hidden=true;customLive.hidden=false;
   cq('#adventureWorld').hidden=true;cq('#tugWorld').hidden=false;cq('#customStatusLabel').textContent='Prompt';cq('#customLifeLabel').textContent='Team';
-  cq('#customTarget').lang=languageTagFor(customLanguage);cq('#customTyped').lang=languageTagFor(customLanguage);
-  tugUpdateRoomLanguage(customLanguage);cq('#tugPlayerLanguage').hidden=false;
+  cq('#customTarget').lang=languageTagFor(room.language);cq('#customTyped').lang=languageTagFor(room.language);
+  tugUpdateRoomLanguage(customLanguage);cq('#tugPlayerLanguage').textContent=`Practice text: ${tugLanguageName(room.language)}`;cq('#tugPlayerLanguage').hidden=false;
   updateTugPlayerArena(room,Object.values(room.players||{}));nextCustomChallenge();
 }
 function updateTugAvatarRow(selector,players,team,pulseMap={}){
@@ -886,7 +918,7 @@ cq('#tugNewRoom').onclick=()=>{closeTugRoom();openCustomGame('tug')};
 
 document.addEventListener('keydown',e=>{
   if(customStage.hidden||customLive.hidden||e.ctrlKey||e.metaKey||e.altKey)return;
-  if(e.key==='Shift'){if(customMode==='tug'&&normalizeTugDifficulty(customDifficulty())==='medium'&&!customKeyboardShifted){customKeyboardShifted=true;renderCustomKeyboard()}return;}
+  if(e.key==='Shift'){if(customMode==='tug'&&tugRole==='player'&&!tugPhysicalShiftHeld){tugPhysicalShiftHeld=true;if(normalizeTugDifficulty(customDifficulty())==='medium')renderCustomKeyboard()}return;}
   const key=physicalKey(e);
   if(key==='Backspace'){e.preventDefault();customBackspace();return}
   const match=rowsForLanguage(customGameLanguage()).flat().find(([mapped])=>mapped===key);
@@ -895,12 +927,18 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{
   if(customStage.hidden||customLive.hidden||e.key!=='Shift')return;
-  if(customMode==='tug'&&normalizeTugDifficulty(customDifficulty())==='medium'&&customKeyboardShifted){customKeyboardShifted=false;renderCustomKeyboard()}
+  if(customMode==='tug'&&tugRole==='player'&&tugPhysicalShiftHeld!==!!e.shiftKey){tugPhysicalShiftHeld=!!e.shiftKey;if(normalizeTugDifficulty(customDifficulty())==='medium')renderCustomKeyboard()}
+});
+window.addEventListener('blur',()=>{
+  if(tugPhysicalShiftHeld){tugPhysicalShiftHeld=false;if(customMode==='tug'&&tugRole==='player'&&!customLive.hidden)renderCustomKeyboard()}
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden&&tugPhysicalShiftHeld){tugPhysicalShiftHeld=false;if(customMode==='tug'&&tugRole==='player'&&!customLive.hidden)renderCustomKeyboard()}
 });
 window.addEventListener('typinglanguagechange',()=>{
   cq('#customWordsInput').lang=languageTag();
   if(customMode==='tug'&&['host','player'].includes(tugRole)&&!customStage.hidden&&!gamesView.hidden){
-    const locked=customGameLanguage();
+    const locked=normalizeTugLanguage(tugRoom?.language||customLanguage);
     if(typingLanguage!==locked){tugSyncHeaderLanguage(locked);return;}
     cq('#tugWordsInput').lang=languageTagFor(locked);
     cq('#customTarget').lang=languageTagFor(locked);

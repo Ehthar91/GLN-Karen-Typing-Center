@@ -817,3 +817,21 @@ body.theme-rgb .tug-language-badge{border-color:#2d8f94;background:rgba(20,174,1
 @media(max-width:620px){.tug-host-settings label:last-child{grid-column:auto}}
 
 .tug-language-note[hidden],.tug-language-badge[hidden]{display:none!important}
+
+/* Tug of War student keyboard chooser, consistent with Classroom Quiz.
+   Personal keyboard choice does not change the room's practice text. */
+.tug-keyboard-toolbar[hidden]{display:none!important}
+.tug-keyboard-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;padding:13px 16px 10px;border-top:1px solid #dce6f2;background:#fbfdff}
+.tug-keyboard-toolbar>span{color:#687f98;font-size:.73rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+.tug-keyboard-switch{display:inline-flex;gap:4px;padding:4px;border:1px solid #d7e0ec;border-radius:12px;background:#eaf1f8}
+.tug-keyboard-switch button{min-height:36px;padding:0 15px;border:0;border-radius:9px;background:transparent;color:#53667e;font:800 .78rem Inter,ui-sans-serif,sans-serif;cursor:pointer}
+.tug-keyboard-switch button:hover{background:#ddeaf6;color:#173868}
+.tug-keyboard-switch button.active{color:#fff;background:linear-gradient(135deg,#2563eb,#1687d6);box-shadow:0 3px 9px rgba(37,99,235,.2)}
+.tug-keyboard-switch button:focus-visible{outline:3px solid #38bdf8;outline-offset:2px}
+body.theme-rgb .tug-keyboard-toolbar{border-color:#284766;background:#0d1b31}
+body.theme-rgb .tug-keyboard-toolbar>span{color:#a9bfd7}
+body.theme-rgb .tug-keyboard-switch{border-color:#345272;background:#152944}
+body.theme-rgb .tug-keyboard-switch button{color:#bdd0e6}
+body.theme-rgb .tug-keyboard-switch button:hover{background:#254368;color:#fff}
+body.theme-rgb .tug-keyboard-switch button.active{background:linear-gradient(135deg,#0679b5,#5a4ee0);color:#fff;box-shadow:0 0 14px rgba(23,190,250,.18)}
+@media(max-width:680px){.tug-keyboard-toolbar{padding:10px 9px}.tug-keyboard-toolbar>span{width:100%;text-align:center}.tug-keyboard-switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;max-width:460px}.tug-keyboard-switch button{padding:0 4px;font-size:.73rem}}
