@@ -527,7 +527,7 @@ function customBackspace(){
   customValue=customValue.slice(0,previousTextBoundary(customValue,customValue.length));
   cq('#customTyped').textContent=customValue;renderCustomTarget();renderCustomKeyboard();
 }
-function currentTugAccuracy(){return tugAttemptedChars?Math.max(0,Math.min(100,(tugCorrectChars/tugAttemptedChars)*100)):100}
+function currentTugAccuracy(){return tugAttemptedChars?Math.max(0,Math.min(100,(tugCorrectChars/tugAttemptedChars)*100)):0}
 function currentTugWpm(){
   const elapsed=Math.max(1,(Date.now()-tugGameStartedAt)/1000);
   return Math.max(0,(tugCorrectChars/5)/(elapsed/60));
@@ -680,7 +680,7 @@ cq('#tugJoinForm').onsubmit=async event=>{
       team=tugSelectedTeam;
     }
     tugCode=code;tugRole='player';tugPlayerId=currentUser.uid;tugPlayerName=rawName;tugTeam=team;tugSyncHeaderLanguage(room.language);
-    const player={id:currentUser.uid,name:rawName,avatar:tugAvatarIndex,team,score:0,index:0,finished:false,joinedAt:Date.now(),finishedAt:0,correctChars:0,attemptedChars:0,errors:0,wpm:0,accuracy:100};
+    const player={id:currentUser.uid,name:rawName,avatar:tugAvatarIndex,team,score:0,index:0,finished:false,joinedAt:Date.now(),finishedAt:0,correctChars:0,attemptedChars:0,errors:0,wpm:0,accuracy:0};
     await fb.set(tugPlayerRef(code,currentUser.uid),player);
     showTugLobby({players:[...players.filter(p=>p.id!==currentUser.uid),player]});watchTugRoom();
   }catch(error){tugError(error.message||'Could not join the Tug of War room.')}
@@ -741,7 +741,7 @@ cq('#startTugRoom').onclick=async()=>{
     if(!stats.red.players.length||!stats.blue.players.length)throw new Error('Both teams need at least one player.');
     if(players.some(p=>!['red','blue'].includes(p.team)))throw new Error('Assign every player to a team first.');
     const updates={status:'playing',winner:'',startedAt:Date.now(),finishedAt:0};
-    Object.keys(room.players||{}).forEach(uid=>{updates[`players/${uid}/score`]=0;updates[`players/${uid}/index`]=0;updates[`players/${uid}/finished`]=false;updates[`players/${uid}/finishedAt`]=0;updates[`players/${uid}/correctChars`]=0;updates[`players/${uid}/attemptedChars`]=0;updates[`players/${uid}/errors`]=0;updates[`players/${uid}/wpm`]=0;updates[`players/${uid}/accuracy`]=100});
+    Object.keys(room.players||{}).forEach(uid=>{updates[`players/${uid}/score`]=0;updates[`players/${uid}/index`]=0;updates[`players/${uid}/finished`]=false;updates[`players/${uid}/finishedAt`]=0;updates[`players/${uid}/correctChars`]=0;updates[`players/${uid}/attemptedChars`]=0;updates[`players/${uid}/errors`]=0;updates[`players/${uid}/wpm`]=0;updates[`players/${uid}/accuracy`]=0});
     await fb.update(tugRoomRef(tugCode),updates);
   }catch(error){cq('#tugLobbyHint').textContent=error.message}
 };
@@ -826,6 +826,30 @@ function tugProgressText(player,total){
   const current=Math.min(total,Math.max(0,Number(player.index)||0)+1);
   return `Prompt ${current} / ${total}`;
 }
+// A player who has not typed anything has NO measured accuracy. Older rooms
+// may still contain accuracy:100 from their initial state, so check attempts.
+function tugDisplayedAccuracy(player){
+  return Number(player?.attemptedChars)>0?`${Math.max(0,Math.min(100,Number(player.accuracy)||0)).toFixed(0)}%`:'—';
+}
+// Accuracy honors work completed: three fully finished prompts in normal rounds.
+// For a teacher-created 1- or 2-prompt round, finishing that shorter set qualifies.
+function tugAccuracyMinPrompts(room){
+  const count=Number(room?.challengeCount)||room?.items?.length||3;
+  return Math.max(1,Math.min(3,count));
+}
+function tugAccuracyWinner(players,room){
+  const minimum=tugAccuracyMinPrompts(room);
+  return players.filter(player=>
+    (Number(player.index)||0)>=minimum&&
+    Number(player.attemptedChars)>0&&Number(player.correctChars)>0
+  ).sort((a,b)=>
+    (Number(b.accuracy)||0)-(Number(a.accuracy)||0)||
+    (Number(b.index)||0)-(Number(a.index)||0)||
+    (Number(b.correctChars)||0)-(Number(a.correctChars)||0)||
+    (Number(b.wpm)||0)-(Number(a.wpm)||0)||
+    String(a.name||'').localeCompare(String(b.name||''))
+  )[0]||null;
+}
 function updateTugPlayerCard(card,player,total){
   card.classList.toggle('finished',!!player.finished);
   const [name,progress]=card.querySelector('.tug-score-info').children;
@@ -833,7 +857,7 @@ function updateTugPlayerCard(card,player,total){
   progress.textContent=tugProgressText(player,total);
   const [points,speed]=card.querySelector('.tug-score-metrics').children;
   points.textContent=`${Number(player.score)||0} pulls`;
-  speed.textContent=`${Number(player.wpm||0).toFixed(1)} WPM · ${Number(player.accuracy??100).toFixed(0)}%`;
+  speed.textContent=`${Number(player.wpm||0).toFixed(1)} WPM · ${tugDisplayedAccuracy(player)}`;
   const avatar=card.querySelector('.tug-character');
   if(avatar){
     avatar.classList.toggle('state-hold',!!player.finished);
@@ -893,15 +917,17 @@ function renderTugTeacherResults(room,players){
   cq('#tugTeacherResultTitle').textContent=winner==='tie'?'It’s a tie!':`${teamLabel(winner)} wins!`;
   cq('#tugTeacherSummary').textContent=`Team A: ${stats.red.avg.toFixed(1)} average pulls · Team B: ${stats.blue.avg.toFixed(1)} average pulls.`;
   const awards=cq('#tugAwards');awards.innerHTML='';
-  const topSpeed=bestPlayer(players,'wpm'),topAccuracy=bestPlayer(players,'accuracy','score'),topPull=bestPlayer(players,'score','accuracy');
-  [['⚡','Top Typist',topSpeed,topSpeed?`${Number(topSpeed.wpm||0).toFixed(1)} WPM`:'' ],['🎯','Highest Accuracy',topAccuracy,topAccuracy?`${Number(topAccuracy.accuracy??100).toFixed(0)}%`:'' ],['💪','Most Team Pulls',topPull,topPull?`${topPull.score||0} pulls`:'' ]].forEach(([icon,title,player,value])=>{if(!player)return;const card=document.createElement('div');card.innerHTML=`<span>${icon}</span><strong>${title}</strong><b></b><small>${value}</small>`;card.querySelector('b').textContent=player.name;awards.appendChild(card)});
+  const topSpeed=bestPlayer(players.filter(p=>Number(p.index)>0&&Number(p.attemptedChars)>0&&Number(p.wpm)>0),'wpm');
+  const topAccuracy=tugAccuracyWinner(players,room);
+  const topPull=bestPlayer(players.filter(p=>Number(p.index)>0&&Number(p.score)>0),'score','accuracy');
+  [['⚡','Top Typist',topSpeed,topSpeed?`${Number(topSpeed.wpm).toFixed(1)} WPM`:'Complete a prompt'],['🎯','Highest Accuracy',topAccuracy,topAccuracy?`${Number(topAccuracy.accuracy).toFixed(0)}%`:`Complete ${tugAccuracyMinPrompts(room)} prompt(s) to qualify`],['💪','Most Team Pulls',topPull,topPull?`${topPull.score} pulls`:'Earn a pull to qualify']].forEach(([icon,title,player,value])=>{const card=document.createElement('div');card.innerHTML=`<span>${icon}</span><strong>${title}</strong><b></b><small>${value}</small>`;card.querySelector('b').textContent=player?.name||'No qualifying player';awards.appendChild(card)});
 }
 function renderTugPlayerFinished(room,players){
   customLive.hidden=true;cq('#tugLobby').hidden=true;cq('#tugTeacherLive').hidden=true;customResults.hidden=false;cq('#customResultActions').hidden=true;
-  const me=room.players?.[tugPlayerId],winner=room.winner||tugOutcome(players,true)?.winner||'tie',myTeam=me?.team||tugTeam,score=me?.score??customScore,accuracy=Number(me?.accuracy??currentTugAccuracy()).toFixed(0);
+  const me=room.players?.[tugPlayerId],winner=room.winner||tugOutcome(players,true)?.winner||'tie',myTeam=me?.team||tugTeam,score=me?.score??customScore,accuracy=tugDisplayedAccuracy(me);
   const won=winner===myTeam,tie=winner==='tie';cq('#customResultIcon').textContent=tie?'🤝':won?'🏆':'🪢';
   cq('#customResultTitle').textContent=tie?'Tug of War tie!':won?`${teamLabel(myTeam)} wins!`:`${teamLabel(winner)} wins!`;
-  cq('#customResultSummary').textContent=`You contributed ${score} pull point${score===1?'':'s'} with ${accuracy}% accuracy.`;
+  cq('#customResultSummary').textContent=`You contributed ${score} pull point${score===1?'':'s'}. ${accuracy==='—'?'No typing activity recorded.':`${accuracy} accuracy.`}`;
   tugCelebratePlayerResult(customResults,room,winner,myTeam);
 }
 cq('#endTugRoom').onclick=async()=>{
@@ -911,7 +937,7 @@ cq('#endTugRoom').onclick=async()=>{
 cq('#tugPlayAgain').onclick=async()=>{
   if(tugRole!=='host'||!tugRoom)return;
   const updates={status:'waiting',winner:'',startedAt:0,finishedAt:0};
-  Object.keys(tugRoom.players||{}).forEach(uid=>{updates[`players/${uid}/score`]=0;updates[`players/${uid}/index`]=0;updates[`players/${uid}/finished`]=false;updates[`players/${uid}/finishedAt`]=0;updates[`players/${uid}/correctChars`]=0;updates[`players/${uid}/attemptedChars`]=0;updates[`players/${uid}/errors`]=0;updates[`players/${uid}/wpm`]=0;updates[`players/${uid}/accuracy`]=100});
+  Object.keys(tugRoom.players||{}).forEach(uid=>{updates[`players/${uid}/score`]=0;updates[`players/${uid}/index`]=0;updates[`players/${uid}/finished`]=false;updates[`players/${uid}/finishedAt`]=0;updates[`players/${uid}/correctChars`]=0;updates[`players/${uid}/attemptedChars`]=0;updates[`players/${uid}/errors`]=0;updates[`players/${uid}/wpm`]=0;updates[`players/${uid}/accuracy`]=0});
   await fb.update(tugRoomRef(tugCode),updates).catch(error=>tugError(error.message));
 };
 cq('#tugNewRoom').onclick=()=>{closeTugRoom();openCustomGame('tug')};
