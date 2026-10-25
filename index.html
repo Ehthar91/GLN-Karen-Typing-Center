@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="rgb-theme.css?v=20260916-all-points-1" />
   <link rel="stylesheet" href="keyboard-realistic.css?v=20260915-unified-keyboard-1" />
   <link rel="stylesheet" href="tug-polish.css?v=20261024-reactive-motion-v4" />
+  <link rel="stylesheet" href="game-auto-keyboard.css?v=20261025-optional-auto-switcher-2" />
 </head>
 <body>
   <main class="app-shell">
@@ -134,9 +135,10 @@
           <div class="tug-class-options">
             <form class="tug-option tug-host-option" id="tugCreateForm">
               <div class="tug-option-heading"><span>👩‍🏫</span><div><strong>Host</strong><p>Paste your own list, choose the team setup, then create a room.</p></div></div>
-              <label>Word or sentence list<textarea id="tugWordsInput" rows="7" maxlength="4000" lang="ksw" placeholder="Enter or paste your own words or sentences" required></textarea><small>One word or sentence per line. Commas in sentences are preserved; single-line comma lists also work.</small></label>
+              <label>Word or sentence list<textarea id="tugWordsInput" rows="7" maxlength="4000" lang="ksw" placeholder="Enter or paste your own words or sentences" required></textarea><small>Use your selected keyboard by default. For a rare mixed-language list, enable Auto below; you can mark ambiguous words with <code>[sgaw]</code> or <code>[pwo]</code>.</small></label>
               <div class="tug-host-settings">
                 <label>Keyboard language<select id="tugLanguage"><option value="ksw">Sgaw Karen · GLN layout</option><option value="pwo">Pwo Karen · GLN layout</option><option value="en">English · QWERTY</option></select></label>
+                <label class="game-auto-host-option"><input type="checkbox" id="tugHostAuto"> Start students in Auto mode (mixed-language lists only)</label>
                 <label>Difficulty<select id="tugDifficulty"><option value="easy">Easy · guided keyboard · bonus at 20 WPM</option><option value="medium" selected>Medium · keyboard only · bonus at 30 WPM</option><option value="hard">Hard · no keyboard · bonus at 40 WPM</option></select></label>
                 <label>Challenges<input id="tugChallengeCount" type="number" min="1" max="50" value="10"></label>
                 <label>Team setup<select id="tugTeamMode"><option value="random" selected>Random teams</option><option value="choose">Students choose</option><option value="host">Host assigns</option></select></label>
@@ -180,9 +182,10 @@
           <div class="custom-challenge"><span>TYPE THIS</span><span class="tug-language-badge" id="tugPlayerLanguage" hidden>Keyboard: Sgaw Karen</span><div class="custom-target" id="customTarget" lang="ksw"></div><div class="custom-typed" id="customTyped" lang="ksw"></div><p>Start typing with your English keyboard.</p></div><div class="tug-keyboard-toolbar" id="tugKeyboardToolbar" hidden>
             <span>Keyboard</span>
             <div class="tug-keyboard-switch" role="group" aria-label="Tug of War keyboard language">
-              <button type="button" data-tug-keyboard="ksw" aria-pressed="false">S’gaw Karen</button>
+              <button type="button" data-tug-keyboard="ksw" aria-pressed="true">S’gaw Karen</button>
               <button type="button" data-tug-keyboard="pwo" aria-pressed="false">Pwo Karen</button>
               <button type="button" data-tug-keyboard="en" aria-pressed="false">English</button>
+              <button type="button" data-tug-keyboard="auto" aria-pressed="false" title="Automatically switch for a mixed-language word list">Auto</button>
             </div>
           </div><div class="game-keyboard keyboard" id="customGameKeyboard"></div>
         </div>
@@ -193,7 +196,7 @@
         <div class="race-join" id="raceJoin">
           <div class="race-intro"><span class="race-flag">🏁</span><h2>Race your classmates</h2><p>Everyone types the same Karen passage. Accurate typing moves your car toward the finish line.</p></div>
           <div class="race-options">
-            <form class="race-option" id="createRaceForm"><strong>Host (Teacher)</strong><p>Paste the Karen words your players will type.</p><label>Race words<textarea id="raceWordsInput" lang="ksw" rows="5" maxlength="800" placeholder="Enter or paste your own race words" required></textarea><small>Use one word per line, commas, or spaces.</small></label><button class="button primary" type="submit">Create a race</button></form>
+            <form class="race-option" id="createRaceForm"><strong>Host (Teacher)</strong><p>Choose a keyboard, then paste your race words.</p><label>Race words<textarea id="raceWordsInput" lang="ksw" rows="5" maxlength="800" placeholder="Enter or paste your own race words" required></textarea><small>The chosen keyboard stays fixed unless Auto is enabled. For ambiguous mixed-language words, use <code>[sgaw]</code> or <code>[pwo]</code>.</small></label><label>Keyboard language<select id="raceHostLanguage"><option value="ksw">Sgaw Karen · GLN layout</option><option value="pwo">Pwo Karen · GLN layout</option><option value="en">English · QWERTY</option></select></label><label class="game-auto-host-option"><input type="checkbox" id="raceHostAuto"> Start students in Auto mode (mixed-language lists only)</label><button class="button primary" type="submit">Create a race</button></form>
             <form class="race-option" id="joinRaceForm"><strong>Player</strong><p>Enter the shared code and your name.</p><label>Room code<input id="raceCodeInput" maxlength="5" autocomplete="off" placeholder="ABCDE" required /></label><label>Your name<input id="raceNameInput" maxlength="24" autocomplete="name" placeholder="Player name" required /></label><button class="button primary" type="submit">Join race</button></form>
           </div>
           <p class="race-error" id="raceError" role="alert"></p>
@@ -208,8 +211,18 @@
           <div class="race-status"><span id="raceStatusText">Race in progress</span><strong id="racePosition">—</strong><button class="race-fullscreen" id="raceFullscreen" type="button" hidden>⛶ Full Screen</button></div>
           <div class="race-track" id="raceTrack"></div>
           <div class="race-passage" id="racePassage" lang="ksw"></div>
+          
           <div class="race-key-instruction" id="raceKeyInstruction" aria-live="polite"></div>
           <p class="race-prompt" id="racePrompt">Start typing with your English keyboard.</p>
+          <div class="race-keyboard-toolbar" id="raceKeyboardToolbar" hidden>
+            <span id="raceAutoLanguage" aria-live="polite">Keyboard</span>
+            <div class="tug-keyboard-switch" role="group" aria-label="Car Race keyboard language">
+              <button type="button" data-race-keyboard="ksw" aria-pressed="true">S’gaw Karen</button>
+              <button type="button" data-race-keyboard="pwo" aria-pressed="false">Pwo Karen</button>
+              <button type="button" data-race-keyboard="en" aria-pressed="false">English</button>
+              <button type="button" data-race-keyboard="auto" aria-pressed="false" title="Automatically switch for a mixed-language word list">Auto</button>
+            </div>
+          </div>
           <div class="race-keyboard keyboard" id="raceKeyboard"></div>
           <section class="race-results" id="raceResults" hidden aria-labelledby="raceResultsTitle">
             <div class="confetti" aria-hidden="true"></div>
@@ -1041,8 +1054,9 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="app.js?v=20261023-typing-placeholder-1"></script>
   <script src="practice.js?v=20261023-type-tab-return-fix-1"></script>
   <script src="games.js?v=20260915-unified-keyboard-1"></script>
-  <script src="custom-games.js?v=20261025-fair-awards-1"></script>
-  <script src="race.js?v=20260915-unified-keyboard-1"></script>
+  <script src="game-language-auto.js?v=20261025-mixed-word-auto-1"></script>
+  <script src="custom-games.js?v=20261025-optional-auto-switcher-2"></script>
+  <script src="race.js?v=20261025-optional-auto-switcher-2"></script>
   <script src="bus-call.js?v=20260917-lineup-toggle-1"></script>
   <script src="race-features.js?v=20260914-race-permission-fix"></script>
   <script src="quiz.js?v=20261023-optional-parentheses-1"></script>

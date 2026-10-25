@@ -27,6 +27,8 @@ let customValue='';
 let customDifficultyMode='medium',customKeyboardShifted=false;
 let customLanguage=typingLanguage;
 let tugPlayerKeyboardLanguage='ksw';
+let tugPlayerKeyboardMode='ksw';
+const tugLanguageAuto=window.GLN_GAME_LANGUAGE_AUTO;
 let tugPhysicalShiftHeld=false;
 
 let tugCode='';
@@ -97,8 +99,10 @@ function tugSyncHeaderLanguage(language){
 // or the words/scoring stored in Firebase. Students can switch mid-prompt.
 function setTugPlayerKeyboardLanguage(language){
   if(tugRole!=='player'||customMode!=='tug'||customLive.hidden)return;
-  if(!['ksw','pwo','en'].includes(language))return;
-  tugPlayerKeyboardLanguage=language;
+  if(!['auto','ksw','pwo','en'].includes(language))return;
+  tugPlayerKeyboardMode=language;
+  if(language!=='auto')tugPlayerKeyboardLanguage=language;
+  if(language!=='auto'){const badge=cq('#tugPlayerLanguage');if(badge)badge.textContent=`Keyboard: ${tugLanguageName(language)} (manual)`;}
   customKeyboardShifted=false;
   tugPhysicalShiftHeld=false;
   renderCustomKeyboard();
@@ -112,19 +116,30 @@ function updateTugKeyboardSwitcher(){
   const active=customMode==='tug'&&tugRole==='player'&&!customLive.hidden;
   toolbar.hidden=!active;
   if(!active)return;
+  if(tugPlayerKeyboardMode!=='auto'){const badge=cq('#tugPlayerLanguage');if(badge)badge.textContent=`Keyboard: ${tugLanguageName(tugPlayerKeyboardLanguage)} (manual)`;}
   toolbar.querySelectorAll('[data-tug-keyboard]').forEach(button=>{
-    const selected=button.dataset.tugKeyboard===tugPlayerKeyboardLanguage;
+    const selected=button.dataset.tugKeyboard===tugPlayerKeyboardMode;
     button.classList.toggle('active',selected);
     button.setAttribute('aria-pressed',String(selected));
   });
+}
+function tugAutoResolveKeyboard(){
+  if(customMode!=='tug'||tugRole!=='player'||tugPlayerKeyboardMode!=='auto')return;
+  const target=customItems[customIndex]||'';
+  const forced=tugRoom?.itemLanguages?.[customIndex];
+  const lang=forced&&['ksw','pwo','en'].includes(forced)?forced:tugLanguageAuto.at(target,customValue.length,tugRoom?.language||customLanguage);
+  tugPlayerKeyboardLanguage=lang;
+  const badge=cq('#tugPlayerLanguage');
+  if(badge)badge.textContent=`Auto keyboard: ${tugLanguageName(lang)}`;
 }
 function tugUpdateDraftLanguage(){
   const lang=normalizeTugLanguage(cq('#tugLanguage').value);
   cq('#tugWordsInput').lang=languageTagFor(lang);
   const note=cq('#tugLanguageNote');
-  if(note)note.textContent=`The room starts with the ${tugLanguageName(lang)} keyboard. Players can switch their own keyboard during the game. Paste ${tugLanguageName(lang)} text; prompts are not translated.`;
+  if(note)note.textContent=cq('#tugHostAuto').checked?`Auto enabled: students begin with language detection. Ambiguous Karen words use ${tugLanguageName(lang)}. Optional tags: [sgaw], [pwo], [en].`:`Fixed keyboard by default: ${tugLanguageName(lang)}. Students can choose another keyboard or Auto during the game.`;
 }
 cq('#tugLanguage').addEventListener('change',tugUpdateDraftLanguage);
+cq('#tugHostAuto').addEventListener('change',tugUpdateDraftLanguage);
 function normalizeTugDifficulty(value){const mode=String(value||'medium').toLowerCase();return mode==='normal'?'medium':(['easy','medium','hard'].includes(mode)?mode:'medium')}
 function customDifficulty(){return customMode==='tug'&&tugRole==='player'?normalizeTugDifficulty(customDifficultyMode):cq('#customDifficulty').value}
 function shuffledChallenges(source,count){
@@ -376,7 +391,7 @@ function closeTugRoom(){
   [cq('#tugTeacherArena'),cq('#tugWorld')].forEach(arena=>{if(arena){delete arena.dataset.tugRoundKey;delete arena.dataset.tugRedTotal;delete arena.dataset.tugBlueTotal}});
   const result=cq('#customGameResults');
   if(result){result.classList.remove('tug-result-finish','tug-result-won','tug-result-tie');result.querySelector('.tug-celebration-confetti')?.remove();delete result.dataset.tugVictoryKey;clearTimeout(result._tugVictoryTimer)};
-  tugRoom=null;tugClassStarted=false;tugFinishing=false;tugPlayerKeyboardLanguage='ksw';tugPhysicalShiftHeld=false;tugCode='';tugRole='';tugPlayerId='';tugPlayerName='';tugSelectedTeam='';tugTeam='';tugLastScores={};
+  tugRoom=null;tugClassStarted=false;tugFinishing=false;tugPlayerKeyboardLanguage='ksw';tugPlayerKeyboardMode='ksw';tugPhysicalShiftHeld=false;tugCode='';tugRole='';tugPlayerId='';tugPlayerName='';tugSelectedTeam='';tugTeam='';tugLastScores={};
 }
 function openCustomGame(mode){
   stopGame();
@@ -401,7 +416,7 @@ function openCustomGame(mode){
   }else{
     customSetup.hidden=true;cq('#tugClassSetup').hidden=false;tugError('');
     cq('#tugConnection').textContent='Connecting…';
-    cq('#tugLanguage').value=normalizeTugLanguage(typingLanguage);tugUpdateDraftLanguage();
+    cq('#tugLanguage').value=normalizeTugLanguage(typingLanguage);cq('#tugHostAuto').checked=false;tugUpdateDraftLanguage();
     cq('#tugCodeInput').value='';cq('#tugNameInput').value='';
     cq('#tugTeamField').hidden=true;cq('#tugJoinTeamNote').textContent='Enter a room code to see how teams are assigned.';
     tugAvatarIndex=0;tugSelectedTeam='';renderTugAvatarPicker();renderTugTeamChoice();
@@ -514,6 +529,7 @@ function renderEasyCustomKeyboard(box){
   bottom.appendChild(customControl('Shift',()=>{},needShift));box.appendChild(bottom)
 }
 function renderCustomKeyboard(){
+  tugAutoResolveKeyboard();
   updateTugKeyboardSwitcher();
   const box=cq('#customGameKeyboard');box.innerHTML='';
   const mode=customMode==='tug'?normalizeTugDifficulty(customDifficulty()):customDifficulty();
@@ -610,7 +626,8 @@ function chooseBalancedTeam(players){
 
 cq('#tugCreateForm').onsubmit=async event=>{
   event.preventDefault();tugError('');
-  const source=parseTugItems(cq('#tugWordsInput').value);
+  const annotatedSource=parseTugItems(cq('#tugWordsInput').value).map(text=>tugLanguageAuto.explicitEntry(text)).filter(entry=>entry.text);
+  const source=annotatedSource;
   const selectedLanguage=normalizeTugLanguage(cq('#tugLanguage').value);
   const count=Math.max(1,Math.min(50,Number(cq('#tugChallengeCount').value)||10));
   try{
@@ -621,8 +638,8 @@ cq('#tugCreateForm').onsubmit=async event=>{
       tries++;
       const code=makeTugCode(),ref=tugRoomRef(code),existing=await fb.get(ref);
       if(existing.exists())continue;
-      const now=Date.now(),items=shuffledChallenges(source,count);
-      await fb.set(ref,{hostUid:currentUser.uid,items,difficulty:normalizeTugDifficulty(cq('#tugDifficulty').value),challengeCount:items.length,language:selectedLanguage,teamMode:cq('#tugTeamMode').value,winLead:TUG_WIN_LEAD,status:'waiting',winner:'',createdAt:now,expiresAt:now+14400000,startedAt:0,finishedAt:0,players:{}});
+      const now=Date.now(),challenges=shuffledChallenges(source,count),items=challenges.map(entry=>entry.text),itemLanguages=challenges.map(entry=>entry.language||'');
+      await fb.set(ref,{hostUid:currentUser.uid,items,itemLanguages,difficulty:normalizeTugDifficulty(cq('#tugDifficulty').value),challengeCount:items.length,language:selectedLanguage,keyboardMode:cq('#tugHostAuto').checked?'auto':'manual',teamMode:cq('#tugTeamMode').value,winLead:TUG_WIN_LEAD,status:'waiting',winner:'',createdAt:now,expiresAt:now+14400000,startedAt:0,finishedAt:0,players:{}});
       tugCode=code;created=true;
     }
     if(!created)throw new Error('Could not create a room. Please try again.');
@@ -784,7 +801,7 @@ function beginTugPlayer(room){
   tugClassStarted=true;customMode='tug';tugLastScores={};
   customResults.classList.remove('tug-result-finish','tug-result-won','tug-result-tie');
   customResults.querySelector('.tug-celebration-confetti')?.remove();delete customResults.dataset.tugVictoryKey;
-  tugPlayerKeyboardLanguage=normalizeTugLanguage(room.language);tugPhysicalShiftHeld=false;
+  tugPlayerKeyboardLanguage=normalizeTugLanguage(room.language);tugPlayerKeyboardMode=room.keyboardMode==='auto'?'auto':tugPlayerKeyboardLanguage;tugPhysicalShiftHeld=false;
   customItems=Array.isArray(room.items)?room.items:Object.values(room.items||{});
   customIndex=Math.max(0,Math.min(customItems.length,Number(me.index)||0));
   customScore=Number(me.score)||0;customValue='';customLanguage=normalizeTugLanguage(room.language);customDifficultyMode=normalizeTugDifficulty(room.difficulty);customKeyboardShifted=false;

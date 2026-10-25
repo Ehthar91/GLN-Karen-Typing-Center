@@ -1,6 +1,8 @@
 const raceStage=document.querySelector('#raceStage'),raceJoin=document.querySelector('#raceJoin'),raceLobby=document.querySelector('#raceLobby'),raceLive=document.querySelector('#raceLive'),raceResults=document.querySelector('#raceResults');
 let raceCode='',racePlayerId='',racePlayerName='',racePassageText='',raceTyped='',raceSendTimer=null,raceCountdownTimer=null,raceCountdownDone=true,raceStartedAt=0,raceCorrect=0,raceErrors=0,raceMode='',raceUnsubscribe=null,raceLanguage=typingLanguage,raceLastStatus='',raceFinishing=false,raceDifficultyMode='medium',raceKeyboardShifted=false;
 let fb=null,db=null,auth=null,currentUser=null;
+let raceLanguageHints=[],raceRoomLanguage='ksw',raceKeyboardMode='ksw';
+const gameLanguageAuto=window.GLN_GAME_LANGUAGE_AUTO;
 const carColors=['#ef3340','#1687e8','#19a974','#f5a623','#8b5cf6','#ec4899'];
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function raceCarGraphic(colorIndex=0){const color=carColors[colorIndex%carColors.length];return `<svg class="race-car-svg" viewBox="0 0 120 52" aria-hidden="true"><path class="car-shadow" d="M14 43h92"/><path fill="${color}" d="M8 34c2-7 8-10 18-11l15-13h35c10 0 18 5 25 13l12 3c4 1 6 4 6 9v6H8z"/><path fill="#dff4ff" d="M45 13h27c7 0 13 3 20 10H34z"/><path fill="rgba(255,255,255,.45)" d="M20 27h78l-7 5H17z"/><path fill="#fff" d="M103 27h9v5h-12z"/><circle cx="31" cy="40" r="9" fill="#17233b"/><circle cx="31" cy="40" r="4" fill="#cbd5e1"/><circle cx="92" cy="40" r="9" fill="#17233b"/><circle cx="92" cy="40" r="4" fill="#cbd5e1"/></svg>`}
@@ -47,7 +49,7 @@ function openRace(){
   document.querySelector('#raceCodeInput').value='';
   document.querySelector('#raceNameInput').value='';
   document.querySelector('#raceWordsInput').value='';
-  raceLanguage=typingLanguage;raceLastStatus='';raceFinishing=false;raceResults.hidden=true;updateRaceLanguageInput();
+  raceLanguage=typingLanguage;raceRoomLanguage=typingLanguage;raceKeyboardMode=typingLanguage;document.querySelector('#raceHostLanguage').value=gameLanguageAuto.normalize(typingLanguage);document.querySelector('#raceHostAuto').checked=false;raceLanguageHints=[];raceLastStatus='';raceFinishing=false;raceResults.hidden=true;updateRaceLanguageInput();
   document.querySelector('#raceConnection').textContent='Connecting…';
   initRaceFirebase().then(()=>document.querySelector('#raceConnection').textContent='Online').catch(()=>{});
 }
@@ -60,7 +62,8 @@ function raceError(message){document.querySelector('#raceError').textContent=mes
 
 document.querySelector('#createRaceForm').onsubmit=async e=>{
   e.preventDefault();raceError('');
-  const passage=cleanWords(document.querySelector('#raceWordsInput').value);
+  const parsed=gameLanguageAuto.raceWords(document.querySelector('#raceWordsInput').value);
+  const passage=parsed.passage;const chosenLanguage=gameLanguageAuto.normalize(document.querySelector('#raceHostLanguage').value);
   try{
     if(!passage) throw new Error(`Paste at least one ${languageName()} word for the race.`);
     await initRaceFirebase();
@@ -74,7 +77,8 @@ document.querySelector('#createRaceForm').onsubmit=async e=>{
       const now=Date.now();
       await fb.set(ref,{
         hostUid:currentUser.uid,
-        passage:storedRacePassage(passage,typingLanguage),
+        passage:storedRacePassage(passage,chosenLanguage),
+        keyboardLanguage:chosenLanguage,keyboardMode:document.querySelector('#raceHostAuto').checked?'auto':'manual',languageHints:parsed.hints,
         status:'waiting',
         createdAt:now,
         expiresAt:now+14400000,
@@ -83,7 +87,7 @@ document.querySelector('#createRaceForm').onsubmit=async e=>{
       raceCode=code;created=true;
     }
     if(!created) throw new Error('Could not create a room. Please try again.');
-    raceMode='host';racePlayerId='';raceLanguage=typingLanguage;
+    raceMode='host';racePlayerId='';raceLanguage=chosenLanguage;
     showRaceLobby({players:[]});watchRace();
   }catch(error){raceError(error.message)}
 };
@@ -104,7 +108,7 @@ document.querySelector('#joinRaceForm').onsubmit=async e=>{
     const players=Object.values(room.players||{});
     if(players.length>=30) throw new Error('This room is full.');
     if(players.some(p=>String(p.name||'').toLowerCase()===name.toLowerCase())) throw new Error('That name is already in this room. Add an initial.');
-    raceCode=code;racePlayerId=currentUser.uid;racePlayerName=name;raceMode='player';raceLanguage=racePassageInfo(room.passage).language;
+    raceCode=code;racePlayerId=currentUser.uid;racePlayerName=name;raceMode='player';raceRoomLanguage=gameLanguageAuto.normalize(room.keyboardLanguage||racePassageInfo(room.passage).language);raceLanguage=raceRoomLanguage;raceKeyboardMode=room.keyboardMode==='auto'?'auto':raceRoomLanguage;
     await fb.set(playerRef(code,currentUser.uid),{
       id:currentUser.uid,name,progress:0,wpm:0,accuracy:100,
       color:players.length%carColors.length,joinedAt:Date.now(),finishedAt:0
@@ -162,7 +166,7 @@ function watchRace(){
   },()=>document.querySelector('#raceConnection').textContent='Reconnecting…');
 }
 function beginLiveRace(data){
-  const passageInfo=racePassageInfo(data.passage);raceLobby.hidden=true;raceLive.hidden=false;raceLive.classList.remove('show-results');raceResults.hidden=true;raceLanguage=passageInfo.language;racePassageText=passageInfo.text;raceTyped='';raceStartedAt=data.startedAt||Date.now();raceCorrect=0;raceErrors=0;
+  const passageInfo=racePassageInfo(data.passage);raceLobby.hidden=true;raceLive.hidden=false;raceLive.classList.remove('show-results');raceResults.hidden=true;raceRoomLanguage=gameLanguageAuto.normalize(data.keyboardLanguage||passageInfo.language);raceLanguage=raceRoomLanguage;raceKeyboardMode=data.keyboardMode==='auto'?'auto':raceRoomLanguage;raceLanguageHints=Array.isArray(data.languageHints)?data.languageHints:[];racePassageText=passageInfo.text;raceTyped='';raceStartedAt=data.startedAt||Date.now();raceCorrect=0;raceErrors=0;
   raceDifficultyMode=String(data.difficulty||'Medium').toLowerCase();raceKeyboardShifted=false;
   raceLive.classList.remove('difficulty-easy','difficulty-medium','difficulty-hard');raceLive.classList.add(`difficulty-${raceDifficultyMode}`);
   raceLive.classList.toggle('teacher-view',raceMode==='host');document.querySelector('#raceFullscreen').hidden=raceMode!=='host';
@@ -231,8 +235,27 @@ function renderMediumRaceKeyboard(box,mobile,layout){
   const space=makeRaceTypeKey('Space','Space',' ');space.classList.add('wide','space');bottom.appendChild(space);
   const enter=makeRaceTypeControl('Enter','↵',()=>{},'enter-key');enter.classList.add('wide');bottom.appendChild(enter);box.appendChild(bottom)
 }
+function setRaceKeyboardMode(language){
+  if(raceMode!=='player'||raceLive.hidden||!['auto','ksw','pwo','en'].includes(language))return;
+  raceKeyboardMode=language;raceKeyboardShifted=false;
+  renderRaceKeyboard();
+}
+document.querySelectorAll('[data-race-keyboard]').forEach(button=>{
+  button.addEventListener('click',()=>setRaceKeyboardMode(button.dataset.raceKeyboard));
+});
 function renderRaceKeyboard(){
   const box=document.querySelector('#raceKeyboard');box.innerHTML='';
+  raceLanguage=raceKeyboardMode==='auto'?gameLanguageAuto.at(racePassageText,raceTyped.length,raceRoomLanguage,raceLanguageHints):gameLanguageAuto.normalize(raceKeyboardMode);
+  const toolbar=document.querySelector('#raceKeyboardToolbar');
+  toolbar.hidden=raceMode!=='player';
+  const status=document.querySelector('#raceAutoLanguage');
+  status.textContent=`${raceKeyboardMode==='auto'?'Auto · ':''}${gameLanguageAuto.names[raceLanguage]} keyboard`;
+  toolbar.querySelectorAll('[data-race-keyboard]').forEach(button=>{
+    const active=button.dataset.raceKeyboard===raceKeyboardMode;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-pressed',String(active));
+  });
+  document.querySelector('#racePassage').lang=raceLanguage==='en'?'en':raceLanguage==='pwo'?'kjp':'ksw';
   const instruction=document.querySelector('#raceKeyInstruction'),mobile=phoneKeyboard(),layout=rowsForLanguage(raceLanguage),lastRow=layout.length-1;
   const medium=raceDifficultyMode==='medium';instruction.hidden=medium;
   if(medium){renderMediumRaceKeyboard(box,mobile,layout);return}
@@ -296,6 +319,7 @@ document.querySelector('#raceNewWords').onclick=()=>{if(raceMode==='host'){close
 const raceFullscreenButton=document.querySelector('#raceFullscreen');
 raceFullscreenButton.onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(raceStage.requestFullscreen)await raceStage.requestFullscreen()}catch{showToast('Full screen is not available on this browser')}};
 document.addEventListener('fullscreenchange',()=>{const active=document.fullscreenElement===raceStage;raceFullscreenButton.textContent=active?'✕ Exit Full Screen':'⛶ Full Screen';raceStage.classList.toggle('is-fullscreen',active)});
-function updateRaceLanguageInput(){const input=document.querySelector('#raceWordsInput'),name=languageName();input.lang=languageTag();input.placeholder=`Enter or paste your own ${name} words`;document.querySelector('#createRaceForm p').textContent=`Paste the ${name} words your students will type.`;document.querySelector('.race-intro p').textContent=`Everyone types the same ${name} passage. Accurate typing moves your car toward the finish line.`}
+function updateRaceLanguageInput(){const input=document.querySelector('#raceWordsInput');const lang=gameLanguageAuto.normalize(document.querySelector('#raceHostLanguage').value);input.lang=lang==='en'?'en':lang==='pwo'?'kjp':'ksw';input.placeholder='Enter English, Sgaw Karen, or Pwo Karen words';document.querySelector('#createRaceForm p').textContent='Choose a keyboard, then paste the words your students will type.';document.querySelector('.race-intro p').textContent='Everyone types the same passage. Students can switch keyboards; Auto is optional.'}
+document.querySelector('#raceHostLanguage').addEventListener('change',updateRaceLanguageInput);
 window.addEventListener('typinglanguagechange',()=>{if(raceJoin&&!raceJoin.hidden){raceLanguage=typingLanguage;updateRaceLanguageInput()}});
 updateRaceLanguageInput();
