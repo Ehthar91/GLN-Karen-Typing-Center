@@ -2,7 +2,17 @@ const raceStage=document.querySelector('#raceStage'),raceJoin=document.querySele
 let raceCode='',racePlayerId='',racePlayerName='',racePassageText='',raceTyped='',raceSendTimer=null,raceCountdownTimer=null,raceCountdownDone=true,raceStartedAt=0,raceCorrect=0,raceErrors=0,raceMode='',raceUnsubscribe=null,raceLanguage=typingLanguage,raceLastStatus='',raceFinishing=false,raceDifficultyMode='medium',raceKeyboardShifted=false;
 let fb=null,db=null,auth=null,currentUser=null;
 let raceLanguageHints=[],raceRoomLanguage='ksw',raceKeyboardMode='ksw';
-const gameLanguageAuto=window.GLN_GAME_LANGUAGE_AUTO;
+// Race must remain playable with the teacher-selected keyboard even if the
+// optional mixed-language helper was not uploaded or was blocked by caching.
+const gameLanguageAuto=window.GLN_GAME_LANGUAGE_AUTO||(()=>{
+  const names={ksw:'Sgaw Karen',pwo:'Pwo Karen',en:'English'};
+  const normalize=value=>Object.prototype.hasOwnProperty.call(names,value)?value:'ksw';
+  return {
+    names,normalize,
+    raceWords:value=>({passage:cleanWords(value),hints:[]}),
+    at:(_passage,_position,fallback)=>normalize(fallback)
+  };
+})();
 const carColors=['#ef3340','#1687e8','#19a974','#f5a623','#8b5cf6','#ec4899'];
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function raceCarGraphic(colorIndex=0){const color=carColors[colorIndex%carColors.length];return `<svg class="race-car-svg" viewBox="0 0 120 52" aria-hidden="true"><path class="car-shadow" d="M14 43h92"/><path fill="${color}" d="M8 34c2-7 8-10 18-11l15-13h35c10 0 18 5 25 13l12 3c4 1 6 4 6 9v6H8z"/><path fill="#dff4ff" d="M45 13h27c7 0 13 3 20 10H34z"/><path fill="rgba(255,255,255,.45)" d="M20 27h78l-7 5H17z"/><path fill="#fff" d="M103 27h9v5h-12z"/><circle cx="31" cy="40" r="9" fill="#17233b"/><circle cx="31" cy="40" r="4" fill="#cbd5e1"/><circle cx="92" cy="40" r="9" fill="#17233b"/><circle cx="92" cy="40" r="4" fill="#cbd5e1"/></svg>`}
@@ -166,7 +176,8 @@ function watchRace(){
   },()=>document.querySelector('#raceConnection').textContent='Reconnecting…');
 }
 function beginLiveRace(data){
-  const passageInfo=racePassageInfo(data.passage);raceLobby.hidden=true;raceLive.hidden=false;raceLive.classList.remove('show-results');raceResults.hidden=true;raceRoomLanguage=gameLanguageAuto.normalize(data.keyboardLanguage||passageInfo.language);raceLanguage=raceRoomLanguage;raceKeyboardMode=data.keyboardMode==='auto'?'auto':raceRoomLanguage;raceLanguageHints=Array.isArray(data.languageHints)?data.languageHints:[];racePassageText=passageInfo.text;raceTyped='';raceStartedAt=data.startedAt||Date.now();raceCorrect=0;raceErrors=0;
+  const passageInfo=racePassageInfo(data.passage);
+  if(!passageInfo.text.trim())throw new Error('This race has no practice words. Ask the host to start a new race with a word list.');raceLobby.hidden=true;raceLive.hidden=false;raceLive.classList.remove('show-results');raceResults.hidden=true;raceRoomLanguage=gameLanguageAuto.normalize(data.keyboardLanguage||passageInfo.language);raceLanguage=raceRoomLanguage;raceKeyboardMode=data.keyboardMode==='auto'?'auto':raceRoomLanguage;raceLanguageHints=Array.isArray(data.languageHints)?data.languageHints:[];racePassageText=passageInfo.text;raceTyped='';raceStartedAt=data.startedAt||Date.now();raceCorrect=0;raceErrors=0;
   raceDifficultyMode=String(data.difficulty||'Medium').toLowerCase();raceKeyboardShifted=false;
   raceLive.classList.remove('difficulty-easy','difficulty-medium','difficulty-hard');raceLive.classList.add(`difficulty-${raceDifficultyMode}`);
   raceLive.classList.toggle('teacher-view',raceMode==='host');document.querySelector('#raceFullscreen').hidden=raceMode!=='host';
@@ -249,7 +260,7 @@ function renderRaceKeyboard(){
   const toolbar=document.querySelector('#raceKeyboardToolbar');
   toolbar.hidden=raceMode!=='player';
   const status=document.querySelector('#raceAutoLanguage');
-  status.textContent=`${raceKeyboardMode==='auto'?'Auto · ':''}${gameLanguageAuto.names[raceLanguage]} keyboard`;
+  status.textContent=(raceKeyboardMode==='auto'&&!window.GLN_GAME_LANGUAGE_AUTO)?`${gameLanguageAuto.names[raceLanguage]} keyboard · Auto unavailable (manual fallback)`:`${raceKeyboardMode==='auto'?'Auto · ':''}${gameLanguageAuto.names[raceLanguage]} keyboard`;
   toolbar.querySelectorAll('[data-race-keyboard]').forEach(button=>{
     const active=button.dataset.raceKeyboard===raceKeyboardMode;
     button.classList.toggle('active',active);
