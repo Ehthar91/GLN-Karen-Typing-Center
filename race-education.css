@@ -45,3 +45,21 @@ body.theme-rgb #createRaceForm .race-tool-row > label {color: #d9e6f8;}
 @media print {.race-status .race-v4-mode{display:none}.race-results .race-v4-results-detail{color:#182a43}.race-results .podium-block .race-v4-points{color:inherit;border-color:#6c7989}}
 
 .race-lobby .race-v4-lobby-mode{margin:8px 0;padding:7px 11px;border:1px solid rgba(109,185,242,.45);border-radius:9px;background:rgba(19,83,135,.17);font-weight:800;font-size:.83rem;}
+
+/* v4.0.2 — Accuracy Challenge: an actual backward move with a brief brake flash. */
+.race-track .race-lane.race-is-reversing .race-car {
+  filter:drop-shadow(0 0 11px rgba(255,85,76,.95)) drop-shadow(0 5px 5px rgba(0,0,0,.32))!important;
+  transition:left 390ms cubic-bezier(.4,0,.2,1)!important;
+}
+.race-track .race-lane.race-is-reversing .race-lane-progress {
+  background:linear-gradient(90deg,#ff744e,#ff323e)!important;
+  box-shadow:0 0 12px rgba(255,68,67,.62)!important;
+}
+.race-player-hud .race-reverse-indicator:not([hidden]) {
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 9px;border-radius:9px;border:1px solid rgba(255,112,112,.55);
+  background:rgba(171,42,51,.15);color:#ffbdad;font-weight:750;
+}
+@media (prefers-reduced-motion:reduce) {
+  .race-track .race-lane.race-is-reversing .race-car {transition:none!important;}
+}

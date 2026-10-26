@@ -9,7 +9,7 @@
   const modes = { speed: 'Speed Race', accuracy: 'Accuracy Challenge', balanced: 'Balanced Race' };
   const details = {
     speed: 'Correct typing progress determines position. In a word race, the first student to finish wins.',
-    accuracy: 'Correct progress matters, but mistakes carry a strong penalty. In word races, finished passages always rank ahead of unfinished passages.',
+    accuracy: 'Wrong keys move your car backward. Correct keys help you recover; accuracy and progress determine your rank. Finished passages rank ahead of unfinished ones.',
     balanced: 'Correct progress and accuracy both contribute to the score. In word races, finished passages always rank ahead of unfinished passages.'
   };
   const clamp = (v, min, max) => Math.max(min, Math.min(max, Number.isFinite(Number(v)) ? Number(v) : min));

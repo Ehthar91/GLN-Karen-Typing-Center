@@ -16,6 +16,27 @@
   let resumedOnceForRound='';
   let restoringSession=false;
   let expireUpdatePending=false;
+  // Accuracy Challenge: distance (percentage points) temporarily lost to wrong keys.
+  // Keep text completion independent so correct characters are never erased.
+  let raceReverseDebt=0;
+  let observedRound='', observedProgress=new Map();
+  const reverseFlashTimers=new WeakMap();
+  const REVERSE_PER_ERROR=3, REVERSE_CAP=15;
+  const clampDebt=value=>Math.min(REVERSE_CAP,Math.max(0,Number(value)||0));
+  const reverseEnabled=room=>room?.scoringMode==='accuracy';
+  const passageUnits=()=>Math.max(1,graphemes(racePassageText));
+  function flashReverseLane(uid){
+    const lane=[...raceEl('raceTrack').querySelectorAll('.race-lane')]
+      .find(node=>node.dataset.playerId===String(uid));
+    if(!lane)return;
+    clearTimeout(reverseFlashTimers.get(lane));
+    lane.classList.remove('race-is-reversing');
+    // Force a new flash even for consecutive wrong keys.
+    void lane.offsetWidth;
+    lane.classList.add('race-is-reversing');
+    reverseFlashTimers.set(lane,setTimeout(()=>lane.classList.remove('race-is-reversing'),550));
+  }
+
 
   // Save the host/player identity independently of typed content. One tab, one race.
   function saveIdentity(){
@@ -27,14 +48,14 @@
     if(raceMode!=='player'||!raceRoomData?.roundId||!racePassageText)return;
     const old=readSession();
     writeSession({...sameIdentity(old)?old:{},code:raceCode,uid:currentUser?.uid,role:'player',name:racePlayerName,
-      roundId:String(raceRoomData.roundId),passage:racePassageText,typed:raceTyped,errors:raceErrors,updatedAt:raceNow()});
+      roundId:String(raceRoomData.roundId),passage:racePassageText,typed:raceTyped,errors:raceErrors,reverseDebt:raceReverseDebt,updatedAt:raceNow()});
   }
 
   const originalCloseRace=closeRace;
   closeRace=()=>{
     if(!restoringSession)forgetSession();
     clearInterval(dashboardTimer);dashboardTimer=null;
-    resumedOnceForRound='';expireUpdatePending=false;
+    resumedOnceForRound='';expireUpdatePending=false;raceReverseDebt=0;observedRound='';observedProgress.clear();
     originalCloseRace();
   };
   const originalWatchRace=watchRace;
@@ -49,7 +70,7 @@
     if(raceRoomData?.status==='waiting'&&raceMode==='player'&&raceLastStatus==='waiting'){
       // A new round must never inherit last round's typing or finished flag.
       const last=readSession();if(sameIdentity(last)&&last.roundId&&raceRoomData.roundId===0){
-        writeSession({...last,roundId:'',typed:'',errors:0,passage:''});
+        writeSession({...last,roundId:'',typed:'',errors:0,reverseDebt:0,passage:''});
       }
     }
   };
@@ -127,7 +148,7 @@
       if(!existing){
         const customPassage=room.randomize?storedRacePassage(shuffleRaceWords(info.text),raceRoomLanguage):room.passage;
         const player={id:currentUser.uid,name,progress:0,typedCount:0,errors:0,wpm:0,accuracy:100,
-          color:Number(raceEl('raceCarColor').value)||0,avatar:Number(raceEl('raceAvatar').value)||0,
+          reverseDebt:0,color:Number(raceEl('raceCarColor').value)||0,avatar:Number(raceEl('raceAvatar').value)||0,
           team:room.teamCount?(players.length%room.teamCount)+1:0,customPassage,joinedAt:raceNow(),finishedAt:0};
         const update={[`players/${currentUser.uid}`]:player};
         if(removed?.allowRejoin)update[`removedPlayers/${currentUser.uid}`]=null;
@@ -150,15 +171,18 @@
         resumedOnceForRound=key;
         const saved=readSession();
         const me=(data.players||[]).find(p=>p.id===racePlayerId);
+        raceReverseDebt=0; // Never carry a previous round's penalty forward.
         if(sameIdentity(saved)&&saved.roundId===roundId&&saved.passage===racePassageText&&
            racePassageText.startsWith(saved.typed||'')){
           raceTyped=String(saved.typed||'');raceErrors=Math.max(0,Number(saved.errors)||0);
+          raceReverseDebt=reverseEnabled(data)?clampDebt(saved.reverseDebt):0;
         }
-        // Fallback if sessionStorage was cleared, while Firebase still has a
-        // correct-character count for this authenticated student.
+        // Recover from Firebase if this browser's session record is missing
+        // or older than the student's server-side position.
         if(me&&Number(me.typedCount)>raceTyped.length){
           raceTyped=racePassageText.slice(0,Math.min(racePassageText.length,Number(me.typedCount)));
           raceErrors=Math.max(0,Number(me.errors)||0);
+          raceReverseDebt=reverseEnabled(data)?clampDebt(me.reverseDebt):0;
         }
         raceCorrect=raceTyped.length;
         if(raceTyped)renderRacePassage();
@@ -183,6 +207,23 @@
     if(!canTypeNow())return;
     const length=raceTyped.length,errors=raceErrors;
     originalAcceptRaceInput(value);
+    if(reverseEnabled(raceRoomData)){
+      if(raceErrors>errors){
+        // A wrong key reverses the car without modifying correctly typed text.
+        raceReverseDebt=Math.min(REVERSE_CAP,raceReverseDebt+REVERSE_PER_ERROR);
+        raceEl('racePrompt').textContent='Wrong key — car reversing!';
+        flashReverseLane(racePlayerId);
+        // Publish the reverse immediately; a fast next key must not swallow it
+        // inside the normal 100ms typing debounce.
+        clearTimeout(raceSendTimer);raceSendTimer=null;
+        void sendRaceProgress();
+      }else if(raceTyped.length>length&&raceReverseDebt>0){
+        // Correct typing pays back the penalty over several keystrokes.
+        const advance=graphemes(raceTyped.slice(length));
+        const recovery=Math.max(.75,Math.min(1.5,50/passageUnits()));
+        raceReverseDebt=Math.max(0,raceReverseDebt-recovery*advance);
+      }
+    }else raceReverseDebt=0;
     if(length!==raceTyped.length||errors!==raceErrors)saveTyping();
   };
   const originalBackspace=raceBackspace;
@@ -200,15 +241,19 @@
     if(room.lengthMode==='time'&&elapsedSeconds(room)>=Number(room.duration||60))return;
     const characters=graphemes(raceTyped),minutes=Math.max(1/60,elapsedSeconds(room)/60);
     const wpm=Math.round(characters/5/minutes),accuracy=Math.round(characters/Math.max(1,characters+raceErrors)*100);
-    const progress=racePassageText.length?Math.min(100,raceTyped.length/racePassageText.length*100):0;
+    const rawProgress=racePassageText.length?Math.min(100,raceTyped.length/racePassageText.length*100):0;
+    const finished=racePassageText.length>0&&raceTyped.length>=racePassageText.length;
+    const penalty=reverseEnabled(room)?raceReverseDebt:0;
+    // At passage completion, the car crosses the finish line; until then the
+    // position really is reduced and drives the shared live standings.
+    const progress=finished?100:Math.max(0,rawProgress-penalty);
     // Do not overwrite a finish timestamp when Firebase receives delayed writes.
-    const finished=progress>=100;
     try{
       const target=playerRef(raceCode,racePlayerId);
       const previous=currentPlayer(room);
       if(previous?.finishedAt)return;
       await fb.update(target,{progress,typedCount:raceTyped.length,errors:raceErrors,wpm,accuracy,
-        lastProgressAt:raceNow(),finishedAt:finished?raceNow():0});
+        reverseDebt:penalty,lastProgressAt:raceNow(),finishedAt:finished?raceNow():0});
       if(finished)raceEl('racePrompt').textContent=`Finished! ${wpm} WPM · ${accuracy}% accuracy`;
     }catch(error){console.warn('Car Race: progress not synced',error)}
   };
@@ -221,7 +266,7 @@
   leaderboard.innerHTML='<div class="race-leaderboard-title"><div><small>LIVE STANDINGS</small><strong>Leaderboard</strong></div><span id="raceLeaderboardCount">0 racers</span></div><div class="race-leaderboard-list" id="raceLeaderboardList"></div>';
   track.replaceWith(shell);shell.append(track,leaderboard);
   const playerHud=document.createElement('div');playerHud.id='racePlayerHud';playerHud.className='race-player-hud';
-  playerHud.innerHTML='<span>⏱ <strong id="racePlayerClock">0:00</strong></span><span>Progress <strong id="racePlayerProgress">0%</strong></span><span>Speed <strong id="racePlayerWpm">0 WPM</strong></span><span>Accuracy <strong id="racePlayerAccuracy">100%</strong></span>';
+  playerHud.innerHTML='<span>⏱ <strong id="racePlayerClock">0:00</strong></span><span>Progress <strong id="racePlayerProgress">0%</strong></span><span>Speed <strong id="racePlayerWpm">0 WPM</strong></span><span>Accuracy <strong id="racePlayerAccuracy">100%</strong></span><span class="race-reverse-indicator" id="raceReverseIndicator" hidden>↶ Recovering <strong id="raceReverseDebt">0%</strong></span>';
   shell.before(playerHud);
   const labelHost=()=>raceMode==='host';
   function refreshRaceDashboardClock(){
@@ -238,6 +283,9 @@
       raceEl('racePlayerWpm').textContent=`${Math.round(me.wpm||0)} WPM`;
       raceEl('racePlayerAccuracy').textContent=`${Math.round(me.accuracy??100)}%`;
     }
+    const isRecovering=reverseEnabled(room)&&raceMode==='player'&&raceReverseDebt>0;
+    raceEl('raceReverseIndicator').hidden=!isRecovering;
+    if(isRecovering)raceEl('raceReverseDebt').textContent=`${raceReverseDebt.toFixed(1)}%`;
     playerHud.hidden=labelHost();
     leaderboard.hidden=!labelHost();
     if(labelHost()){
@@ -254,6 +302,18 @@
     if(data.status!=='racing')clearTimeout(raceSendTimer);
     if(data.status==='waiting')expireUpdatePending=false;
     originalRenderRace(data);
+    // Monitor published progress, not keystroke counts: the teacher sees cars
+    // visibly reverse on any student's error. Reset history each round.
+    const round=`${raceCode}:${data.roundId||data.startedAt||''}`;
+    if(observedRound!==round){observedRound=round;observedProgress.clear()}
+    if(reverseEnabled(data)&&data.status==='racing'){
+      (data.players||[]).forEach(player=>{
+        const uid=String(player.id),next=Math.max(0,Number(player.progress)||0);
+        const previous=observedProgress.get(uid);
+        if(previous!==undefined&&next<previous-.05)flashReverseLane(uid);
+        observedProgress.set(uid,next);
+      });
+    }else observedProgress.clear();
     const ranked=raceRankPlayers(data.players);
     const container=raceEl('raceLeaderboardList');
     const oldNodes=new Map([...container.children].map(el=>[el.dataset.uid,el]));
