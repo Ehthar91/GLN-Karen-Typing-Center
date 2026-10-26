@@ -21,11 +21,14 @@
   let raceReverseDebt=0;
   let observedRound='', observedProgress=new Map();
   const reverseFlashTimers=new WeakMap();
-  const REVERSE_PER_ERROR=3, REVERSE_CAP=15;
-  const clampDebt=value=>Math.min(REVERSE_CAP,Math.max(0,Number(value)||0));
+  // v4.2: resolve limits from Firebase room settings. Old rooms use 3% / 15%.
+  const advanced=room=>window.GLNRaceAdvancedSettings?.read(room) ||
+    {reversePerError:3,reverseCap:15,accuracyTarget:90,reverseFeedback:true};
+  const clampDebt=(value,room=raceRoomData)=>Math.min(advanced(room).reverseCap,Math.max(0,Number(value)||0));
   const reverseEnabled=room=>room?.scoringMode==='accuracy';
   const passageUnits=()=>Math.max(1,graphemes(racePassageText));
   function flashReverseLane(uid){
+    if(!advanced(raceRoomData).reverseFeedback)return;
     const lane=[...raceEl('raceTrack').querySelectorAll('.race-lane')]
       .find(node=>node.dataset.playerId===String(uid));
     if(!lane)return;
@@ -176,14 +179,14 @@
         if(sameIdentity(saved)&&saved.roundId===roundId&&saved.passage===racePassageText&&
            racePassageText.startsWith(saved.typed||'')){
           raceTyped=String(saved.typed||'');raceErrors=Math.max(0,Number(saved.errors)||0);
-          raceReverseDebt=reverseEnabled(data)?clampDebt(saved.reverseDebt):0;
+          raceReverseDebt=reverseEnabled(data)?clampDebt(saved.reverseDebt,data):0;
         }
         // Recover from Firebase if this browser's session record is missing
         // or older than the student's server-side position.
         if(me&&Number(me.typedCount)>raceTyped.length){
           raceTyped=racePassageText.slice(0,Math.min(racePassageText.length,Number(me.typedCount)));
           raceErrors=Math.max(0,Number(me.errors)||0);
-          raceReverseDebt=reverseEnabled(data)?clampDebt(me.reverseDebt):0;
+          raceReverseDebt=reverseEnabled(data)?clampDebt(me.reverseDebt,data):0;
         }
         raceCorrect=raceTyped.length;
         // Restore word-level mistakes for this exact round and passage only.
@@ -213,8 +216,9 @@
     if(reverseEnabled(raceRoomData)){
       if(raceErrors>errors){
         // A wrong key reverses the car without modifying correctly typed text.
-        raceReverseDebt=Math.min(REVERSE_CAP,raceReverseDebt+REVERSE_PER_ERROR);
-        raceEl('racePrompt').textContent='Wrong key — car reversing!';
+        raceReverseDebt=window.GLNRaceAdvancedSettings?.addError(raceReverseDebt,raceRoomData)
+          ?? Math.min(15,raceReverseDebt+3);
+        raceEl('racePrompt').textContent=advanced(raceRoomData).reverseFeedback?'Wrong key — car reversing!':'Wrong key — progress reduced!';
         flashReverseLane(racePlayerId);
         // Publish the reverse immediately; a fast next key must not swallow it
         // inside the normal 100ms typing debounce.
@@ -252,7 +256,7 @@
     const wpm=Math.round(characters/5/minutes),accuracy=Math.round(characters/Math.max(1,characters+raceErrors)*100);
     const rawProgress=racePassageText.length?Math.min(100,raceTyped.length/racePassageText.length*100):0;
     const finished=racePassageText.length>0&&raceTyped.length>=racePassageText.length;
-    const penalty=reverseEnabled(room)?raceReverseDebt:0;
+    const penalty=reverseEnabled(room)?clampDebt(raceReverseDebt,room):0;
     // At passage completion, the car crosses the finish line; until then the
     // position really is reduced and drives the shared live standings.
     const progress=finished?100:Math.max(0,rawProgress-penalty);

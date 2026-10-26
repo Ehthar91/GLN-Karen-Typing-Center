@@ -1,0 +1,19 @@
+/* GLN Classroom Car Race v4.2 — teacher challenge settings + live feedback */
+#createRaceForm .race-v42-settings{display:grid;gap:11px;margin:4px 0 13px;padding:15px;border:1px solid #87aacb68;border-radius:12px;background:rgba(46,111,169,.095);min-width:0;box-sizing:border-box}
+#createRaceForm .race-v42-settings[hidden],.race-v42-lobby[hidden],.race-v42-goal[hidden],.race-v42-teacher-settings[hidden]{display:none!important}
+.race-v42-heading{display:flex;flex-wrap:wrap;gap:5px 12px;align-items:baseline;justify-content:space-between}
+.race-v42-heading strong{font-size:.92rem}.race-v42-heading small{font-size:.73rem;opacity:.7}
+#createRaceForm .race-v42-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+#createRaceForm .race-v42-grid label{display:grid;gap:6px;min-width:0;font-size:.79rem;font-weight:700}
+#createRaceForm .race-v42-grid select{display:block;box-sizing:border-box;width:100%;max-width:100%;min-width:0;min-height:40px}
+#createRaceForm .race-v42-checkbox{display:flex;align-items:center;gap:9px;font-size:.82rem;font-weight:700;line-height:1.4}
+#createRaceForm .race-v42-checkbox input{flex:0 0 auto;width:auto;min-width:17px;height:17px}
+#createRaceForm .race-v42-note{font-size:.76rem;opacity:.86;line-height:1.45;margin:0}
+.race-v42-lobby{margin:8px 0;padding:8px 11px;border:1px solid #61aad277;border-radius:9px;background:#2774b321;font-size:.77rem;font-weight:700}
+.race-v42-teacher-settings{padding:7px 10px;background:#e8f2ff;border-bottom:1px solid #d5e4f6;color:#224870;font-size:.68rem;font-weight:750;line-height:1.45}
+.race-leaderboard .race-v42-racer-info{display:block;font-size:.61rem;color:#688199;line-height:1.4;overflow-wrap:anywhere}
+.race-leaderboard .race-v42-racer-info.is-below-goal{color:#b32b28;font-weight:800}
+.race-player-hud .race-v42-goal{border-radius:7px;padding:4px 7px;color:#a2f4bf;border:1px solid #75bb9b7d;font-weight:800}
+.race-player-hud .race-v42-goal.is-below-goal{color:#ffd6b2;background:#98392f5e;border-color:#ff9b847d}
+@media(max-width:650px){#createRaceForm .race-v42-grid{grid-template-columns:1fr}.race-v42-heading strong{font-size:.86rem}}
+@media print{.race-v42-teacher-settings{display:none!important}}
