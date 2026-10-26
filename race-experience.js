@@ -184,9 +184,12 @@
   function celebrate(players){
     if(!players.length)return;
     const winner=players[0];
-    winnerLine.textContent=raceMode==='player'&&racePlayerId
-      ? (()=>{const place=players.findIndex(p=>p.id===racePlayerId)+1;return place>0?`You placed #${place}! · Winner: ${winner.name}`:`Winner: ${winner.name}`})()
-      :`🏆 Winner: ${winner.name}`;
+    if(raceMode==='player'&&racePlayerId){
+      const place=players.findIndex(p=>p.id===racePlayerId)+1;
+      winnerLine.textContent=place===1?'🏆 You won the race!'
+        :place>1?`You finished #${place} · 🏆 ${winner.name} wins!`
+        :`🏆 ${winner.name} wins the race!`;
+    }else winnerLine.textContent=`🏆 ${winner.name} wins the race!`;
     el('raceResults').classList.add('race-v3-results-celebrating');
     clearTimeout(finishTimer);
     confettiBurst.replaceChildren();
@@ -210,6 +213,9 @@
     if(!raceResults.hidden&&signature===lastResultSignature)return;
     lastResultSignature=signature;
     originalRenderResults(players);
+    // Print and CSV export are teacher actions, not student controls.
+    const teacherTools=el('raceResults').querySelector('.race-result-toolbar');
+    if(teacherTools)teacherTools.hidden=raceMode!=='host';
   };
   const originalRender=renderRace;
   renderRace=data=>{
@@ -261,6 +267,8 @@
       startRaceAmbience(data);
     }
     lastRoomStatus=data.status;
+    const teacherTools=el('raceResults').querySelector('.race-result-toolbar');
+    if(teacherTools)teacherTools.hidden=raceMode!=='host';
     refreshSoundButton();
   };
   const originalShowLobby=showRaceLobby;

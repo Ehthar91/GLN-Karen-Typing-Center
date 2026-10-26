@@ -42,3 +42,129 @@
 @media(max-width:720px){.race-v3-light{width:47px;height:47px}.race-v3-signal{padding:12px 16px;gap:10px}.race-v3-overtaking{top:95px;font-size:.72rem;padding:9px 13px}.race-v3-sound{font-size:.70rem}}
 @media(prefers-reduced-motion:reduce){.race-dashboard .race-track .race-car,.race-v3-countdown *{transition:none!important;animation:none!important;will-change:auto!important}.race-v3-overtaking,.race-v3-climbing,.race-v3-finish-flash,.race-v3-results-celebrating .race-podium,.race-v3-confetti-burst i{animation:none!important}.race-v3-confetti-burst{display:none}}
 @media print{.race-v3-sound,.race-v3-overtaking,.race-v3-finish-flash,.race-v3-countdown,.race-v3-confetti-burst{display:none!important}}
+
+/* v3.1 finish-screen polish: the photo-ready podium remains legible after the
+   one-time animation. Only the burst particles move; no endless confetti. */
+.race-results .confetti,
+.race-results .confetti::before,
+.race-results .confetti::after {display:none!important;}
+.race-results {
+  min-height:540px;
+  padding:26px clamp(14px,3.1vw,32px) 30px;
+  background:radial-gradient(ellipse at 50% 12%,rgba(40,125,217,.36),transparent 47%),
+    linear-gradient(160deg,#081a35 0%,#0c3769 57%,#081e40 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+}
+.race-results::before,.race-results::after {top:42px;font-size:clamp(1.8rem,3.8vw,2.7rem);opacity:.48;}
+.race-results .results-eyebrow {color:#9be5fb;font-size:.72rem;letter-spacing:.22em;}
+.race-results h2 {margin:7px 0 8px;font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.035em;line-height:1.08;}
+.race-results .race-v3-winner {
+  position:relative;z-index:3;display:table;max-width:95%;
+  padding:9px 20px;margin:0 auto 25px;border:1px solid rgba(255,222,138,.39);
+  border-radius:999px;background:rgba(255,211,102,.11);color:#ffdfa0;
+  font:850 clamp(.9rem,1.9vw,1.12rem)/1.35 Inter,system-ui,sans-serif;
+  overflow-wrap:anywhere;
+}
+.race-results .race-podium {
+  max-width:790px;gap:clamp(7px,1.3vw,14px);
+  align-items:flex-end;justify-content:center;
+}
+.race-results .podium-place {min-width:0;width:min(32%,250px);}
+.race-results .podium-place .podium-medal {font-size:1.8rem;line-height:1.35;margin-bottom:0;}
+.race-results .podium-place .podium-vehicle {
+  flex:0 0 auto;width:min(185px,95%);height:91px;
+  margin:0 auto -7px;background-position:center bottom!important;
+  animation:none;transform:none;
+}
+.race-results .podium-block {
+  width:100%;min-height:148px;padding:15px 12px 18px;
+  border:1px solid rgba(255,255,255,.25);border-radius:15px 15px 8px 8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.24),0 14px 26px rgba(0,0,0,.22);
+}
+.race-results .place-1 .podium-block {min-height:200px;}
+.race-results .place-2 .podium-block {min-height:158px;}
+.race-results .place-3 .podium-block {min-height:137px;}
+.race-results .podium-block::before {font-size:clamp(2.3rem,4vw,3.05rem);line-height:1.05;margin-bottom:1px;}
+.race-results .podium-block strong {
+  color:#fff;font:900 clamp(.90rem,1.55vw,1.17rem)/1.2 Inter,'Padauk',system-ui,sans-serif;
+  overflow-wrap:anywhere;text-wrap:balance;max-width:100%;
+}
+.race-results .podium-block small {color:rgba(255,255,255,.9);font:650 .72rem/1.25 Inter,system-ui,sans-serif;}
+.race-results .podium-block span {
+  margin-top:3px;padding:5px 9px;border-radius:7px;
+  background:rgba(5,20,42,.21);font:850 .76rem/1.2 Inter,system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;white-space:normal;
+}
+.race-results .place-1 .podium-block {background:linear-gradient(155deg,#eec33d,#b9780a);}
+.race-results .place-2 .podium-block {background:linear-gradient(155deg,#9cb2c7,#546f8d);}
+.race-results .place-3 .podium-block {background:linear-gradient(155deg,#c47b4b,#874329);}
+.race-results .other-racers {
+  background:rgba(4,20,45,.74);max-width:760px;
+  margin-top:20px;border-color:rgba(255,255,255,.27);
+}
+.race-results .other-racers #raceOtherList>div {align-items:center;gap:9px;}
+.race-results .results-actions,
+.race-results .race-result-toolbar {
+  position:relative;z-index:3;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;
+}
+.race-results .results-actions {margin-top:23px;}
+.race-results .race-result-toolbar {margin-top:11px;}
+.race-results .results-actions[hidden],
+.race-results .race-result-toolbar[hidden] {display:none!important;}
+.race-results .results-actions .button,
+.race-results .race-result-toolbar .button {
+  min-height:39px;min-width:145px;padding:9px 14px;border-radius:10px;
+  border:1px solid rgba(223,239,255,.58);
+  background:rgba(10,28,57,.82);color:#f6fbff;
+  font:750 .78rem Inter,system-ui,sans-serif;
+  box-shadow:0 5px 12px rgba(0,0,0,.12);
+}
+.race-results .results-actions .button.primary {
+  color:#102749;background:linear-gradient(160deg,#9be9ff,#57c7eb);
+  border-color:#a9f0ff;
+}
+.race-results .results-actions .button:hover,
+.race-results .race-result-toolbar .button:hover {filter:brightness(1.13);}
+.race-results .results-actions .button:focus-visible,
+.race-results .race-result-toolbar .button:focus-visible {outline:3px solid #ffdc77;outline-offset:3px;}
+/* The one-time burst floats behind, never across the results text. */
+.race-results .race-v3-confetti-burst {z-index:1;}
+.race-results .race-v3-confetti-burst i {width:6px;height:11px;}
+/* Let students see their own lanes and vehicles while the lights count down. */
+.race-v3-countdown {
+  background:radial-gradient(ellipse at center,rgba(8,27,52,.77),rgba(3,13,29,.88));
+  backdrop-filter:blur(1.8px);gap:12px;
+}
+.race-v3-signal {border-width:2px;box-shadow:0 14px 35px #0009,inset 0 2px 3px #ffffff25;}
+.race-v3-cue {max-width:88%;text-shadow:0 2px 10px #000;}
+@media(max-width:720px){
+  .race-results {min-height:0;padding:23px 12px 25px;}
+  .race-results h2 {font-size:clamp(1.85rem,7vw,2.5rem);}
+  .race-results .race-v3-winner {border-radius:14px;padding:8px 12px;margin-bottom:15px;}
+  .race-results .race-podium {gap:5px;}
+  .race-results .podium-place {width:33%;}
+  .race-results .podium-place .podium-vehicle {height:clamp(46px,11vw,70px);margin-bottom:-5px;}
+  .race-results .podium-block {padding:12px 5px 14px;gap:4px;}
+  .race-results .place-1 .podium-block {min-height:161px;}
+  .race-results .place-2 .podium-block {min-height:132px;}
+  .race-results .place-3 .podium-block {min-height:116px;}
+  .race-results .podium-block::before {font-size:2rem;}
+  .race-results .podium-block strong {font-size:.8rem;}
+  .race-results .podium-block small {font-size:.63rem;}
+  .race-results .podium-block span {padding:4px 5px;font-size:.61rem;}
+  .race-results .results-actions .button,
+  .race-results .race-result-toolbar .button {width:auto;min-width:min(45%,180px);font-size:.74rem;}
+}
+@media(max-width:420px){
+  .race-results .results-actions,.race-results .race-result-toolbar{gap:7px;}
+  .race-results .results-actions .button,.race-results .race-result-toolbar .button{width:100%;}
+  .race-results .other-racers #raceOtherList>div{grid-template-columns:24px minmax(0,1fr) auto;font-size:.68rem;}
+}
+@media(prefers-reduced-motion:reduce){
+  .race-results .podium-place,.race-results .podium-vehicle {animation:none!important;}
+}
+@media print{
+  body.print-race .race-v3-winner {border:0;background:transparent;color:#111;}
+  body.print-race .podium-block span {background:transparent;}
+}
