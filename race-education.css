@@ -1,0 +1,13 @@
+/* GLN Classroom Car Race v4.0 — unobtrusive educational scoring UI */
+#createRaceForm .race-v4-field {min-width:175px;flex:1 1 175px;display:flex;flex-direction:column;gap:6px;font-weight:700;}
+#createRaceForm #raceScoringMode {width:100%;min-height:38px;}
+#createRaceForm .race-v4-hint {margin:3px 0 11px;padding:9px 12px;border-radius:9px;border:1px solid rgba(106,185,238,.38);background:rgba(26,78,121,.17);font-size:.79rem;line-height:1.5;color:inherit;}
+.race-status .race-v4-mode {display:inline-flex;align-items:center;padding:6px 10px;background:rgba(71,154,241,.17);border:1px solid rgba(116,195,255,.4);border-radius:999px;font-size:.7rem;font-weight:800;color:#d7efff;white-space:nowrap;}
+.race-results .race-v4-results-detail {max-width:760px;margin:4px auto 18px;text-align:center;color:#cdeafd;font-size:clamp(.73rem,1.5vw,.91rem);line-height:1.5;}
+.race-results .podium-block .race-v4-points {margin-top:6px;padding:5px 8px;border:1px solid #ffffff39;border-radius:9px;color:#fff;font:750 clamp(.65rem,1.25vw,.8rem)/1.35 Inter,system-ui,sans-serif;text-align:center;}
+.race-results .other-racers #raceOtherList>div>span:last-child{white-space:normal;text-align:right;line-height:1.45;}
+.race-player-hud .race-v4-errors {white-space:nowrap;}
+@media (max-width:700px) {.race-status .race-v4-mode{order:3;padding:4px 7px;font-size:.62rem}.race-results .podium-block .race-v4-points{font-size:.59rem;padding:5px 3px}.race-results .race-v4-results-detail{margin-bottom:13px}.race-results .other-racers #raceOtherList>div>span:last-child{font-size:.65rem;}}
+@media print {.race-status .race-v4-mode{display:none}.race-results .race-v4-results-detail{color:#182a43}.race-results .podium-block .race-v4-points{color:inherit;border-color:#6c7989}}
+
+.race-lobby .race-v4-lobby-mode{margin:8px 0;padding:7px 11px;border:1px solid rgba(109,185,242,.45);border-radius:9px;background:rgba(19,83,135,.17);font-weight:800;font-size:.83rem;}
