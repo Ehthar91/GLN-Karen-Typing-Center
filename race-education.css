@@ -1,6 +1,40 @@
 /* GLN Classroom Car Race v4.0 — unobtrusive educational scoring UI */
-#createRaceForm .race-v4-field {min-width:175px;flex:1 1 175px;display:flex;flex-direction:column;gap:6px;font-weight:700;}
-#createRaceForm #raceScoringMode {width:100%;min-height:38px;}
+/* v4.0.1: Avoid select overflow in the teacher race setup panel. */
+#createRaceForm .race-tool-row.three {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-width: 0;
+}
+#createRaceForm .race-tool-row > label {
+  min-width: 0;
+  max-width: 100%;
+}
+body.theme-rgb #createRaceForm .race-tool-row > label {color: #d9e6f8;}
+#createRaceForm .race-v4-field {
+  grid-column: 1 / -1;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+}
+#createRaceForm .race-tool-row input,
+#createRaceForm .race-tool-row select {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+#createRaceForm #raceScoringMode {min-height: 40px;}
+/* Keep the inactive race-length setting hidden, even though race-option
+   label display styles otherwise override the browser's [hidden] rule. */
+#createRaceForm #raceWordCountField[hidden],
+#createRaceForm #raceTimeField[hidden] { display: none !important; }
+@media (max-width: 720px) {
+  #createRaceForm .race-tool-row.three {grid-template-columns: minmax(0, 1fr);}
+}
 #createRaceForm .race-v4-hint {margin:3px 0 11px;padding:9px 12px;border-radius:9px;border:1px solid rgba(106,185,238,.38);background:rgba(26,78,121,.17);font-size:.79rem;line-height:1.5;color:inherit;}
 .race-status .race-v4-mode {display:inline-flex;align-items:center;padding:6px 10px;background:rgba(71,154,241,.17);border:1px solid rgba(116,195,255,.4);border-radius:999px;font-size:.7rem;font-weight:800;color:#d7efff;white-space:nowrap;}
 .race-results .race-v4-results-detail {max-width:760px;margin:4px auto 18px;text-align:center;color:#cdeafd;font-size:clamp(.73rem,1.5vw,.91rem);line-height:1.5;}
