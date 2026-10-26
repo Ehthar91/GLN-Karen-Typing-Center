@@ -17,29 +17,37 @@ const carColors=['#ef3340','#1687e8','#19a974','#f5a623','#8b5cf6','#ec4899'];
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function raceCarGraphic(colorIndex=0){const color=carColors[colorIndex%carColors.length];return `<svg class="race-car-svg" viewBox="0 0 120 52" aria-hidden="true"><path class="car-shadow" d="M14 43h92"/><path fill="${color}" d="M8 34c2-7 8-10 18-11l15-13h35c10 0 18 5 25 13l12 3c4 1 6 4 6 9v6H8z"/><path fill="#dff4ff" d="M45 13h27c7 0 13 3 20 10H34z"/><path fill="rgba(255,255,255,.45)" d="M20 27h78l-7 5H17z"/><path fill="#fff" d="M103 27h9v5h-12z"/><circle cx="31" cy="40" r="9" fill="#17233b"/><circle cx="31" cy="40" r="4" fill="#cbd5e1"/><circle cx="92" cy="40" r="9" fill="#17233b"/><circle cx="92" cy="40" r="4" fill="#cbd5e1"/></svg>`}
 
+// Share one initialization promise: restoring a tab and opening the game can
+// otherwise try to initialize the default Firebase app at the same time.
+let raceFirebaseInitPromise=null;
 async function initRaceFirebase(){
-  if(currentUser) return currentUser;
-  try{
-    const cfg=await import('./firebase-config.js');
-    if(!cfg.firebaseConfig || !cfg.firebaseConfig.apiKey || String(cfg.firebaseConfig.apiKey).includes('PASTE_')){
-      throw new Error('Firebase is not configured yet. Add your Firebase settings to firebase-config.js.');
+  if(currentUser)return currentUser;
+  if(raceFirebaseInitPromise)return raceFirebaseInitPromise;
+  raceFirebaseInitPromise=(async()=>{
+    try{
+      const cfg=await import('./firebase-config.js');
+      if(!cfg.firebaseConfig||!cfg.firebaseConfig.apiKey||String(cfg.firebaseConfig.apiKey).includes('PASTE_')){
+        throw new Error('Firebase is not configured yet. Add your Firebase settings to firebase-config.js.');
+      }
+      const appMod=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
+      const authMod=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js');
+      const dbMod=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js');
+      const app=appMod.getApps().length?appMod.getApp():appMod.initializeApp(cfg.firebaseConfig);
+      auth=authMod.getAuth(app);
+      db=dbMod.getDatabase(app);
+      fb={...authMod,...dbMod};
+      if(typeof auth.authStateReady==='function')await auth.authStateReady();
+      if(auth.currentUser)currentUser=auth.currentUser;
+      else{const credential=await authMod.signInAnonymously(auth);currentUser=credential.user}
+      return currentUser;
+    }catch(error){
+      raceError(error.message||'Could not connect to the classroom race service.');
+      document.querySelector('#raceConnection').textContent='Offline';
+      throw error;
     }
-    const appMod=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
-    const authMod=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js');
-    const dbMod=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js');
-    const app=appMod.initializeApp(cfg.firebaseConfig);
-    auth=authMod.getAuth(app);
-    db=dbMod.getDatabase(app);
-    fb={...authMod,...dbMod};
-    if(typeof auth.authStateReady==='function')await auth.authStateReady();
-    if(auth.currentUser)currentUser=auth.currentUser;
-    else{const credential=await authMod.signInAnonymously(auth);currentUser=credential.user}
-    return currentUser;
-  }catch(error){
-    raceError(error.message || 'Could not connect to the classroom race service.');
-    document.querySelector('#raceConnection').textContent='Offline';
-    throw error;
-  }
+  })();
+  try{return await raceFirebaseInitPromise}
+  finally{raceFirebaseInitPromise=null}
 }
 
 function makeRoomCode(){
@@ -153,7 +161,8 @@ document.querySelector('#startRace').onclick=async()=>{
     const room=snap.val();
     if(room.hostUid!==currentUser.uid) throw new Error('Only the teacher who created this room can start it.');
     if(!Object.keys(room.players||{}).length) throw new Error('Wait for at least one student to join.');
-    await fb.update(roomRef(raceCode),{status:'racing',startedAt:Date.now()+3500});
+    const roundNow=Date.now();
+    await fb.update(roomRef(raceCode),{status:'racing',startedAt:roundNow+3500,roundId:String(roundNow),endedAt:0,pausedAt:0});
   }catch(error){document.querySelector('#lobbyHint').textContent=error.message}
 };
 
@@ -187,16 +196,34 @@ function beginLiveRace(data){
   if(raceMode==='host')document.querySelector('#racePrompt').textContent='Teacher view — watch the racers move live.';
 }
 function startRaceCountdown(startAt){clearInterval(raceCountdownTimer);const overlay=document.querySelector('#raceCountdown'),label=document.querySelector('#raceCountdownText');const update=()=>{const left=startAt-Date.now();if(left<=0){label.textContent='GO!';raceCountdownDone=true;setTimeout(()=>{overlay.hidden=true},550);clearInterval(raceCountdownTimer);return}raceCountdownDone=false;overlay.hidden=false;label.textContent=String(Math.max(1,Math.ceil(left/1000)))};update();raceCountdownTimer=setInterval(update,180)}
+// Deterministic standings shared by the track, leaderboard, podium, and CSV.
+// Finishing first wins a completed word race; timed ties use accuracy then WPM.
+function raceRankPlayers(players){
+  return [...(players||[])].sort((a,b)=>{
+    const finishA=Number(a.finishedAt)||0,finishB=Number(b.finishedAt)||0;
+    if(finishA&&finishB&&finishA!==finishB)return finishA-finishB;
+    if(Boolean(finishA)!==Boolean(finishB))return finishA?-1:1;
+    const progress=Number(b.progress||0)-Number(a.progress||0);
+    if(Math.abs(progress)>0.0001)return progress;
+    const accuracy=Number(b.accuracy??100)-Number(a.accuracy??100);
+    if(accuracy)return accuracy;
+    const speed=Number(b.wpm||0)-Number(a.wpm||0);
+    if(speed)return speed;
+    return (Number(a.joinedAt)||0)-(Number(b.joinedAt)||0)||String(a.id||'').localeCompare(String(b.id||''));
+  });
+}
 // Reuse the same lane and car nodes across Firebase updates. Rebuilding every car
 // was interrupting CSS motion and forcing large vehicle images to repaint.
 function renderRace(data){
-  const players=[...(data.players||[])].sort((a,b)=>b.progress-a.progress||((a.finishedAt||Infinity)-(b.finishedAt||Infinity))||a.joinedAt-b.joinedAt);
+  const players=raceRankPlayers(data.players);
+  // Lane positions never follow the leaderboard: cars only move horizontally.
+  const lanePlayers=[...players].sort((a,b)=>(Number(a.joinedAt)||0)-(Number(b.joinedAt)||0)||String(a.id||'').localeCompare(String(b.id||'')));
   const track=document.querySelector('#raceTrack');
   track.classList.toggle('density-medium',players.length>8&&players.length<=16);
   track.classList.toggle('density-compact',players.length>16);
   const existing=new Map(Array.from(track.querySelectorAll(':scope > .race-lane')).map(lane=>[lane.dataset.playerId,lane]));
   const keep=new Set();
-  players.forEach((player,index)=>{
+  lanePlayers.forEach((player,index)=>{
     const id=String(player.id||player.name||index),progress=Math.max(0,Math.min(100,Number(player.progress)||0));
     let lane=existing.get(id);
     if(!lane){
@@ -209,15 +236,15 @@ function renderRace(data){
     }
     keep.add(id);
     const name=lane.querySelector('.race-lane-name'),car=lane.querySelector('.race-car'),meter=lane.querySelector('.race-lane-progress');
-    const caption=`${index+1}. ${player.name||'Racer'}`;
+    const caption=`Lane ${index+1} · ${player.name||'Racer'}`;
     if(name.dataset.baseCaption!==caption){name.dataset.baseCaption=caption;name.textContent=caption;}
     lane.classList.toggle('is-your-lane',raceMode==='player'&&id===String(racePlayerId));
     lane.classList.toggle('is-finished',progress>=100);
     const nextLeft=`${(progress*.88).toFixed(2)}%`;
     if(car.style.left!==nextLeft)car.style.left=nextLeft;
     if(meter)meter.style.width=`${progress.toFixed(2)}%`;
-    // Move only when rank changes; never discard the car itself.
-    if(track.children[index]!==lane)track.insertBefore(lane,track.children[index]||null);
+    // Append only on initial join; ranking never moves an existing lane.
+    if(!lane.isConnected)track.appendChild(lane);
   });
   existing.forEach((lane,id)=>{if(!keep.has(id))lane.remove()});
   if(racePlayerId){
@@ -327,9 +354,9 @@ function renderRaceKeyboard(){
   const line=document.createElement('div'),space=document.createElement('button');line.className='key-row';space.type='button';space.className='key wide space';space.textContent='Space';if(expected?.key==='Space')space.classList.add('expected');space.onclick=()=>acceptRaceInput(' ');line.appendChild(space);
   const enter=document.createElement('button');enter.type='button';enter.className='key wide';enter.textContent='Enter';line.appendChild(enter);box.appendChild(line)
 }
-function raceBackspace(){if(raceMode!=='player'||!raceTyped)return;const next=previousTextBoundary(raceTyped,raceTyped.length),removed=raceTyped.length-next;raceTyped=raceTyped.slice(0,next);raceCorrect=Math.max(0,raceCorrect-removed);renderRacePassage();renderRaceKeyboard();scheduleRaceProgress()}
+function raceBackspace(){if(raceMode!=='player'||!raceTyped||raceRoomData?.status!=='racing'||!raceCountdownDone||Date.now()<raceStartedAt)return;const next=previousTextBoundary(raceTyped,raceTyped.length),removed=raceTyped.length-next;raceTyped=raceTyped.slice(0,next);raceCorrect=Math.max(0,raceCorrect-removed);renderRacePassage();renderRaceKeyboard();scheduleRaceProgress()}
 function acceptRaceInput(value){
-  if(raceMode!=='player'||raceLive.hidden||!raceCountdownDone||raceTyped.length>=racePassageText.length)return;
+  if(raceMode!=='player'||raceLive.hidden||!raceCountdownDone||raceRoomData?.status!=='racing'||Date.now()<raceStartedAt||raceTyped.length>=racePassageText.length)return;
   const remaining=racePassageText.slice(raceTyped.length);
   if(remaining.startsWith(value)){
     raceTyped+=value;raceCorrect+=value.length;document.querySelector('#racePrompt').textContent='Keep going!';

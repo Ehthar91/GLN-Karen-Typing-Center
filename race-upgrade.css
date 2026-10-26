@@ -1,0 +1,40 @@
+/* Car Race: stable fixed lanes, clear separate standings, projector-friendly layout. */
+.race-dashboard{display:block;min-width:0;}
+.race-dashboard .race-track{min-width:0;}
+.race-dashboard .race-leaderboard{display:none;}
+.race-live.teacher-view .race-dashboard{display:grid;grid-template-columns:minmax(0,1fr) minmax(215px,265px);gap:10px;background:#101e35;align-items:stretch;padding:10px;}
+.race-live.teacher-view .race-dashboard .race-track{border-radius:10px;min-height:400px;}
+.race-live.teacher-view .race-dashboard .race-leaderboard{display:flex;flex-direction:column;min-width:0;min-height:0;background:#f7faff;color:#172c49;border-radius:10px;overflow:hidden;box-shadow:inset 0 0 0 1px #dce5f0;}
+.race-leaderboard-title{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 12px;background:#eef5ff;border-bottom:1px solid #d6e3f2;}
+.race-leaderboard-title div{display:grid;gap:3px;}
+.race-leaderboard-title small{font-size:.58rem;letter-spacing:.1em;font-weight:900;color:#5981a4;}
+.race-leaderboard-title strong{font-size:.94rem;color:#173868;}
+.race-leaderboard-title>span{white-space:nowrap;font-size:.63rem;color:#4b6582;font-weight:800;}
+.race-leaderboard-list{display:flex;flex-direction:column;gap:5px;overflow-y:auto;padding:8px;min-height:0;max-height:650px;}
+.race-leaderboard-row{display:flex;align-items:center;gap:8px;min-width:0;padding:8px 7px;border:1px solid #e0e9f3;border-radius:8px;background:#fff;}
+.race-leaderboard-row.is-leader{background:#fff9dd;border-color:#eed17b;}
+.race-standing-place{display:grid;place-items:center;flex:0 0 24px;height:24px;border-radius:7px;background:#e9f1fa;color:#204678;font-size:.77rem;}
+.race-leaderboard-row.is-leader .race-standing-place{background:#f8c946;color:#4c3500;}
+.race-standing-main{display:grid;gap:5px;flex:1;min-width:0;}
+.race-standing-name{font-size:.72rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.race-standing-meter{height:5px;border-radius:5px;background:#e6ebf3;overflow:hidden;}
+.race-standing-meter i{display:block;height:100%;width:0%;border-radius:5px;background:linear-gradient(90deg,#208fd2,#22b680);transition:width .55s ease;}
+.race-standing-stats{min-width:64px;text-align:right;white-space:nowrap;font-size:.60rem;font-weight:800;color:#405f79;}
+.race-player-hud{display:flex;justify-content:space-around;gap:6px;flex-wrap:wrap;padding:10px 12px;background:#122c4f;color:#f5faff;font-size:.78rem;font-weight:650;}
+.race-player-hud strong{font-size:.93rem;font-variant-numeric:tabular-nums;}
+.race-player-hud[hidden],.race-leaderboard[hidden]{display:none!important;}
+.race-host-controls button:disabled{opacity:.5;cursor:not-allowed;}
+.race-track .race-lane-name{max-width:65%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.race-live.teacher-view .race-track.density-compact .race-lane-name{max-width:68%;}
+.race-stage:fullscreen .race-live.teacher-view .race-dashboard,
+.race-stage.is-fullscreen .race-live.teacher-view .race-dashboard{flex:1;min-height:0;}
+.race-stage:fullscreen .race-live.teacher-view .race-leaderboard-list,
+.race-stage.is-fullscreen .race-live.teacher-view .race-leaderboard-list{flex:1;max-height:none;}
+.race-stage:fullscreen .race-live.teacher-view .race-dashboard .race-track:not(.density-compact),
+.race-stage.is-fullscreen .race-live.teacher-view .race-dashboard .race-track:not(.density-compact){display:flex;flex-direction:column;min-height:0;}
+.race-stage:fullscreen .race-live.teacher-view .race-dashboard .race-track:not(.density-compact) .race-lane,
+.race-stage.is-fullscreen .race-live.teacher-view .race-dashboard .race-track:not(.density-compact) .race-lane{flex:1;min-height:42px;height:auto;}
+.race-live.show-results>.race-dashboard,.race-live.show-results>.race-player-hud{display:none!important;}
+@media(max-width:850px){.race-live.teacher-view .race-dashboard{grid-template-columns:1fr;}.race-live.teacher-view .race-dashboard .race-track{min-height:300px;}.race-leaderboard-list{max-height:280px;}}
+@media(max-width:580px){.race-standing-stats{min-width:58px;}.race-player-hud{font-size:.68rem;}.race-player-hud strong{font-size:.80rem;}}
+@media(prefers-reduced-motion:reduce){.race-standing-meter i{transition:none}}
