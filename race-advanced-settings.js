@@ -7,8 +7,8 @@
   if (typeof document!=='undefined') api.install();
 })(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
-  const defaults=Object.freeze({reversePerError:3,reverseCap:15,accuracyTarget:90,reverseFeedback:true});
-  const permitted={reversePerError:[1,2,3,5],reverseCap:[10,15,25],accuracyTarget:[80,90,95,100]};
+  const defaults=Object.freeze({reversePerError:3,accuracyTarget:90,reverseFeedback:true});
+  const permitted={reversePerError:[1,2,3,5],accuracyTarget:[80,90,95,100]};
   function read(room){
     room=room||{};
     const result={};
@@ -19,8 +19,10 @@
     result.reverseFeedback=room.reverseFeedback!==false;
     return result;
   }
-  const limitDebt=(value,room)=>Math.min(read(room).reverseCap,Math.max(0,Number(value)||0));
-  const addError=(value,room)=>Math.min(read(room).reverseCap,limitDebt(value,room)+read(room).reversePerError);
+  // No arbitrary debt cap: only the physical start line (0%) limits reversing.
+  const limitDebt=value=>Math.max(0,Number.isFinite(Number(value))?Number(value):0);
+  const limitToTrack=(debt,typedProgress)=>Math.min(limitDebt(debt),Math.max(0,Math.min(100,Number(typedProgress)||0)));
+  const addError=(value,room)=>limitDebt(value)+read(room).reversePerError;
   const belowTarget=(player,room)=>Boolean((Number(player?.typedCount)||0)>0 && Number(player?.accuracy??100)<read(room).accuracyTarget);
   const $=id=>document.getElementById(id);
   function install(){
@@ -30,17 +32,16 @@
     panel.innerHTML='<div class="race-v42-heading"><strong>Accuracy Challenge options</strong><small>Shared with every racer</small></div>'+
       '<div class="race-v42-grid">'+
       '<label>Reverse per wrong key<select id="raceReverseStep"><option value="1">Easy · 1%</option><option value="2">Normal · 2%</option><option value="3" selected>Standard · 3%</option><option value="5">Hard · 5%</option></select></label>'+
-      '<label>Maximum reverse debt<select id="raceReverseCap"><option value="10">10%</option><option value="15" selected>15%</option><option value="25">25%</option></select></label>'+
       '<label>Accuracy target<select id="raceAccuracyTarget"><option value="80">80%</option><option value="90" selected>90%</option><option value="95">95%</option><option value="100">100%</option></select></label>'+
       '</div><label class="race-v42-checkbox"><input id="raceReverseFeedback" type="checkbox" checked> Show brake and reverse flash effects</label>'+
-      '<p class="race-v42-note">Accuracy is a learning goal, not a minimum to finish. Turning effects off does not remove the reverse penalty.</p>';
+      '<p class="race-v42-note"><strong>No reverse cap:</strong> every wrong key can push the car backward until it reaches START (0%). There is no extra hidden penalty past START. Accuracy targets are learning goals, not finish requirements; disabling effects does not disable reversing.</p>';
     const hint=$('raceScoringHint');
     (hint||scoring.closest('label')).after(panel);
     const updateVisibility=()=>{panel.hidden=scoring.value!=='accuracy'};
     scoring.addEventListener('change',updateVisibility);updateVisibility();
     const previousSettings=raceSettings;
     raceSettings=()=>({ ...previousSettings(),
-      ...read({reversePerError:$('raceReverseStep').value,reverseCap:$('raceReverseCap').value,
+      ...read({reversePerError:$('raceReverseStep').value,
         accuracyTarget:$('raceAccuracyTarget').value,reverseFeedback:$('raceReverseFeedback').checked}) });
 
     const lobby=document.createElement('p');lobby.id='raceV42Lobby';lobby.className='race-v42-lobby';
@@ -54,7 +55,7 @@
       if(!room||room.scoringMode!=='accuracy'){lobby.hidden=true;return}
       const options=read(room);
       lobby.hidden=false;
-      lobby.textContent=`Accuracy settings · −${options.reversePerError}% per mistake · ${options.reverseCap}% maximum · ${options.accuracyTarget}% goal${options.reverseFeedback?'':' · effects off'}`;
+      lobby.textContent=`Accuracy settings · −${options.reversePerError}% per mistake · back to START (no cap) · ${options.accuracyTarget}% goal${options.reverseFeedback?'':' · effects off'}`;
     }
 
     const liveSummary=document.createElement('div');liveSummary.id='raceV42TeacherSettings';
@@ -68,7 +69,7 @@
       const enabled=data.scoringMode==='accuracy';
       const options=read(data),host=raceMode==='host';
       liveSummary.hidden=!enabled||!host;
-      if(!liveSummary.hidden)liveSummary.textContent=`Goal ${options.accuracyTarget}% · Reverse −${options.reversePerError}% per mistake (max ${options.reverseCap}%)`;
+      if(!liveSummary.hidden)liveSummary.textContent=`Goal ${options.accuracyTarget}% · Reverse −${options.reversePerError}% per mistake · no cap (START at 0%)`;
       const player=(data.players||[]).find(p=>p.id===racePlayerId);
       goal.hidden=!enabled||host||!player;
       if(!goal.hidden){
@@ -92,5 +93,5 @@
       }
     };
   }
-  return {defaults,read,limitDebt,addError,belowTarget,install};
+  return {defaults,read,limitDebt,limitToTrack,addError,belowTarget,install};
 });

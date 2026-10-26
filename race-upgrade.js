@@ -21,10 +21,13 @@
   let raceReverseDebt=0;
   let observedRound='', observedProgress=new Map();
   const reverseFlashTimers=new WeakMap();
-  // v4.2: resolve limits from Firebase room settings. Old rooms use 3% / 15%.
+  // The only reverse boundary is the START line. Do not bank invisible
+  // penalties after the car reaches 0%; the next correct key can move forward.
   const advanced=room=>window.GLNRaceAdvancedSettings?.read(room) ||
-    {reversePerError:3,reverseCap:15,accuracyTarget:90,reverseFeedback:true};
-  const clampDebt=(value,room=raceRoomData)=>Math.min(advanced(room).reverseCap,Math.max(0,Number(value)||0));
+    {reversePerError:3,accuracyTarget:90,reverseFeedback:true};
+  const availableDistance=()=>racePassageText?.length?Math.max(0,Math.min(100,raceTyped.length/racePassageText.length*100)):0;
+  const clampDebt=value=>window.GLNRaceAdvancedSettings?.limitToTrack(value,availableDistance()) ??
+    Math.min(Math.max(0,Number(value)||0),availableDistance());
   const reverseEnabled=room=>room?.scoringMode==='accuracy';
   const passageUnits=()=>Math.max(1,graphemes(racePassageText));
   function flashReverseLane(uid){
@@ -216,8 +219,8 @@
     if(reverseEnabled(raceRoomData)){
       if(raceErrors>errors){
         // A wrong key reverses the car without modifying correctly typed text.
-        raceReverseDebt=window.GLNRaceAdvancedSettings?.addError(raceReverseDebt,raceRoomData)
-          ?? Math.min(15,raceReverseDebt+3);
+        raceReverseDebt=clampDebt(window.GLNRaceAdvancedSettings?.addError(raceReverseDebt,raceRoomData)
+          ?? raceReverseDebt+advanced(raceRoomData).reversePerError);
         raceEl('racePrompt').textContent=advanced(raceRoomData).reverseFeedback?'Wrong key — car reversing!':'Wrong key — progress reduced!';
         flashReverseLane(racePlayerId);
         // Publish the reverse immediately; a fast next key must not swallow it
@@ -242,7 +245,10 @@
   const originalBackspace=raceBackspace;
   raceBackspace=()=>{
     if(!raceTyped||!canTypeNow())return;
-    originalBackspace();saveTyping();
+    originalBackspace();
+    // Backspacing may shrink the available track distance.
+    raceReverseDebt=clampDebt(raceReverseDebt);
+    saveTyping();
   };
 
   // Single authoritative progress write, using effective ACTIVE seconds. A
@@ -256,7 +262,8 @@
     const wpm=Math.round(characters/5/minutes),accuracy=Math.round(characters/Math.max(1,characters+raceErrors)*100);
     const rawProgress=racePassageText.length?Math.min(100,raceTyped.length/racePassageText.length*100):0;
     const finished=racePassageText.length>0&&raceTyped.length>=racePassageText.length;
-    const penalty=reverseEnabled(room)?clampDebt(raceReverseDebt,room):0;
+    const penalty=reverseEnabled(room)?clampDebt(raceReverseDebt):0;
+    raceReverseDebt=penalty;
     // At passage completion, the car crosses the finish line; until then the
     // position really is reduced and drives the shared live standings.
     const progress=finished?100:Math.max(0,rawProgress-penalty);
