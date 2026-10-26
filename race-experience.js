@@ -205,6 +205,52 @@
     finishTimer=setTimeout(()=>confettiBurst.replaceChildren(),2700);
     if(roundHasStarted)playCue('finish');
   }
+  // v3.2: enrich the existing podium elements without changing vehicle assets,
+  // race ranking or the multiplayer result data. Player names are always text.
+  const originalMakePodiumPlace=makePodiumPlace;
+  makePodiumPlace=(player,place)=>{
+    const card=originalMakePodiumPlace(player,place);
+    const car=card.querySelector('.podium-vehicle');
+    const medal=card.querySelector('.podium-medal');
+    const block=card.querySelector('.podium-block');
+    const oldStats=block?.querySelector('span');
+    if(!car||!medal||!block||!oldStats)return card;
+
+    const carStage=document.createElement('div');
+    carStage.className='race-v32-car-stage';
+    car.before(carStage);
+    carStage.append(car);
+    const plate=document.createElement('div');
+    plate.className='race-v32-car-plate';
+    const badge=document.createElement('b');
+    badge.textContent=String(place).padStart(2,'0');
+    const plateName=document.createElement('span');
+    plateName.textContent=player.name||'Racer';
+    plate.title=player.name||'Racer';
+    plate.append(badge,plateName);
+    carStage.append(plate);
+
+    medal.classList.add('race-v32-medal');
+    medal.setAttribute('aria-hidden','true');
+    block.prepend(medal);
+    const metricGroup=document.createElement('div');
+    metricGroup.className='race-v32-metrics';
+    for(const [number,label] of [
+      [Math.round(Number(player.wpm)||0),'WPM'],
+      [Math.round(Number(player.accuracy??100)||0)+'%','Accuracy']
+    ]){
+      const metric=document.createElement('div');
+      metric.className='race-v32-metric';
+      const value=document.createElement('b');
+      value.textContent=String(number);
+      const caption=document.createElement('small');
+      caption.textContent=label;
+      metric.append(value,caption);
+      metricGroup.append(metric);
+    }
+    oldStats.replaceWith(metricGroup);
+    return card;
+  };
   // Avoid rebuilding the whole podium on every Firebase snapshot when values
   // have not changed; this also prevents restarting its entrance animation.
   const originalRenderResults=renderRaceResults;
@@ -213,6 +259,8 @@
     if(!raceResults.hidden&&signature===lastResultSignature)return;
     lastResultSignature=signature;
     originalRenderResults(players);
+    const othersHeading=el('raceOthers')?.querySelector('h3');
+    if(othersHeading)othersHeading.textContent=players.length===4?'Other Racer':'Other Racers';
     // Print and CSV export are teacher actions, not student controls.
     const teacherTools=el('raceResults').querySelector('.race-result-toolbar');
     if(teacherTools)teacherTools.hidden=raceMode!=='host';

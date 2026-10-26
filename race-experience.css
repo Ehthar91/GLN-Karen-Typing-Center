@@ -168,3 +168,88 @@
   body.print-race .race-v3-winner {border:0;background:transparent;color:#111;}
   body.print-race .podium-block span {background:transparent;}
 }
+
+/* v3.2 podium polish: readable racing numbers and identities, anchored medals,
+   generous projector-ready WPM/accuracy, and a subtle gold winner halo. */
+.race-results .podium-place { isolation:isolate; }
+.race-results .race-v32-car-stage {
+  position:relative;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-end;gap:0;width:100%;z-index:1;
+}
+.race-results .race-v32-car-stage .podium-vehicle {
+  position:relative;z-index:1;margin-bottom:-3px;
+}
+.race-results .place-1 .race-v32-car-stage::before {
+  content:'';position:absolute;pointer-events:none;z-index:0;
+  left:10%;right:10%;top:2%;height:88px;border-radius:50%;
+  background:radial-gradient(ellipse,#ffe5a04a 0%,#ffc83422 35%,transparent 73%);
+  filter:blur(8px);
+}
+.race-results .race-v32-car-plate {
+  position:relative;z-index:2;max-width:94%;min-width:0;
+  display:flex;align-items:center;gap:7px;padding:5px 10px;
+  margin:0 auto 8px;border:1px solid #b2d7f25a;border-radius:8px;
+  background:linear-gradient(145deg,#172f50,#071a31);
+  color:#fff;font:800 clamp(.69rem,1.25vw,.87rem)/1.2 Inter,'Padauk',system-ui,sans-serif;
+  box-shadow:0 3px 10px #0006;
+}
+.race-results .race-v32-car-plate b {
+  flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;
+  width:25px;min-height:23px;border-radius:5px;background:#d2e9ff;color:#0b2847;
+  font:950 .7rem/1 Inter,system-ui,sans-serif;
+}
+.race-results .race-v32-car-plate span {
+  min-width:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:2;overflow-wrap:anywhere;text-align:center;
+}
+.race-results .podium-block {position:relative;gap:5px;padding-top:22px;}
+.race-results .podium-block .podium-medal.race-v32-medal {
+  position:absolute;top:-17px;right:12px;z-index:3;
+  display:grid;place-items:center;width:35px;height:35px;
+  margin:0;border-radius:50%;border:1px solid #ffffff70;
+  background:#0b2246;box-shadow:0 4px 10px #0007;
+  font-size:1.5rem;line-height:1;
+}
+.race-results .place-1 .podium-block {
+  box-shadow:inset 0 2px 0 #fff6,0 0 24px #f1bb3e42,0 14px 26px #0004;
+}
+.race-results .podium-block .race-v32-metrics {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  width:100%;max-width:222px;gap:7px;margin-top:8px;
+}
+.race-results .podium-block .race-v32-metric {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;min-width:0;padding:8px 5px 7px;
+  border:1px solid #ffffff32;border-radius:9px;background:#08224445;
+  font-variant-numeric:tabular-nums;
+}
+.race-results .podium-block .race-v32-metric b {
+  color:#fff;font:950 clamp(1.03rem,1.85vw,1.43rem)/1 Inter,system-ui,sans-serif;
+}
+.race-results .podium-block .race-v32-metric small {
+  color:#f8fbff;font:750 clamp(.62rem,1.05vw,.74rem)/1.12 Inter,system-ui,sans-serif;
+}
+.race-results .other-racers #raceOtherList>div {
+  padding:10px 8px;border-radius:8px;font-size:clamp(.78rem,1.2vw,.92rem);
+}
+.race-results .other-racers #raceOtherList>div+div {border-top:1px solid #ffffff20;}
+.race-results .other-racers h3 {font-size:1rem;}
+@media(max-width:720px){
+  .race-results .race-v32-car-plate {gap:4px;padding:4px 5px;margin-bottom:6px;font-size:.66rem;}
+  .race-results .race-v32-car-plate b {width:19px;min-height:19px;font-size:.61rem;}
+  .race-results .podium-block {padding:19px 5px 10px;}
+  .race-results .podium-block .podium-medal.race-v32-medal {
+    top:-12px;right:5px;width:26px;height:26px;font-size:1.09rem;
+  }
+  .race-results .podium-block .race-v32-metrics {gap:3px;margin-top:5px;}
+  .race-results .podium-block .race-v32-metric {padding:7px 2px 6px;border-radius:6px;}
+  .race-results .podium-block .race-v32-metric b {font-size:clamp(.77rem,3vw,1.04rem);}
+  .race-results .podium-block .race-v32-metric small {font-size:clamp(.5rem,1.75vw,.63rem);}
+  .race-results .podium-block strong {font-size:clamp(.74rem,2.45vw,.96rem);}
+}
+@media print{
+  body.print-race .race-v32-car-plate {color:#111;background:#fff;border:1px solid #777;}
+  body.print-race .race-v32-car-plate b {color:#111;background:#eee;}
+  body.print-race .race-v32-metric,body.print-race .race-v32-medal {background:transparent!important;box-shadow:none!important;}
+  body.print-race .race-v32-metric b,body.print-race .race-v32-metric small {color:#111!important;}
+}
