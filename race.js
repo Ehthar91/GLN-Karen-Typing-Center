@@ -19,6 +19,23 @@ function raceCarGraphic(colorIndex=0){const color=carColors[colorIndex%carColors
 
 // Share one initialization promise: restoring a tab and opening the game can
 // otherwise try to initialize the default Firebase app at the same time.
+// Firebase Realtime Database exposes an estimated offset from device time to
+// server time. Use it for countdowns AND input/scoring gates, not visuals alone.
+// Falls back to the local clock when offline or before the offset is available.
+let raceServerClockOffset=0, raceServerClockListener=null;
+function raceNow(){return Date.now()+raceServerClockOffset}
+function observeRaceServerClock(){
+  if(!fb||!db||raceServerClockListener)return;
+  try{raceServerClockListener=fb.onValue(fb.ref(db,'.info/serverTimeOffset'),snapshot=>{
+    const offset=Number(snapshot.val());if(Number.isFinite(offset))raceServerClockOffset=offset;
+  },()=>{raceServerClockListener=null})}catch(error){console.warn('Race clock using device time',error)}
+}
+async function syncRaceServerClock(){
+  if(!fb||!db)return;
+  try{const snap=await fb.get(fb.ref(db,'.info/serverTimeOffset'));
+    const offset=Number(snap.val());if(Number.isFinite(offset))raceServerClockOffset=offset;
+  }catch{ /* clock estimate is best effort; keep local fallback */ }
+}
 let raceFirebaseInitPromise=null;
 async function initRaceFirebase(){
   if(currentUser)return currentUser;
@@ -36,6 +53,7 @@ async function initRaceFirebase(){
       auth=authMod.getAuth(app);
       db=dbMod.getDatabase(app);
       fb={...authMod,...dbMod};
+      observeRaceServerClock();
       if(typeof auth.authStateReady==='function')await auth.authStateReady();
       if(auth.currentUser)currentUser=auth.currentUser;
       else{const credential=await authMod.signInAnonymously(auth);currentUser=credential.user}
@@ -92,7 +110,7 @@ document.querySelector('#createRaceForm').onsubmit=async e=>{
       const ref=roomRef(code);
       const existing=await fb.get(ref);
       if(existing.exists()) continue;
-      const now=Date.now();
+      const now=raceNow();
       await fb.set(ref,{
         hostUid:currentUser.uid,
         passage:storedRacePassage(passage,chosenLanguage),
@@ -121,7 +139,7 @@ document.querySelector('#joinRaceForm').onsubmit=async e=>{
     const snap=await fb.get(roomRef(code));
     if(!snap.exists()) throw new Error('Room not found. Check the code.');
     const room=snap.val();
-    if(room.expiresAt && room.expiresAt<Date.now()) throw new Error('This room has expired. Ask the teacher to create a new race.');
+    if(room.expiresAt && room.expiresAt<raceNow()) throw new Error('This room has expired. Ask the teacher to create a new race.');
     if(room.status!=='waiting') throw new Error('This race has already started.');
     const players=Object.values(room.players||{});
     if(players.length>=30) throw new Error('This room is full.');
@@ -129,7 +147,7 @@ document.querySelector('#joinRaceForm').onsubmit=async e=>{
     raceCode=code;racePlayerId=currentUser.uid;racePlayerName=name;raceMode='player';raceRoomLanguage=gameLanguageAuto.normalize(room.keyboardLanguage||racePassageInfo(room.passage).language);raceLanguage=raceRoomLanguage;raceKeyboardMode=room.keyboardMode==='auto'?'auto':raceRoomLanguage;
     await fb.set(playerRef(code,currentUser.uid),{
       id:currentUser.uid,name,progress:0,wpm:0,accuracy:100,
-      color:players.length%carColors.length,joinedAt:Date.now(),finishedAt:0
+      color:players.length%carColors.length,joinedAt:raceNow(),finishedAt:0
     });
     showRaceLobby({players:[...players,{name}]});watchRace();
   }catch(error){raceError(error.message)}
@@ -161,8 +179,9 @@ document.querySelector('#startRace').onclick=async()=>{
     const room=snap.val();
     if(room.hostUid!==currentUser.uid) throw new Error('Only the teacher who created this room can start it.');
     if(!Object.keys(room.players||{}).length) throw new Error('Wait for at least one student to join.');
-    const roundNow=Date.now();
-    await fb.update(roomRef(raceCode),{status:'racing',startedAt:roundNow+3500,roundId:String(roundNow),endedAt:0,pausedAt:0});
+    await syncRaceServerClock();
+    const roundNow=raceNow();
+    await fb.update(roomRef(raceCode),{status:'racing',startedAt:roundNow+4500,roundId:String(roundNow),endedAt:0,pausedAt:0});
   }catch(error){document.querySelector('#lobbyHint').textContent=error.message}
 };
 
@@ -186,7 +205,7 @@ function watchRace(){
 }
 function beginLiveRace(data){
   const passageInfo=racePassageInfo(data.passage);
-  if(!passageInfo.text.trim())throw new Error('This race has no practice words. Ask the host to start a new race with a word list.');raceLobby.hidden=true;raceLive.hidden=false;raceLive.classList.remove('show-results');raceResults.hidden=true;raceRoomLanguage=gameLanguageAuto.normalize(data.keyboardLanguage||passageInfo.language);raceLanguage=raceRoomLanguage;raceKeyboardMode=data.keyboardMode==='auto'?'auto':raceRoomLanguage;raceLanguageHints=Array.isArray(data.languageHints)?data.languageHints:[];racePassageText=passageInfo.text;raceTyped='';raceStartedAt=data.startedAt||Date.now();raceCorrect=0;raceErrors=0;
+  if(!passageInfo.text.trim())throw new Error('This race has no practice words. Ask the host to start a new race with a word list.');raceLobby.hidden=true;raceLive.hidden=false;raceLive.classList.remove('show-results');raceResults.hidden=true;raceRoomLanguage=gameLanguageAuto.normalize(data.keyboardLanguage||passageInfo.language);raceLanguage=raceRoomLanguage;raceKeyboardMode=data.keyboardMode==='auto'?'auto':raceRoomLanguage;raceLanguageHints=Array.isArray(data.languageHints)?data.languageHints:[];racePassageText=passageInfo.text;raceTyped='';raceStartedAt=data.startedAt||raceNow();raceCorrect=0;raceErrors=0;
   raceDifficultyMode=String(data.difficulty||'Medium').toLowerCase();raceKeyboardShifted=false;
   raceLive.classList.remove('difficulty-easy','difficulty-medium','difficulty-hard');raceLive.classList.add(`difficulty-${raceDifficultyMode}`);
   raceLive.classList.toggle('teacher-view',raceMode==='host');document.querySelector('#raceFullscreen').hidden=raceMode!=='host';
@@ -195,7 +214,7 @@ function beginLiveRace(data){
   startRaceCountdown(raceStartedAt);
   if(raceMode==='host')document.querySelector('#racePrompt').textContent='Teacher view — watch the racers move live.';
 }
-function startRaceCountdown(startAt){clearInterval(raceCountdownTimer);const overlay=document.querySelector('#raceCountdown'),label=document.querySelector('#raceCountdownText');const update=()=>{const left=startAt-Date.now();if(left<=0){label.textContent='GO!';raceCountdownDone=true;setTimeout(()=>{overlay.hidden=true},550);clearInterval(raceCountdownTimer);return}raceCountdownDone=false;overlay.hidden=false;label.textContent=String(Math.max(1,Math.ceil(left/1000)))};update();raceCountdownTimer=setInterval(update,180)}
+function startRaceCountdown(startAt){clearInterval(raceCountdownTimer);const overlay=document.querySelector('#raceCountdown'),label=document.querySelector('#raceCountdownText');const update=()=>{const left=startAt-raceNow();if(left<=0){label.textContent='GO!';raceCountdownDone=true;setTimeout(()=>{overlay.hidden=true},550);clearInterval(raceCountdownTimer);return}raceCountdownDone=false;overlay.hidden=false;label.textContent=String(Math.max(1,Math.ceil(left/1000)))};update();raceCountdownTimer=setInterval(update,180)}
 // Deterministic standings shared by the track, leaderboard, podium, and CSV.
 // Finishing first wins a completed word race; timed ties use accuracy then WPM.
 function raceRankPlayers(players){
@@ -256,7 +275,7 @@ function renderRace(data){
     document.querySelector('#raceStatusText').textContent='Race finished!';
     document.querySelector('#racePrompt').textContent=players[0]?`Winner: ${players[0].name}`:'Race finished';
     renderRaceResults(players);
-    if(raceMode==='host'&&!raceFinishing&&data.status!=='finished'){raceFinishing=true;fb.update(roomRef(raceCode),{status:'finished'}).catch(()=>{raceFinishing=false})}
+    if(raceMode==='host'&&!raceFinishing&&data.status!=='finished'){raceFinishing=true;fb.update(roomRef(raceCode),{status:'finished',endedAt:raceNow()}).catch(()=>{raceFinishing=false})}
   }else document.querySelector('#raceStatusText').textContent='Race in progress';
 }
 function makePodiumPlace(player,place){const card=document.createElement('article');card.className=`podium-place place-${place}`;const medal=document.createElement('span');medal.className='podium-medal';medal.textContent=place===1?'🥇':place===2?'🥈':'🥉';const car=document.createElement('div');car.className='podium-car';car.innerHTML=raceCarGraphic(player.color||0);const name=document.createElement('strong');name.textContent=player.name;const stats=document.createElement('span');stats.textContent=`${Math.round(player.wpm||0)} WPM · ${Math.round(player.accuracy??100)}%`;const block=document.createElement('div');block.className='podium-block';block.dataset.place=place;block.append(name,stats);card.append(medal,car,block);return card}
@@ -354,9 +373,9 @@ function renderRaceKeyboard(){
   const line=document.createElement('div'),space=document.createElement('button');line.className='key-row';space.type='button';space.className='key wide space';space.textContent='Space';if(expected?.key==='Space')space.classList.add('expected');space.onclick=()=>acceptRaceInput(' ');line.appendChild(space);
   const enter=document.createElement('button');enter.type='button';enter.className='key wide';enter.textContent='Enter';line.appendChild(enter);box.appendChild(line)
 }
-function raceBackspace(){if(raceMode!=='player'||!raceTyped||raceRoomData?.status!=='racing'||!raceCountdownDone||Date.now()<raceStartedAt)return;const next=previousTextBoundary(raceTyped,raceTyped.length),removed=raceTyped.length-next;raceTyped=raceTyped.slice(0,next);raceCorrect=Math.max(0,raceCorrect-removed);renderRacePassage();renderRaceKeyboard();scheduleRaceProgress()}
+function raceBackspace(){if(raceMode!=='player'||!raceTyped||raceRoomData?.status!=='racing'||!raceCountdownDone||raceNow()<raceStartedAt)return;const next=previousTextBoundary(raceTyped,raceTyped.length),removed=raceTyped.length-next;raceTyped=raceTyped.slice(0,next);raceCorrect=Math.max(0,raceCorrect-removed);renderRacePassage();renderRaceKeyboard();scheduleRaceProgress()}
 function acceptRaceInput(value){
-  if(raceMode!=='player'||raceLive.hidden||!raceCountdownDone||raceRoomData?.status!=='racing'||Date.now()<raceStartedAt||raceTyped.length>=racePassageText.length)return;
+  if(raceMode!=='player'||raceLive.hidden||!raceCountdownDone||raceRoomData?.status!=='racing'||raceNow()<raceStartedAt||raceTyped.length>=racePassageText.length)return;
   const remaining=racePassageText.slice(raceTyped.length);
   if(remaining.startsWith(value)){
     raceTyped+=value;raceCorrect+=value.length;document.querySelector('#racePrompt').textContent='Keep going!';
@@ -369,11 +388,11 @@ function acceptRaceInput(value){
 function scheduleRaceProgress(){clearTimeout(raceSendTimer);raceSendTimer=setTimeout(sendRaceProgress,100)}
 async function sendRaceProgress(){
   if(!raceCode||!racePlayerId||!fb)return;
-  const elapsed=Math.max(1,(Date.now()-raceStartedAt)/60000),progress=Math.min(100,raceTyped.length/racePassageText.length*100),
+  const elapsed=Math.max(1,(raceNow()-raceStartedAt)/60000),progress=Math.min(100,raceTyped.length/racePassageText.length*100),
         wpm=Math.round((raceCorrect/5)/elapsed),accuracy=Math.round(raceCorrect/Math.max(1,raceCorrect+raceErrors)*100);
   try{
     await fb.update(playerRef(raceCode,racePlayerId),{
-      progress,wpm,accuracy,finishedAt:progress>=100?Date.now():0
+      progress,wpm,accuracy,finishedAt:progress>=100?raceNow():0
     });
   }catch{}
   if(progress>=100)document.querySelector('#racePrompt').textContent=`Finished! ${wpm} WPM · ${accuracy}% accuracy`

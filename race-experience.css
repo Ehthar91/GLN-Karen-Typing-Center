@@ -1,0 +1,44 @@
+/* GLN Classroom Car Race v3 — GPU-friendly accents; fully disabled for reduced motion. */
+.race-v3-sound{flex-shrink:0;padding:6px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.32);color:#fff;background:rgba(255,255,255,.11);font:800 .76rem Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.race-v3-sound:hover{background:rgba(255,255,255,.2)}
+.race-v3-sound:focus-visible{outline:3px solid #facc15;outline-offset:2px}
+.race-v3-sound:disabled{opacity:.5;cursor:wait}
+.race-v3-standing{color:#f2f8ff}
+.race-v3-standing strong{color:#ffe27f}
+.race-v3-paused{padding:4px 9px;border-radius:7px;background:#ffdd87;color:#513805;font-size:.75rem;font-weight:900;letter-spacing:.04em}
+.race-v3-paused[hidden]{display:none}
+.race-v3-countdown{display:flex;flex-direction:column;gap:14px;justify-content:center;align-items:center;inset:0;z-index:60;background:radial-gradient(circle at center,rgba(31,57,91,.96),rgba(4,15,35,.96));backdrop-filter:blur(5px)}
+.race-v3-countdown[hidden]{display:none}
+.race-v3-signal{display:flex;gap:14px;padding:17px 21px;border:3px solid #71839d;border-radius:21px;background:linear-gradient(150deg,#1b273d,#07101e);box-shadow:0 17px 45px #0008,inset 0 2px 3px #ffffff25}
+.race-v3-light{display:block;width:66px;height:66px;border:5px solid #01070d;border-radius:50%;background:#253244;box-shadow:inset 0 7px 15px #000c;transition:background .12s,box-shadow .12s}
+.race-v3-three .race-v3-light.red{background:#fd4357;box-shadow:0 0 29px #ff3658c0,inset 0 -8px 11px #900923}
+.race-v3-two .race-v3-light.amber,.race-v3-one .race-v3-light.amber{background:#ffcf42;box-shadow:0 0 29px #f6ca3da8,inset 0 -8px 11px #bb7e0e}
+.race-v3-one .race-v3-light.red{background:#e45761;box-shadow:0 0 12px #ff365877}
+.race-v3-go .race-v3-light.green{background:#36e796;box-shadow:0 0 40px #36e796db,inset 0 -8px 11px #078e52}
+.race-v3-countdown strong#raceCountdownText{width:auto;min-width:180px;height:auto;padding:3px 26px;border:0;border-radius:18px;background:transparent;box-shadow:none;color:white;font-size:clamp(3.5rem,8vw,5.8rem);letter-spacing:.06em;line-height:1.12;text-shadow:0 4px 21px #000c;animation:none}
+.race-v3-go strong#raceCountdownText{color:#6cffac;text-shadow:0 0 32px #20cb72b8}
+.race-v3-cue{font:900 clamp(.66rem,1.8vw,1rem) Inter,system-ui,sans-serif;letter-spacing:.19em;color:#e9f4ff;text-align:center}
+.race-v3-go .race-v3-cue{color:#8bffba}
+.race-dashboard .race-track .race-car{transition:left .85s cubic-bezier(.18,.8,.25,1);will-change:left}
+.race-dashboard .race-track .race-car::before{width:52px;height:9px;opacity:.6}
+.race-dashboard .race-track .race-lane.is-finished{background:linear-gradient(90deg,rgba(26,168,109,.08),rgba(65,231,151,.18))}
+.race-dashboard .race-track .race-lane.is-finished .race-lane-name{box-shadow:0 0 0 1px rgba(50,232,143,.75)}
+.race-v3-overtaking{position:absolute;z-index:27;top:65px;left:50%;transform:translateX(-50%);max-width:min(92%,620px);padding:12px 22px;border:1px solid #fde68a;border-radius:99px;background:#152844;color:#fff5b7;font:900 .9rem Inter,system-ui,sans-serif;box-shadow:0 10px 24px #0008;pointer-events:none;text-align:center;white-space:normal;animation:raceV3Toast .28s ease-out}
+.race-v3-overtaking[hidden]{display:none}
+.race-v3-overtaking-lane .race-car{filter:drop-shadow(0 0 12px #9decff) drop-shadow(0 5px 5px #0008)!important}
+.race-v3-overtaking-lane .race-car::after{content:"";position:absolute;right:78%;top:32%;width:80px;height:30px;background:repeating-linear-gradient(180deg,#b6f5ff80 0 3px,transparent 3px 10px);clip-path:polygon(100% 5%,0 26%,80% 45%,0 80%,100% 100%);animation:raceV3Speed .44s linear 2}
+.race-leaderboard-row.race-v3-climbing{border-color:#58c2fb;background:#eafaff;animation:raceV3Stand .95s ease}
+.race-v3-finish-flash{position:absolute;right:32px;top:28px;z-index:6;border:1px solid #fcd34d;border-radius:8px;padding:5px 10px;background:#142942;color:#fff;font:bold .7rem Inter,system-ui,sans-serif;box-shadow:0 0 22px #facc1566;pointer-events:none;animation:raceV3Finish 1.5s ease-out both}
+.race-v3-winner{margin:8px auto 18px;font:900 clamp(1rem,2vw,1.4rem) Inter,system-ui,sans-serif;line-height:1.4;color:#ffe27e;text-align:center;text-wrap:balance}
+.race-v3-confetti-burst{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2}
+.race-v3-confetti-burst i{position:absolute;top:-25px;left:var(--x);width:9px;height:17px;background:var(--color);animation:raceV3Confetti 2.3s var(--delay) ease-in forwards;opacity:0}
+.race-v3-results-celebrating .race-podium{animation:raceV3Podium .7s ease-out both}
+@keyframes raceV3Toast{from{opacity:0;transform:translate(-50%,-12px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes raceV3Speed{to{transform:translateX(-23px);opacity:0}}
+@keyframes raceV3Stand{45%{transform:scale(1.02)}100%{transform:scale(1)}}
+@keyframes raceV3Finish{0%{opacity:0;transform:translateY(13px) scale(.85)}20%,80%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-15px)}}
+@keyframes raceV3Confetti{0%{opacity:1;transform:translateY(-10px) rotate(0)}85%{opacity:1}100%{opacity:0;transform:translateY(580px) rotate(620deg)}}
+@keyframes raceV3Podium{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:720px){.race-v3-light{width:47px;height:47px}.race-v3-signal{padding:12px 16px;gap:10px}.race-v3-overtaking{top:95px;font-size:.72rem;padding:9px 13px}.race-v3-sound{font-size:.70rem}}
+@media(prefers-reduced-motion:reduce){.race-dashboard .race-track .race-car,.race-v3-countdown *{transition:none!important;animation:none!important;will-change:auto!important}.race-v3-overtaking,.race-v3-climbing,.race-v3-finish-flash,.race-v3-results-celebrating .race-podium,.race-v3-confetti-burst i{animation:none!important}.race-v3-confetti-burst{display:none}}
+@media print{.race-v3-sound,.race-v3-overtaking,.race-v3-finish-flash,.race-v3-countdown,.race-v3-confetti-burst{display:none!important}}

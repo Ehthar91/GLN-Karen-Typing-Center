@@ -8,7 +8,7 @@
   const writeSession=session=>{try{sessionStorage.setItem(SESSION_KEY,JSON.stringify(session))}catch{}};
   const forgetSession=()=>{try{sessionStorage.removeItem(SESSION_KEY)}catch{}};
   const sameIdentity=record=>Boolean(record&&record.code===raceCode&&record.uid===currentUser?.uid&&record.role===raceMode);
-  const effectiveNow=room=>room?.status==='paused'&&room.pausedAt?Number(room.pausedAt):room?.status==='finished'&&room.endedAt?Number(room.endedAt):Date.now();
+  const effectiveNow=room=>room?.status==='paused'&&room.pausedAt?Number(room.pausedAt):room?.status==='finished'&&room.endedAt?Number(room.endedAt):raceNow();
   const elapsedSeconds=room=>Math.max(0,(effectiveNow(room)-Number(room?.startedAt||effectiveNow(room)))/1000);
   const graphemes=value=>raceGraphemeSegmenter?Array.from(raceGraphemeSegmenter.segment(value)).length:Array.from(value).length;
   const currentPlayer=room=>Array.isArray(room?.players)?room.players.find(p=>p.id===racePlayerId):room?.players?.[racePlayerId];
@@ -21,13 +21,13 @@
   function saveIdentity(){
     if(!raceCode||!currentUser||!['player','host'].includes(raceMode))return;
     const old=readSession(),existing=sameIdentity(old)?old:{};
-    writeSession({...existing,code:raceCode,uid:currentUser.uid,role:raceMode,name:raceMode==='player'?racePlayerName:'',updatedAt:Date.now()});
+    writeSession({...existing,code:raceCode,uid:currentUser.uid,role:raceMode,name:raceMode==='player'?racePlayerName:'',updatedAt:raceNow()});
   }
   function saveTyping(){
     if(raceMode!=='player'||!raceRoomData?.roundId||!racePassageText)return;
     const old=readSession();
     writeSession({...sameIdentity(old)?old:{},code:raceCode,uid:currentUser?.uid,role:'player',name:racePlayerName,
-      roundId:String(raceRoomData.roundId),passage:racePassageText,typed:raceTyped,errors:raceErrors,updatedAt:Date.now()});
+      roundId:String(raceRoomData.roundId),passage:racePassageText,typed:raceTyped,errors:raceErrors,updatedAt:raceNow()});
   }
 
   const originalCloseRace=closeRace;
@@ -66,7 +66,7 @@
       const snapshot=await fb.get(roomRef(saved.code));
       if(!snapshot.exists())return forgetSession();
       const room=snapshot.val();
-      if(room.expiresAt&&room.expiresAt<Date.now())return forgetSession();
+      if(room.expiresAt&&room.expiresAt<raceNow())return forgetSession();
       const me=room.players?.[saved.uid];
       if(saved.role==='host'&&room.hostUid!==saved.uid)return forgetSession();
       if(saved.role==='player'&&!me)return forgetSession();
@@ -107,7 +107,7 @@
       const snapshot=await fb.get(roomRef(code));
       if(!snapshot.exists())throw new Error('Room not found. Check the code.');
       const room=snapshot.val(),players=Object.values(room.players||{});
-      if(room.expiresAt&&room.expiresAt<Date.now())throw new Error('This room has expired.');
+      if(room.expiresAt&&room.expiresAt<raceNow())throw new Error('This room has expired.');
       const existing=room.players?.[currentUser.uid];
       const removed=room.removedPlayers?.[currentUser.uid];
       if(removed&&!removed.allowRejoin)throw new Error('The host removed you from this race.');
@@ -128,7 +128,7 @@
         const customPassage=room.randomize?storedRacePassage(shuffleRaceWords(info.text),raceRoomLanguage):room.passage;
         const player={id:currentUser.uid,name,progress:0,typedCount:0,errors:0,wpm:0,accuracy:100,
           color:Number(raceEl('raceCarColor').value)||0,avatar:Number(raceEl('raceAvatar').value)||0,
-          team:room.teamCount?(players.length%room.teamCount)+1:0,customPassage,joinedAt:Date.now(),finishedAt:0};
+          team:room.teamCount?(players.length%room.teamCount)+1:0,customPassage,joinedAt:raceNow(),finishedAt:0};
         const update={[`players/${currentUser.uid}`]:player};
         if(removed?.allowRejoin)update[`removedPlayers/${currentUser.uid}`]=null;
         await fb.update(roomRef(code),update);
@@ -174,7 +174,7 @@
   function canTypeNow(){
     const room=raceRoomData;
     return raceMode==='player'&&room?.status==='racing'&&raceCountdownDone&&
-      Date.now()>=Number(room.startedAt||0)&&
+      raceNow()>=Number(room.startedAt||0)&&
       !(room.lengthMode==='time'&&elapsedSeconds(room)>=Number(room.duration||60))&&
       raceTyped.length<racePassageText.length&&!raceWasRemoved;
   }
@@ -196,7 +196,7 @@
   sendRaceProgress=async()=>{
     if(!raceCode||!racePlayerId||!fb||raceWasRemoved||raceRoomData?.status!=='racing')return;
     const room=raceRoomData;
-    if(Date.now()<Number(room.startedAt||0))return;
+    if(raceNow()<Number(room.startedAt||0))return;
     if(room.lengthMode==='time'&&elapsedSeconds(room)>=Number(room.duration||60))return;
     const characters=graphemes(raceTyped),minutes=Math.max(1/60,elapsedSeconds(room)/60);
     const wpm=Math.round(characters/5/minutes),accuracy=Math.round(characters/Math.max(1,characters+raceErrors)*100);
@@ -208,7 +208,7 @@
       const previous=currentPlayer(room);
       if(previous?.finishedAt)return;
       await fb.update(target,{progress,typedCount:raceTyped.length,errors:raceErrors,wpm,accuracy,
-        lastProgressAt:Date.now(),finishedAt:finished?Date.now():0});
+        lastProgressAt:raceNow(),finishedAt:finished?raceNow():0});
       if(finished)raceEl('racePrompt').textContent=`Finished! ${wpm} WPM · ${accuracy}% accuracy`;
     }catch(error){console.warn('Car Race: progress not synced',error)}
   };
@@ -228,7 +228,7 @@
     const room=raceRoomData;if(!room||raceLive.hidden)return;
     if(room.lengthMode==='time'&&room.status==='racing'&&elapsedSeconds(room)>=Number(room.duration||60)&&raceMode==='host'&&!expireUpdatePending){
       expireUpdatePending=true;
-      fb.update(roomRef(raceCode),{status:'finished',endedAt:Date.now()}).catch(()=>{expireUpdatePending=false});
+      fb.update(roomRef(raceCode),{status:'finished',endedAt:raceNow()}).catch(()=>{expireUpdatePending=false});
     }
     const seconds=room.lengthMode==='time'?Math.max(0,Number(room.duration||60)-elapsedSeconds(room)):elapsedSeconds(room);
     raceEl('racePlayerClock').textContent=formatRaceTime(seconds);
@@ -243,7 +243,7 @@
     if(labelHost()){
       const pauseButton=raceEl('racePause');
       pauseButton.disabled=!['racing','paused'].includes(room.status)||
-        (room.status==='racing'&&Date.now()<Number(room.startedAt||0));
+        (room.status==='racing'&&raceNow()<Number(room.startedAt||0));
       raceEl('raceEnd').disabled=room.status==='finished';
     }
   }
