@@ -48,7 +48,8 @@
     if(raceMode!=='player'||!raceRoomData?.roundId||!racePassageText)return;
     const old=readSession();
     writeSession({...sameIdentity(old)?old:{},code:raceCode,uid:currentUser?.uid,role:'player',name:racePlayerName,
-      roundId:String(raceRoomData.roundId),passage:racePassageText,typed:raceTyped,errors:raceErrors,reverseDebt:raceReverseDebt,updatedAt:raceNow()});
+      roundId:String(raceRoomData.roundId),passage:racePassageText,typed:raceTyped,errors:raceErrors,reverseDebt:raceReverseDebt,
+      wordErrors:window.GLNRaceVocabulary?.serialize()||{},updatedAt:raceNow()});
   }
 
   const originalCloseRace=closeRace;
@@ -70,7 +71,7 @@
     if(raceRoomData?.status==='waiting'&&raceMode==='player'&&raceLastStatus==='waiting'){
       // A new round must never inherit last round's typing or finished flag.
       const last=readSession();if(sameIdentity(last)&&last.roundId&&raceRoomData.roundId===0){
-        writeSession({...last,roundId:'',typed:'',errors:0,reverseDebt:0,passage:''});
+        writeSession({...last,roundId:'',typed:'',errors:0,reverseDebt:0,wordErrors:{},passage:''});
       }
     }
   };
@@ -185,7 +186,9 @@
           raceReverseDebt=reverseEnabled(data)?clampDebt(me.reverseDebt):0;
         }
         raceCorrect=raceTyped.length;
-        if(raceTyped)renderRacePassage();
+        // Restore word-level mistakes for this exact round and passage only.
+        window.GLNRaceVocabulary?.restore({saved,player:me,roundId,passage:racePassageText});
+        renderRacePassage();
         saveTyping();
       }
     }
@@ -216,7 +219,7 @@
         // Publish the reverse immediately; a fast next key must not swallow it
         // inside the normal 100ms typing debounce.
         clearTimeout(raceSendTimer);raceSendTimer=null;
-        void sendRaceProgress();
+        queueMicrotask(()=>{void sendRaceProgress();});
       }else if(raceTyped.length>length&&raceReverseDebt>0){
         // Correct typing pays back the penalty over several keystrokes.
         const advance=graphemes(raceTyped.slice(length));
@@ -224,7 +227,13 @@
         raceReverseDebt=Math.max(0,raceReverseDebt-recovery*advance);
       }
     }else raceReverseDebt=0;
-    if(length!==raceTyped.length||errors!==raceErrors)saveTyping();
+    if(length!==raceTyped.length||errors!==raceErrors){
+      window.GLNRaceVocabulary?.onInput({beforeLength:length,beforeErrors:errors});
+      saveTyping();
+      // In Speed/Balanced races, a wrong key is a scoring event too. Publish
+      // it even when no correct character follows the mistake.
+      if(raceErrors>errors&&!reverseEnabled(raceRoomData))scheduleRaceProgress();
+    }
   };
   const originalBackspace=raceBackspace;
   raceBackspace=()=>{
@@ -253,6 +262,7 @@
       const previous=currentPlayer(room);
       if(previous?.finishedAt)return;
       await fb.update(target,{progress,typedCount:raceTyped.length,errors:raceErrors,wpm,accuracy,
+        wordErrors:window.GLNRaceVocabulary?.serialize()||null,
         reverseDebt:penalty,lastProgressAt:raceNow(),finishedAt:finished?raceNow():0});
       if(finished)raceEl('racePrompt').textContent=`Finished! ${wpm} WPM · ${accuracy}% accuracy`;
     }catch(error){console.warn('Car Race: progress not synced',error)}

@@ -1,0 +1,23 @@
+/* Classroom Car Race v4.1 — word-by-word learning feedback. */
+.race-v41-list-count{display:block;margin:7px 0 0;font-size:.75rem;line-height:1.5;font-weight:700;opacity:.8}
+.race-v41-tracker{width:min(720px,calc(100% - 36px));margin:10px auto 0;padding:10px 14px;border-radius:13px;border:1px solid #ccdfef;background:#f3f9ff;color:#1a4773;font:800 .83rem/1.4 Inter,system-ui,sans-serif}
+.race-v41-tracker[hidden]{display:none!important}
+.race-v41-tracker-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.race-v41-tracker-top span{color:#54728c}
+.race-v41-meter{height:7px;background:#dbe8f3;border-radius:999px;overflow:hidden;margin-top:8px}
+.race-v41-meter i{display:block;height:100%;width:0;background:#28a77f;transition:width .25s ease}
+.race-passage .race-v41-word{display:inline-block;border-radius:.36em;padding:0 .025em;transition:background .15s ease,box-shadow .15s ease;unicode-bidi:isolate}
+.race-passage .race-v41-word.is-active{background:rgba(255,203,74,.18);box-shadow:inset 0 -3px 0 #f0bb46}
+.race-passage .race-v41-word.is-completed{background:rgba(33,164,115,.09)}
+.race-passage .race-v41-word.has-mistake,.race-live:not(.teacher-view)>.race-passage .race-v41-word.has-mistake{background:rgba(255,91,86,.27)!important;box-shadow:0 0 0 2px rgba(212,45,50,.8),0 0 15px rgba(212,45,50,.28)!important}
+.race-passage .race-v41-word.has-mistake .current{background:#f15e56!important;color:#fff!important;box-shadow:none!important}
+.race-v41-summary{max-width:740px;margin:24px auto 12px;padding:16px 18px;border:1px solid rgba(179,217,245,.43);border-radius:17px;background:rgba(11,35,70,.56);color:#eaf5ff;font:600 .84rem/1.5 Inter,system-ui,sans-serif}
+.race-v41-summary[hidden]{display:none!important}
+.race-v41-summary h3{font-size:1.08rem;margin:0 0 8px;color:#fff}
+.race-v41-summary p{margin:0 0 10px;color:#c5e0f2}
+.race-v41-word-stat{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid rgba(210,231,250,.19);padding:9px 2px}
+.race-v41-word-stat strong{font-family:Padauk,Inter,system-ui,sans-serif;font-size:1.05rem;overflow-wrap:anywhere}
+.race-v41-word-stat span{text-align:right;white-space:nowrap;color:#bbdaf1}
+@media(max-width:560px){.race-v41-tracker{font-size:.72rem;padding:10px}.race-v41-summary{padding:13px 11px}.race-v41-word-stat span{font-size:.7rem;white-space:normal}}
+@media(prefers-reduced-motion:reduce){.race-v41-meter i,.race-passage .race-v41-word{transition:none!important}}
+@media print{.race-v41-summary{background:#fff!important;color:#1a314a!important;border:1px solid #8ea0b0}.race-v41-summary h3,.race-v41-summary p,.race-v41-word-stat span{color:#1a314a!important}}
