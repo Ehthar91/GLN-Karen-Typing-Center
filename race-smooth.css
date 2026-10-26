@@ -1,0 +1,53 @@
+/* GLN Classroom Car Race — incremental-motion polish. Both themes, Chromebook first. */
+.race-track .race-lane {
+  isolation:isolate;
+  border-radius:9px;
+  transition:background-color .2s ease, box-shadow .2s ease;
+}
+.race-track .race-lane-progress {
+  position:absolute;
+  left:0;
+  bottom:1px;
+  height:4px;
+  max-width:100%;
+  border-radius:4px;
+  background:linear-gradient(90deg,#0ca6d7,#45e0aa);
+  box-shadow:0 0 10px rgba(36,192,201,.22);
+  opacity:.9;
+  z-index:1;
+  pointer-events:none;
+  transition:width 620ms cubic-bezier(.2,.72,.22,1);
+}
+.race-track .race-car {
+  z-index:2;
+  transition:left 620ms cubic-bezier(.2,.72,.22,1) !important;
+  will-change:left;
+}
+.race-track .race-lane-name {z-index:3;}
+.race-track .race-lane-metrics {z-index:4;}
+.race-track .race-lane.is-your-lane {
+  background:rgba(23,130,216,.09);
+  box-shadow:inset 0 0 0 1px rgba(37,164,223,.45);
+}
+.race-track .race-lane.is-finished .race-lane-progress {
+  background:linear-gradient(90deg,#18b978,#ffd34b);
+  box-shadow:0 0 11px rgba(255,207,75,.35);
+}
+body.theme-rgb .race-track .race-lane.is-your-lane {
+  background:rgba(36,180,225,.12);
+  box-shadow:inset 0 0 0 1px rgba(97,225,253,.65);
+}
+body.theme-rgb .race-track .race-lane-progress {
+  background:linear-gradient(90deg,#198bff,#4fe9c5);
+  box-shadow:0 0 10px rgba(36,199,255,.36);
+}
+body.theme-rgb .race-track .race-lane.is-finished .race-lane-progress {
+  background:linear-gradient(90deg,#39d99d,#ffda65);
+}
+@media (max-width:720px){
+  .race-track .race-lane-progress {height:3px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .race-track .race-car,.race-track .race-lane-progress,
+  .race-track .race-lane {transition:none !important;}
+}

@@ -187,18 +187,42 @@ function beginLiveRace(data){
   if(raceMode==='host')document.querySelector('#racePrompt').textContent='Teacher view — watch the racers move live.';
 }
 function startRaceCountdown(startAt){clearInterval(raceCountdownTimer);const overlay=document.querySelector('#raceCountdown'),label=document.querySelector('#raceCountdownText');const update=()=>{const left=startAt-Date.now();if(left<=0){label.textContent='GO!';raceCountdownDone=true;setTimeout(()=>{overlay.hidden=true},550);clearInterval(raceCountdownTimer);return}raceCountdownDone=false;overlay.hidden=false;label.textContent=String(Math.max(1,Math.ceil(left/1000)))};update();raceCountdownTimer=setInterval(update,180)}
+// Reuse the same lane and car nodes across Firebase updates. Rebuilding every car
+// was interrupting CSS motion and forcing large vehicle images to repaint.
 function renderRace(data){
   const players=[...(data.players||[])].sort((a,b)=>b.progress-a.progress||((a.finishedAt||Infinity)-(b.finishedAt||Infinity))||a.joinedAt-b.joinedAt);
-  const track=document.querySelector('#raceTrack');track.innerHTML='';track.classList.toggle('density-medium',players.length>8&&players.length<=16);track.classList.toggle('density-compact',players.length>16);
+  const track=document.querySelector('#raceTrack');
+  track.classList.toggle('density-medium',players.length>8&&players.length<=16);
+  track.classList.toggle('density-compact',players.length>16);
+  const existing=new Map(Array.from(track.querySelectorAll(':scope > .race-lane')).map(lane=>[lane.dataset.playerId,lane]));
+  const keep=new Set();
   players.forEach((player,index)=>{
-    const lane=document.createElement('div');lane.className='race-lane';
-    const name=document.createElement('span');name.className='race-lane-name';name.textContent=`${index+1}. ${player.name}`;
-    const car=document.createElement('span');car.className='race-car';car.innerHTML=raceCarGraphic(player.color||0);car.style.left=`${Math.min(88,(player.progress||0)*.88)}%`;
-    const finish=document.createElement('span');finish.className='race-finish';lane.append(name,car,finish);track.appendChild(lane)
+    const id=String(player.id||player.name||index),progress=Math.max(0,Math.min(100,Number(player.progress)||0));
+    let lane=existing.get(id);
+    if(!lane){
+      lane=document.createElement('div');lane.className='race-lane';lane.dataset.playerId=id;
+      const name=document.createElement('span');name.className='race-lane-name';
+      const car=document.createElement('span');car.className='race-car';car.innerHTML=raceCarGraphic(player.color||0);
+      const finish=document.createElement('span');finish.className='race-finish';
+      const meter=document.createElement('span');meter.className='race-lane-progress';meter.setAttribute('aria-hidden','true');
+      lane.append(name,meter,car,finish);
+    }
+    keep.add(id);
+    const name=lane.querySelector('.race-lane-name'),car=lane.querySelector('.race-car'),meter=lane.querySelector('.race-lane-progress');
+    const caption=`${index+1}. ${player.name||'Racer'}`;
+    if(name.dataset.baseCaption!==caption){name.dataset.baseCaption=caption;name.textContent=caption;}
+    lane.classList.toggle('is-your-lane',raceMode==='player'&&id===String(racePlayerId));
+    lane.classList.toggle('is-finished',progress>=100);
+    const nextLeft=`${(progress*.88).toFixed(2)}%`;
+    if(car.style.left!==nextLeft)car.style.left=nextLeft;
+    if(meter)meter.style.width=`${progress.toFixed(2)}%`;
+    // Move only when rank changes; never discard the car itself.
+    if(track.children[index]!==lane)track.insertBefore(lane,track.children[index]||null);
   });
+  existing.forEach((lane,id)=>{if(!keep.has(id))lane.remove()});
   if(racePlayerId){
     const me=players.find(p=>p.id===racePlayerId),place=players.findIndex(p=>p.id===racePlayerId)+1;
-    document.querySelector('#racePosition').textContent=(me?.progress||0)>=100?`Finished · #${place}`:`#${place} · ${Math.round(me?.progress||0)}%`;
+    document.querySelector('#racePosition').textContent=(me?.progress||0)>=100?`Finished · #${place}`:`#${place||'–'} · ${Math.round(me?.progress||0)}%`;
   }else document.querySelector('#racePosition').textContent=`${players.length} racer${players.length===1?'':'s'}`;
   const allFinished=players.length>0&&players.every(p=>(p.progress||0)>=100);
   if(allFinished){
@@ -214,11 +238,29 @@ function raceExpected(){
   if(racePassageText[raceTyped.length]===' ')return{key:'Space',value:' ',shift:false};
   return allMappings(raceLanguage).find(item=>racePassageText.startsWith(item.value,raceTyped.length))||null
 }
+// Keep Karen vowels and tone marks together in the highlighted current syllable
+// (a single UTF-16 code unit can be only part of a displayed glyph).
+const raceGraphemeSegmenter=typeof Intl!=='undefined'&&Intl.Segmenter?new Intl.Segmenter('und',{granularity:'grapheme'}):null;
+function raceNextTextUnit(text){
+  if(!text)return '';
+  // Browser grapheme segmentation can separate U+1062 (Sgaw vowel) and U+1038
+  // (tone) from the preceding consonant. Keep trailing marks with their base.
+  if(raceGraphemeSegmenter){
+    const segments=raceGraphemeSegmenter.segment(text)[Symbol.iterator]();
+    let unit=segments.next().value?.segment||'';
+    for(let next=segments.next();!next.done&&/^\p{M}/u.test(next.value.segment);next=segments.next())unit+=next.value.segment;
+    return unit;
+  }
+  const points=Array.from(text);let unit=points[0]||'';
+  for(let i=1;i<points.length&&/^\p{M}/u.test(points[i]);i++)unit+=points[i];
+  return unit;
+}
 function renderRacePassage(){
-  const box=document.querySelector('#racePassage');box.innerHTML='';
+  const box=document.querySelector('#racePassage');box.replaceChildren();
   const done=document.createElement('span');done.className='done';done.textContent=racePassageText.slice(0,raceTyped.length);
-  const current=document.createElement('span');current.className='current';current.textContent=racePassageText.slice(raceTyped.length,raceTyped.length+1);
-  const rest=document.createTextNode(racePassageText.slice(raceTyped.length+1));box.append(done,current,rest)
+  const remaining=racePassageText.slice(raceTyped.length),currentText=raceNextTextUnit(remaining);
+  const current=document.createElement('span');current.className='current';current.textContent=currentText;
+  box.append(done,current,document.createTextNode(remaining.slice(currentText.length)));
 }
 function makeRaceTypeControl(label,display,action,className=''){
   const button=document.createElement('button');button.type='button';button.className='key modifier';
