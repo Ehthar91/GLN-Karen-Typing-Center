@@ -231,6 +231,33 @@ function raceRankPlayers(players){
     return (Number(a.joinedAt)||0)-(Number(b.joinedAt)||0)||String(a.id||'').localeCompare(String(b.id||''));
   });
 }
+// Map 0-100% progress to the actual lane's finish stripe, rather than an
+// arbitrary 88% of the track. Account for the rendered vehicle's width so its
+// front crosses the checkered line at 100% on wide, narrow and compact tracks.
+function racePlaceCarAtProgress(car, progress){
+  if(!car)return;
+  const value=Math.max(0,Math.min(100,Number(progress)||0));
+  const stripe=car.parentElement?.querySelector('.race-finish');
+  const width=car.offsetWidth||parseFloat(getComputedStyle(car).width)||92;
+  const stripeWidth=stripe?.offsetWidth||18;
+  // The nose finishes inside the stripe, rather than stopping before it.
+  const finishInset=2+stripeWidth*.25;
+  const nextLeft=`calc(${value.toFixed(2)}% - ${(value/100*(width+finishInset)).toFixed(2)}px)`;
+  if(car.style.left!==nextLeft)car.style.left=nextLeft;
+}
+// A Chromebook can rotate, zoom, or enter fullscreen after a racer finishes.
+// Re-measure the car widths on resize without moving anyone's recorded score.
+let raceCarResizeFrame=0;
+window.addEventListener('resize',()=>{
+  if(raceCarResizeFrame)cancelAnimationFrame(raceCarResizeFrame);
+  raceCarResizeFrame=requestAnimationFrame(()=>{
+    raceCarResizeFrame=0;
+    document.querySelectorAll('#raceTrack .race-lane').forEach(lane=>{
+      if(lane.dataset.raceProgress!==undefined)
+        racePlaceCarAtProgress(lane.querySelector('.race-car'),Number(lane.dataset.raceProgress));
+    });
+  });
+},{passive:true});
 // Reuse the same lane and car nodes across Firebase updates. Rebuilding every car
 // was interrupting CSS motion and forcing large vehicle images to repaint.
 function renderRace(data){
@@ -245,6 +272,7 @@ function renderRace(data){
   lanePlayers.forEach((player,index)=>{
     const id=String(player.id||player.name||index),progress=Math.max(0,Math.min(100,Number(player.progress)||0));
     let lane=existing.get(id);
+    const isNewLane=!lane;
     if(!lane){
       lane=document.createElement('div');lane.className='race-lane';lane.dataset.playerId=id;
       const name=document.createElement('span');name.className='race-lane-name';
@@ -259,11 +287,16 @@ function renderRace(data){
     if(name.dataset.baseCaption!==caption){name.dataset.baseCaption=caption;name.textContent=caption;}
     lane.classList.toggle('is-your-lane',raceMode==='player'&&id===String(racePlayerId));
     lane.classList.toggle('is-finished',progress>=100);
-    const nextLeft=`${(progress*.88).toFixed(2)}%`;
-    if(car.style.left!==nextLeft)car.style.left=nextLeft;
-    if(meter)meter.style.width=`${progress.toFixed(2)}%`;
-    // Append only on initial join; ranking never moves an existing lane.
+    // Append before measuring: a detached car has no rendered width.
     if(!lane.isConnected)track.appendChild(lane);
+    lane.dataset.raceProgress=progress.toFixed(2);
+    racePlaceCarAtProgress(car,progress);
+    // Vehicle skins are applied by race-features.js after this render wrapper.
+    // Re-measure once they are styled, so even the first update is aligned.
+    if(isNewLane)requestAnimationFrame(()=>{
+      if(car.isConnected)racePlaceCarAtProgress(car,Number(lane.dataset.raceProgress));
+    });
+    if(meter)meter.style.width=`${progress.toFixed(2)}%`;
   });
   existing.forEach((lane,id)=>{if(!keep.has(id))lane.remove()});
   if(racePlayerId){

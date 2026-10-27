@@ -178,6 +178,14 @@
     }
     const track=document.createElement('div');track.className='race-v52-track';board.append(track);
     const cards=new Map();
+    let resizeFrame=0;
+    window.addEventListener('resize',()=>{
+      if(resizeFrame)cancelAnimationFrame(resizeFrame);
+      resizeFrame=requestAnimationFrame(()=>{
+        resizeFrame=0;
+        if(isRound(raceRoomData)&&!board.hidden)renderTeamCars(raceRoomData);
+      });
+    },{passive:true});
     function renderTeamCars(room){
       const teams=teamProgress(room),activeIds=new Set();
       teams.forEach((t,position)=>{
@@ -192,7 +200,12 @@
         card.querySelector('strong').textContent=`${position+1}. ${t.name}`;
         card.querySelector('.race-v52-percent').textContent=`${Math.round(t.progress)}%`;
         card.querySelector('.race-v52-meter').style.width=`${t.progress}%`;
-        card.querySelector('img').style.left=`${Math.max(0,t.progress*0.87)}%`;
+        // Align the shared team car to the relay finish stripe at 100%.
+        const teamCar=card.querySelector('img');
+        const percent=Math.max(0,Math.min(100,Number(t.progress)||0));
+        const carWidth=teamCar.offsetWidth||85;
+        const carLeft=`calc(${percent.toFixed(2)}% - ${(percent/100*(carWidth+6)).toFixed(2)}px)`;
+        if(teamCar.style.left!==carLeft)teamCar.style.left=carLeft;
         const foot=card.querySelector('.race-v52-team-foot span');
         foot.textContent=t.done>=t.total?'All turns complete':`Turn ${t.done+1}/${t.total} · ${t.activeName||'Waiting'}`+(t.activeConnected?'':' · Offline');
         const skip=card.querySelector('button');skip.hidden=!teacher(room)||room.status==='finished'||t.done>=t.total;
