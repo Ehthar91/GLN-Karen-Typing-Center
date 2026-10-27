@@ -270,7 +270,8 @@ function renderRace(data){
     const me=players.find(p=>p.id===racePlayerId),place=players.findIndex(p=>p.id===racePlayerId)+1;
     document.querySelector('#racePosition').textContent=(me?.progress||0)>=100?`Finished · #${place}`:`#${place||'–'} · ${Math.round(me?.progress||0)}%`;
   }else document.querySelector('#racePosition').textContent=`${players.length} racer${players.length===1?'':'s'}`;
-  const allFinished=players.length>0&&players.every(p=>(p.progress||0)>=100);
+  const scoringPlayers=players.filter(p=>p.roundEligible!==false);
+  const allFinished=scoringPlayers.length>0&&scoringPlayers.every(p=>(p.progress||0)>=100);
   if(allFinished){
     document.querySelector('#raceStatusText').textContent='Race finished!';
     document.querySelector('#racePrompt').textContent=players[0]?`Winner: ${players[0].name}`:'Race finished';

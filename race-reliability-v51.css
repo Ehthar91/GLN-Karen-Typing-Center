@@ -1,0 +1,14 @@
+/* Classroom Car Race v5.1: low-noise connection and fairness indicators */
+.race-v51-status{margin:.45rem 0 .75rem;padding:.6rem .85rem;border:1px solid rgba(63,185,151,.33);background:rgba(26,121,102,.13);border-radius:11px;color:#9be8cf;font-weight:700;font-size:.85rem;line-height:1.4}
+.race-v51-status.has-offline{color:#ffdda0;border-color:rgba(245,176,74,.38);background:rgba(148,91,22,.15)}
+.race-v51-status:empty{display:none}
+.race-v51-practice{border:1px solid rgba(246,182,70,.5);background:rgba(147,94,24,.19);color:#ffdeae;padding:10px 14px;border-radius:12px;font-size:.9rem;font-weight:700;margin:10px 0}
+.race-v51-practice[hidden]{display:none!important}
+.lobby-player-chip.race-v51-offline{opacity:.57;border-style:dashed;filter:saturate(.55)}
+.lobby-player-chip.race-v51-offline::after{content:'Offline';margin-left:6px;font-size:.67em;color:#f8c981}
+.race-v51-error{padding:16px;margin:12px;background:#fff0e9;border:1px solid #e89b7d;border-radius:12px;color:#812c1c;text-align:center;font-weight:700}
+#raceConnection[data-connection-state="offline"]{color:#f4b966}
+@media(max-width:600px){.race-v51-status{font-size:.76rem;padding:.45rem .65rem}}
+/* The legacy progress-only team chips can disagree with the frozen scored roster;
+   show the v5 leaderboard as the single authoritative team scoreboard. */
+.race-v5-team-mode #teamScoreboard{display:none!important}

@@ -31,17 +31,20 @@
   function standings(players, teamCount, mode = 'speed') {
     const count = clampTeamCount(teamCount);
     if (!count) return [];
-    const groups = Array.from({ length: count }, (_, i) => ({ team: i + 1, name: `${names[i]} Team`, color: colors[i], members: [], score: 0, progress: 0, accuracy: 0 }));
+    const groups = Array.from({ length: count }, (_, i) => ({ team: i + 1, name: `${names[i]} Team`, color: colors[i], members: [], eligibleMembers: [], score: 0, progress: 0, accuracy: 0 }));
     (players || []).forEach(p => { if (validTeam(p?.team, count)) groups[Number(p.team) - 1].members.push(p); });
     groups.forEach(t => {
-      if (!t.members.length) return;
-      const total = (fn) => t.members.reduce((sum, p) => sum + fn(p), 0);
-      t.score = total(p => activeScore(p, mode)) / t.members.length;
-      t.progress = total(p => sanitize(p.progress)) / t.members.length;
-      t.accuracy = total(p => sanitize(p.accuracy ?? 100)) / t.members.length;
+      // Freeze score eligibility at the start. Late joiners may practice, but
+      // must not lower (or boost) an existing team's average mid-round.
+      t.eligibleMembers = t.members.filter(p => p.roundEligible !== false);
+      if (!t.eligibleMembers.length) return;
+      const total = fn => t.eligibleMembers.reduce((sum, p) => sum + fn(p), 0);
+      t.score = total(p => activeScore(p, mode)) / t.eligibleMembers.length;
+      t.progress = total(p => sanitize(p.progress)) / t.eligibleMembers.length;
+      t.accuracy = total(p => sanitize(p.accuracy ?? 100)) / t.eligibleMembers.length;
     });
     return groups.sort((a, b) => {
-      if (!a.members.length || !b.members.length) return Number(Boolean(b.members.length)) - Number(Boolean(a.members.length));
+      if (!a.eligibleMembers.length || !b.eligibleMembers.length) return Number(Boolean(b.eligibleMembers.length)) - Number(Boolean(a.eligibleMembers.length));
       return b.score - a.score || b.progress - a.progress || b.accuracy - a.accuracy || a.team - b.team;
     });
   }
@@ -159,10 +162,10 @@
       ranked.forEach((team, place) => {
         const card = document.createElement('div'); card.className = 'race-v5-team-card';
         card.dataset.team = String(team.team); card.style.setProperty('--team-accent', team.color);
-        if (team.members.length && place === 0) card.classList.add('is-leading');
-        const label = document.createElement('strong'); label.textContent = `${team.members.length ? place + 1 + '. ' : '— '}${team.name}`;
+        if (team.eligibleMembers.length && place === 0) card.classList.add('is-leading');
+        const label = document.createElement('strong'); label.textContent = `${team.eligibleMembers.length ? place + 1 + '. ' : '— '}${team.name}`;
         const stat = document.createElement('span');
-        stat.textContent = team.members.length ? `${team.score.toFixed(1)}${mode === 'speed' ? '%' : ' pts'} · ${team.members.length} ${team.members.length === 1 ? 'racer' : 'racers'}` : 'Waiting for racers';
+        stat.textContent = team.eligibleMembers.length ? `${team.score.toFixed(1)}${mode === 'speed' ? '%' : ' pts'} · ${team.eligibleMembers.length} scoring${team.members.length>team.eligibleMembers.length?' · '+(team.members.length-team.eligibleMembers.length)+' late':''}` : 'No scoring racers';
         const track = document.createElement('div'); track.className = 'race-v5-team-meter';
         const bar = document.createElement('i'); bar.style.width = `${Math.max(0, Math.min(100, team.score))}%`;
         track.append(bar); card.append(label, stat, track); list.append(card);
@@ -194,27 +197,27 @@
       resultsPanel.hidden = !count || room.status !== 'finished';
       if (resultsPanel.hidden) { lastTeamResultsKey = ''; return; }
       const ranked = standings(players, count, getMode(room));
-      const winner = ranked.find(t => t.members.length);
+      const winner = ranked.find(t => t.eligibleMembers.length);
       if (!winner) return;
       const key = JSON.stringify([raceCode, room.roundId, players.map(p => [p.id, p.team, p.progress, p.accuracy]), room.status]);
       if (lastTeamResultsKey === key) return;
       lastTeamResultsKey = key;
       resultsPanel.replaceChildren();
-      const tied = ranked.filter(t => t.members.length && Math.abs(t.score - winner.score) < 1e-7 && Math.abs(t.progress - winner.progress) < 1e-7 && Math.abs(t.accuracy - winner.accuracy) < 1e-7);
-      const heading = document.createElement('h3'); heading.textContent = tied.length > 1 ? `🤝 Tie: ${tied.map(t => t.name).join(' & ')}` : `🏆 ${winner.name} wins!`;
+      const tied=ranked.filter(t=>t.eligibleMembers.length&&Math.abs(t.score-winner.score)<1e-7&&Math.abs(t.progress-winner.progress)<1e-7&&Math.abs(t.accuracy-winner.accuracy)<1e-7);
+      const heading=document.createElement('h3');heading.textContent=tied.length>1?`🤝 Tie: ${tied.map(t=>t.name).join(' & ')}`:`🏆 ${winner.name} wins!`;
       heading.style.setProperty('--team-accent', winner.color);
       const sub = document.createElement('p'); sub.textContent = 'Team scores use the average of every member, so teams of different sizes can compete fairly.';
       const lineup = document.createElement('div'); lineup.className = 'race-v5-results-lineup';
-      ranked.filter(t => t.members.length).forEach((t, i) => {
+      ranked.filter(t => t.eligibleMembers.length).forEach((t, i) => {
         const pill = document.createElement('div'); pill.className = 'race-v5-results-team';
         pill.style.setProperty('--team-accent', t.color);
         const name = document.createElement('strong'); name.textContent = `${i + 1}. ${t.name}`;
-        const score = document.createElement('span'); score.textContent = `${t.score.toFixed(1)} ${getMode(room) === 'speed' ? '% progress' : 'points'} · ${t.members.length} ${t.members.length === 1 ? 'racer' : 'racers'}`;
+        const score = document.createElement('span'); score.textContent = `${t.score.toFixed(1)} ${getMode(room) === 'speed' ? '% progress' : 'points'} · ${t.eligibleMembers.length} scoring racers`;
         pill.append(name, score); lineup.append(pill);
       });
       resultsPanel.append(heading, sub, lineup);
       const announcement = $('raceV3Winner');
-      if (announcement && tied.length > 1) announcement.textContent = `🤝 Team race tied: ${tied.map(t => t.name).join(' & ')}`;
+      if(announcement&&tied.length>1)announcement.textContent=`🤝 Team race tied: ${tied.map(t=>t.name).join(' & ')}`;
       else if (announcement) announcement.textContent = raceMode === 'player'
         ? (Number(players.find(p => p.id === racePlayerId)?.team) === winner.team ? `🎉 Your ${winner.name} won!` : `🏆 ${winner.name} won the team race!`)
         : `🏆 ${winner.name} wins the team race!`;

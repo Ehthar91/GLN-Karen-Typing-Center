@@ -19,6 +19,7 @@
   // Accuracy Challenge: distance (percentage points) temporarily lost to wrong keys.
   // Keep text completion independent so correct characters are never erased.
   let raceReverseDebt=0;
+  let raceClientSequence=0;
   let observedRound='', observedProgress=new Map();
   const reverseFlashTimers=new WeakMap();
   // The only reverse boundary is the START line. Do not bank invisible
@@ -62,7 +63,7 @@
   closeRace=()=>{
     if(!restoringSession)forgetSession();
     clearInterval(dashboardTimer);dashboardTimer=null;
-    resumedOnceForRound='';expireUpdatePending=false;raceReverseDebt=0;observedRound='';observedProgress.clear();
+    resumedOnceForRound='';expireUpdatePending=false;raceReverseDebt=0;raceClientSequence=0;observedRound='';observedProgress.clear();
     originalCloseRace();
   };
   const originalWatchRace=watchRace;
@@ -178,6 +179,7 @@
         resumedOnceForRound=key;
         const saved=readSession();
         const me=(data.players||[]).find(p=>p.id===racePlayerId);
+        raceClientSequence=Math.max(0,Number(me?.lastClientSequence)||0);
         raceReverseDebt=0; // Never carry a previous round's penalty forward.
         if(sameIdentity(saved)&&saved.roundId===roundId&&saved.passage===racePassageText&&
            racePassageText.startsWith(saved.typed||'')){
@@ -267,15 +269,21 @@
     // At passage completion, the car crosses the finish line; until then the
     // position really is reduced and drives the shared live standings.
     const progress=finished?100:Math.max(0,rawProgress-penalty);
-    // Do not overwrite a finish timestamp when Firebase receives delayed writes.
-    try{
+    // Use a player-scoped transaction: an in-flight Chromebook update from an
+    // earlier round must NEVER revive progress after Race Again. These writes
+    // also remain ordered when a student types quickly or briefly disconnects.
+    try {
       const target=playerRef(raceCode,racePlayerId);
-      const previous=currentPlayer(room);
-      if(previous?.finishedAt)return;
-      await fb.update(target,{progress,typedCount:raceTyped.length,errors:raceErrors,wpm,accuracy,
+      const roundId=String(room.roundId||room.startedAt||'');
+      const sequence=++raceClientSequence;
+      const payload={progress,typedCount:raceTyped.length,errors:raceErrors,wpm,accuracy,
         wordErrors:window.GLNRaceVocabulary?.serialize()||null,
-        reverseDebt:penalty,lastProgressAt:raceNow(),finishedAt:finished?raceNow():0});
-      if(finished)raceEl('racePrompt').textContent=`Finished! ${wpm} WPM · ${accuracy}% accuracy`;
+        reverseDebt:penalty,lastProgressAt:raceNow(),lastClientSequence:sequence,
+        finishedAt:finished?raceNow():0};
+      const result=await fb.runTransaction(target,previous=>
+        window.GLNRaceReliability?.applyProgress(previous,{roundId,managed:room.reliabilityV51===true,sequence,payload})
+      ,{applyLocally:false});
+      if(finished&&result.committed)raceEl('racePrompt').textContent=`Finished! ${wpm} WPM · ${accuracy}% accuracy`;
     }catch(error){console.warn('Car Race: progress not synced',error)}
   };
 
