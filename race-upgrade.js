@@ -156,7 +156,7 @@
         const customPassage=room.randomize?storedRacePassage(shuffleRaceWords(info.text),raceRoomLanguage):room.passage;
         const player={id:currentUser.uid,name,progress:0,typedCount:0,errors:0,wpm:0,accuracy:100,
           reverseDebt:0,color:Number(raceEl('raceCarColor').value)||0,avatar:Number(raceEl('raceAvatar').value)||0,
-          team:room.teamCount?(players.length%room.teamCount)+1:0,customPassage,joinedAt:raceNow(),finishedAt:0};
+          team:window.GLNRaceTeams?.assign(players,room.teamCount)|| (room.teamCount?(players.length%room.teamCount)+1:0),customPassage,joinedAt:raceNow(),finishedAt:0};
         const update={[`players/${currentUser.uid}`]:player};
         if(removed?.allowRejoin)update[`removedPlayers/${currentUser.uid}`]=null;
         await fb.update(roomRef(code),update);

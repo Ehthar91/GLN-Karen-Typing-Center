@@ -1,0 +1,40 @@
+/* Classroom Car Race v5.0 — team racing without additional image assets. */
+#raceV5TeamSetup[hidden],#raceV5LobbyTeams[hidden],#raceV5TeamBoard[hidden],#raceV5TeamResults[hidden],#raceV5PlayerTeam[hidden]{display:none!important}
+#raceV5TeamSetup{min-width:0;display:grid;gap:6px;border:1px solid #4d91bd66;border-radius:12px;background:#316fa018;padding:12px;margin:8px 0}
+#raceV5TeamSetup label{display:grid;gap:6px;font-weight:750;font-size:.84rem;min-width:0}
+#raceV5TeamSetup select{width:100%;min-width:0;max-width:100%;box-sizing:border-box;min-height:41px}
+#raceV5TeamSetup p{font-size:.74rem;margin:0;opacity:.75;line-height:1.45}
+.race-v5-lobby{border:1px solid #5296bc79;border-radius:13px;background:#4383ab12;padding:12px;margin:10px 0}
+.race-v5-lobby-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#raceV5Balance{border:1px solid #72b2e198;border-radius:9px;background:#1a5483;color:#fff;padding:7px 13px;cursor:pointer;font-weight:800}
+#raceV5Balance:disabled{opacity:.6}
+.race-v5-lobby-counts{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.race-v5-team-count{border:1px solid var(--team-accent);border-left:5px solid var(--team-accent);background:#081b335e;color:inherit;border-radius:8px;padding:7px 10px;font-weight:800;font-size:.78rem}
+.race-v5-note{margin:9px 0 0;font-size:.77rem;opacity:.78}
+#lobbyPlayers .lobby-player-chip[data-team]:not([data-team="0"]){border-left:5px solid var(--team-accent)}
+#lobbyPlayers .race-v5-assign{min-width:0;max-width:155px;width:auto;min-height:33px;padding:5px;border-radius:7px;border:1px solid #7297c5;background:#122c4d;color:#fff;font:inherit;font-size:.76rem;margin-left:auto;cursor:pointer}
+.race-v5-team-board{background:#09172edb;border:1px solid #5688bb77;border-radius:15px;padding:13px;margin:13px 0;color:#f1f7ff}
+.race-v5-board-header{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:11px}
+.race-v5-board-header strong{font-size:1rem}
+.race-v5-board-header span{font-size:.74rem;color:#afcde4}
+.race-v5-board-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:9px}
+.race-v5-team-card{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:5px 7px;padding:10px;background:#19304c;border:1px solid #46688c;border-top:4px solid var(--team-accent);border-radius:10px;min-width:0}
+.race-v5-team-card.is-leading{box-shadow:inset 0 0 0 1px var(--team-accent)}
+.race-v5-team-card strong{font-size:.83rem;overflow-wrap:anywhere}
+.race-v5-team-card span{font-size:.69rem;color:#d7e9f9;text-align:right}
+.race-v5-team-meter{grid-column:1/-1;height:7px;background:#071426;border-radius:10px;overflow:hidden}
+.race-v5-team-meter i{display:block;height:100%;border-radius:10px;background:var(--team-accent);transition:width .45s ease}
+.race-v5-team-mode #teamScoreboard{display:none!important}
+.race-v5-team-mode .race-lane[data-team]:not([data-team=""]){border-left:5px solid var(--team-accent)}
+.race-v5-team-mode .race-leaderboard-row.has-team{border-left:4px solid var(--team-accent)}
+.race-v5-player-badge{border:1px solid var(--team-accent);background:#062942;color:#fff;padding:5px 10px;border-radius:8px;font-weight:800}
+.race-v5-team-results{display:grid;gap:10px;margin:14px auto 25px;max-width:780px;text-align:center;padding:16px 13px;background:linear-gradient(115deg,#17355d,#16446c);border:1px solid #5da9e477;border-radius:14px;color:#fff}
+.race-v5-team-results h3{margin:0;font-size:clamp(1.1rem,3vw,1.75rem);color:#fff;text-shadow:0 0 12px var(--team-accent,#fff)}
+.race-v5-team-results p{font-size:.78rem;margin:0;color:#c8e3f9}
+.race-v5-results-lineup{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:9px}
+.race-v5-results-team{display:flex;flex-direction:column;gap:4px;border-radius:10px;padding:10px;background:#091c35a9;border-top:4px solid var(--team-accent)}
+.race-v5-results-team strong{font-size:.9rem}
+.race-v5-results-team span{font-size:.75rem;color:#c4dcef}
+@media(max-width:650px){#lobbyPlayers .race-v5-assign{max-width:100%;width:100%;margin:6px 0 0}.race-v5-team-card{padding:8px}.race-v5-team-board{padding:9px}}
+@media(prefers-reduced-motion:reduce){.race-v5-team-meter i{transition:none}}
+@media print{#raceV5TeamBoard{display:none!important}.race-v5-team-results{color:#000;background:#fff;border:1px solid #777}.race-v5-team-results h3{color:#000;text-shadow:none}.race-v5-team-results p,.race-v5-results-team span{color:#222}.race-v5-results-team{background:#eee;color:#000}}
