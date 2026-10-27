@@ -1,0 +1,168 @@
+/* Classroom Car Race: wide browser viewport for live teacher and student racing.
+   Applies only while #raceLive is visible; setup, other games and site tools are untouched. */
+@media screen {
+  #gamesView:has(> #raceStage:not([hidden]) #raceLive:not([hidden])) {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 10px clamp(10px, 1.25vw, 24px) 16px;
+  }
+  #gamesView:has(> #raceStage:not([hidden]) #raceLive:not([hidden])) > .games-heading,
+  #gamesView:has(> #raceStage:not([hidden]) #raceLive:not([hidden])) > .privacy {
+    display: none !important;
+  }
+  #gamesView:has(> #raceStage:not([hidden]) #raceLive:not([hidden])) > #raceStage {
+    width: 100%;
+    max-width: none;
+    min-height: calc(100dvh - 78px - 26px);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  #raceStage #raceLive:not([hidden]) {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  #raceStage #raceLive:not([hidden]):not(.show-results) > .race-dashboard {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 320px;
+  }
+
+  /* Teacher: track uses the available width and height; scoreboard is proportional. */
+  #raceStage #raceLive.teacher-view:not(.show-results) > .race-dashboard {
+    grid-template-columns: minmax(0, 4fr) minmax(260px, 1fr);
+    min-height: 420px;
+  }
+  #raceStage #raceLive.teacher-view .race-dashboard .race-leaderboard-list {
+    flex: 1 1 auto;
+    max-height: none;
+  }
+  #raceStage #raceLive.teacher-view .race-dashboard .race-track:not(.density-compact) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  #raceStage #raceLive.teacher-view .race-dashboard .race-track:not(.density-compact) .race-lane {
+    height: auto;
+    min-height: clamp(62px, 8dvh, 108px);
+    flex: 1 0 auto;
+  }
+
+  /* Student: taller, wider race track without sacrificing typing space. */
+  #raceStage #raceLive:not(.teacher-view):not(.show-results) > .race-dashboard {
+    display: flex;
+    flex-direction: column;
+  }
+  #raceStage #raceLive:not(.teacher-view) .race-dashboard .race-track:not([hidden]) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  #raceStage #raceLive:not(.teacher-view) .race-dashboard .race-track .race-lane {
+    height: auto;
+    min-height: clamp(60px, 7dvh, 102px);
+    flex: 1 0 auto;
+  }
+  #raceStage #raceLive:not(.teacher-view) > .race-passage,
+  #raceStage #raceLive:not(.teacher-view) > .race-prompt {
+    width: min(1100px, calc(100% - 32px));
+  }
+  #raceStage #raceLive:not(.teacher-view) > .race-passage {
+    margin-top: 10px;
+    margin-bottom: 8px;
+    font-size: clamp(2rem, 3.6vw, 3.8rem);
+  }
+  #raceStage #raceLive:not(.teacher-view) > .race-keyboard {
+    width: min(1300px, 100%);
+    align-self: center;
+  }
+
+  /* Relay mode replaces per-student tracks with a shared team-car track. */
+  #raceStage.race-v52-mode #raceLive:not(.show-results) > .race-dashboard {
+    display: none !important;
+  }
+  #raceStage.race-v52-mode #raceLive:not(.show-results) > #raceV52Board:not([hidden]) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 10px 12px;
+    min-height: 250px;
+  }
+  #raceStage.race-v52-mode .race-v52-track {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1 1 auto;
+  }
+  #raceStage.race-v52-mode .race-v52-team {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  #raceStage.race-v52-mode .race-v52-lane {
+    height: clamp(56px, 9dvh, 120px);
+  }
+  #raceStage.race-v52-mode .race-v52-lane img {
+    height: 90%;
+    width: clamp(75px, 10vw, 150px);
+  }
+
+  /* Existing browser Full Screen control remains the only true fullscreen trigger. */
+  #raceStage:fullscreen,
+  #raceStage.is-fullscreen {
+    min-height: 100dvh !important;
+    overflow-y: auto;
+  }
+}
+@media screen and (max-width: 980px) {
+  #raceStage #raceLive.teacher-view:not(.show-results) > .race-dashboard {
+    grid-template-columns: minmax(0, 2.5fr) minmax(215px, 1fr);
+  }
+}
+@media screen and (max-width: 850px) {
+  #raceStage #raceLive.teacher-view:not(.show-results) > .race-dashboard {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 550px;
+  }
+  #raceStage #raceLive.teacher-view .race-dashboard .race-track:not(.density-compact) {
+    min-height: 300px;
+  }
+  #raceStage #raceLive.teacher-view .race-leaderboard-list {
+    max-height: 260px;
+  }
+}
+@media screen and (max-width: 720px) {
+  #gamesView:has(> #raceStage:not([hidden]) #raceLive:not([hidden])) {
+    padding: 6px 8px 12px;
+  }
+  #gamesView:has(> #raceStage:not([hidden]) #raceLive:not([hidden])) > #raceStage {
+    min-height: calc(100dvh - 68px - 18px);
+  }
+  #raceStage #raceLive:not(.teacher-view) > .race-passage {
+    width: calc(100% - 16px);
+    font-size: clamp(1.7rem, 7vw, 2.8rem);
+  }
+  #raceStage #raceLive:not(.teacher-view):not(.show-results) > .race-dashboard {
+    min-height: 260px;
+  }
+  #raceStage.race-v52-mode #raceLive:not(.show-results) > #raceV52Board:not([hidden]) {
+    margin: 8px;
+  }
+}
+@media screen and (max-height: 650px) and (min-width: 851px) {
+  #raceStage #raceLive.teacher-view:not(.show-results) > .race-dashboard {
+    min-height: 300px;
+  }
+  #raceStage #raceLive:not(.teacher-view):not(.show-results) > .race-dashboard {
+    min-height: 230px;
+  }
+}
