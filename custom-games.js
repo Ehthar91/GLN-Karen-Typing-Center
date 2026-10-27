@@ -44,12 +44,42 @@ let tugClassStarted=false;
 let tugFinishing=false;
 let tugPromptStartedAt=0;
 let tugPromptErrors=0;
+let tugPromptPauseBase=0;
 let tugCorrectChars=0;
 let tugAttemptedChars=0;
 let tugErrors=0;
 let tugGameStartedAt=0;
 let tugPreviewToken=0;
 let tugLastScores={};
+let tugRoundTicker=null;
+let tugOffsetUnsubscribe=null;
+let tugServerOffset=0;
+const TUG_RECOVERY_KEY='glnTugRecoveryV2';
+const TUG_LISTS_KEY='glnTugSavedListsV2';
+function tugSavedLists(){try{return JSON.parse(localStorage.getItem(TUG_LISTS_KEY)||'{}')||{}}catch{return{}}}
+function refreshTugSavedLists(){const select=cq('#tugSavedList');if(!select)return;const current=select.value;select.replaceChildren(new Option('Choose a saved vocabulary list…',''));Object.keys(tugSavedLists()).sort().forEach(name=>select.add(new Option(name,name)));if(tugSavedLists()[current])select.value=current}
+function tugSaveRecovery(){if(tugCode&&tugRole)sessionStorage.setItem(TUG_RECOVERY_KEY,JSON.stringify({code:tugCode,role:tugRole,uid:currentUser?.uid||'',name:tugPlayerName,index:customIndex,value:customValue,round:tugRoom?.startedAt||0,correct:tugCorrectChars,attempted:tugAttemptedChars,errors:tugErrors,promptErrors:tugPromptErrors}))}
+function tugGetRecovery(){try{return JSON.parse(sessionStorage.getItem(TUG_RECOVERY_KEY)||'null')}catch{return null}}
+function tugMode(room=tugRoom){return ['classic','accuracy','balanced'].includes(room?.scoringMode)?room.scoringMode:'classic'}
+function tugPenalty(room=tugRoom){const n=Number(room?.wrongKeyPenalty);return [1,2,3].includes(n)?n:1}
+function tugNow(){return Date.now()+tugServerOffset}
+function tugCanType(){return customMode!=='tug'||(tugRoom?.status==='playing'&&tugNow()>=(Number(tugRoom?.startsAt)||Number(tugRoom?.startedAt)||0)&&!Boolean(tugRoom?.players?.[tugPlayerId]?.finished))}
+function tugPausedMilliseconds(room=tugRoom){return Math.max(0,Number(room?.pausedMs)||0)+(room?.status==='paused'?Math.max(0,tugNow()-(Number(room.pausedAt)||tugNow())):0)}
+function tugUpdateOverlay(){
+  const overlay=cq('#tugRoundOverlay');if(!overlay)return;
+  const active=customMode==='tug'&&tugRole==='player'&&!customLive.hidden;
+  if(!active){overlay.hidden=true;return}
+  const seconds=Math.ceil(((Number(tugRoom?.startsAt)||0)-tugNow())/1000);
+  const paused=tugRoom?.status==='paused';
+  overlay.hidden=!(paused||seconds>0);
+  if(!overlay.hidden){cq('#tugRoundOverlayText').textContent=paused?'PAUSED':seconds>3?'GET READY':String(seconds);cq('#tugRoundOverlayHint').textContent=paused?'Teacher paused the game':'Type when the countdown reaches GO'}
+}
+function tugSyncScoringHelp(){const mode=cq('#tugScoringMode')?.value||'classic';const row=cq('#tugPenaltyRow');if(row)row.hidden=mode==='classic';const note=cq('#tugScoringHelp');if(note)note.textContent=mode==='classic'?'Each correct prompt earns 1 pull. Fast, error-free typing earns a bonus pull.':mode==='accuracy'?'Clean typing pulls harder. Every wrong key removes earned pulls (down to zero), without a maximum penalty cap.':'Speed and precision both count. Wrong keys undo earned pulls; fast, error-free words earn a bonus.'}
+cq('#tugScoringMode')?.addEventListener('change',tugSyncScoringHelp);
+cq('#tugSavedList')?.addEventListener('change',()=>{const value=tugSavedLists()[cq('#tugSavedList').value];if(value)cq('#tugWordsInput').value=value});
+cq('#tugSaveList')?.addEventListener('click',()=>{const value=cq('#tugWordsInput').value.trim();if(!value)return tugError('Add vocabulary before saving.');const name=prompt('Name this Tug of War list:',`Tug List ${Object.keys(tugSavedLists()).length+1}`);if(!name?.trim())return;const lists=tugSavedLists(),key=name.trim().slice(0,40);lists[key]=value;localStorage.setItem(TUG_LISTS_KEY,JSON.stringify(lists));refreshTugSavedLists();cq('#tugSavedList').value=key;showToast('Tug of War list saved')});
+cq('#tugDeleteList')?.addEventListener('click',()=>{const key=cq('#tugSavedList').value;if(!key)return;const lists=tugSavedLists();delete lists[key];localStorage.setItem(TUG_LISTS_KEY,JSON.stringify(lists));refreshTugSavedLists();showToast('Tug of War list deleted')});
+
 
 function customLists(){try{return JSON.parse(localStorage.getItem(customListKey)||'{}')}catch{return{}}}
 function writeCustomLists(value){localStorage.setItem(customListKey,JSON.stringify(value))}
@@ -179,8 +209,9 @@ function tugConsumeScoreBursts(players){
 function tugClearVisualEffects(arena){
   if(!arena)return;
   clearTimeout(arena._tugImpactTimer);
+  clearTimeout(arena._tugRecoilTimer);
   clearTimeout(arena._tugVictoryTimer);
-  arena.classList.remove('tug-impact-red','tug-impact-blue','tug-victory-red','tug-victory-blue','tug-victory-tie');
+  arena.classList.remove('tug-impact-red','tug-impact-blue','tug-recoil-red','tug-recoil-blue','tug-victory-red','tug-victory-blue','tug-victory-tie');
   arena.querySelector('.tug-celebration-layer')?.remove();
   delete arena.dataset.tugVictoryKey;
 }
@@ -198,9 +229,11 @@ function tugAnimateScoreChange(arena,room,players){
   }
   const redGain=Math.max(0,red-Number(arena.dataset.tugRedTotal||0));
   const blueGain=Math.max(0,blue-Number(arena.dataset.tugBlueTotal||0));
+  const redLoss=Math.max(0,Number(arena.dataset.tugRedTotal||0)-red);
+  const blueLoss=Math.max(0,Number(arena.dataset.tugBlueTotal||0)-blue);
   arena.dataset.tugRedTotal=String(red);
   arena.dataset.tugBlueTotal=String(blue);
-  if(!redGain&&!blueGain)return;
+  if(!redGain&&!blueGain){if(redLoss||blueLoss){const team=redLoss>blueLoss?'red':'blue';arena.classList.remove('tug-recoil-red','tug-recoil-blue');void arena.offsetWidth;arena.classList.add('tug-recoil-'+team);clearTimeout(arena._tugRecoilTimer);arena._tugRecoilTimer=setTimeout(()=>arena.classList.remove('tug-recoil-red','tug-recoil-blue'),400)}return;}
   // When the two sides score simultaneously, show the team with the stronger
   // burst. Neither team is favored when the bursts are equal.
   const direction=redGain>blueGain?'red':blueGain>redGain?'blue':'';
@@ -384,19 +417,19 @@ function renderTugTeamChoice(){
 cq('#tugChooseRed').onclick=()=>{if(!cq('#tugChooseRed').disabled){tugSelectedTeam='red';renderTugTeamChoice()}};
 cq('#tugChooseBlue').onclick=()=>{if(!cq('#tugChooseBlue').disabled){tugSelectedTeam='blue';renderTugTeamChoice()}};
 
-function closeTugRoom(){
+function closeTugRoom(forget=true){
   if(tugUnsubscribe){tugUnsubscribe();tugUnsubscribe=null}
   tugClearVisualEffects(cq('#tugTeacherArena'));
   tugClearVisualEffects(cq('#tugWorld'));
   [cq('#tugTeacherArena'),cq('#tugWorld')].forEach(arena=>{if(arena){delete arena.dataset.tugRoundKey;delete arena.dataset.tugRedTotal;delete arena.dataset.tugBlueTotal}});
   const result=cq('#customGameResults');
   if(result){result.classList.remove('tug-result-finish','tug-result-won','tug-result-tie');result.querySelector('.tug-celebration-confetti')?.remove();delete result.dataset.tugVictoryKey;clearTimeout(result._tugVictoryTimer)};
-  tugRoom=null;tugClassStarted=false;tugFinishing=false;tugPlayerKeyboardLanguage='ksw';tugPlayerKeyboardMode='ksw';tugPhysicalShiftHeld=false;tugCode='';tugRole='';tugPlayerId='';tugPlayerName='';tugSelectedTeam='';tugTeam='';tugLastScores={};
+  clearInterval(tugRoundTicker);tugRoundTicker=null;if(tugOffsetUnsubscribe){tugOffsetUnsubscribe();tugOffsetUnsubscribe=null}if(forget)sessionStorage.removeItem(TUG_RECOVERY_KEY);tugRoom=null;tugClassStarted=false;tugFinishing=false;tugPlayerKeyboardLanguage='ksw';tugPlayerKeyboardMode='ksw';tugPhysicalShiftHeld=false;tugCode='';tugRole='';tugPlayerId='';tugPlayerName='';tugSelectedTeam='';tugTeam='';tugLastScores={};
 }
 function openCustomGame(mode){
   stopGame();
   if(typeof closeRace==='function')closeRace();
-  closeTugRoom();
+  closeTugRoom(false);
   customMode=mode;
   gameGrid.hidden=true;gameStage.hidden=true;
   const raceStage=cq('#raceStage');if(raceStage)raceStage.hidden=true;
@@ -415,12 +448,12 @@ function openCustomGame(mode){
     customError('');refreshCustomLists();
   }else{
     customSetup.hidden=true;cq('#tugClassSetup').hidden=false;tugError('');
-    cq('#tugConnection').textContent='Connecting…';
+    cq('#tugConnection').textContent='Connecting…';refreshTugSavedLists();tugSyncScoringHelp();
     cq('#tugLanguage').value=normalizeTugLanguage(typingLanguage);cq('#tugHostAuto').checked=false;tugUpdateDraftLanguage();
     cq('#tugCodeInput').value='';cq('#tugNameInput').value='';
     cq('#tugTeamField').hidden=true;cq('#tugJoinTeamNote').textContent='Enter a room code to see how teams are assigned.';
     tugAvatarIndex=0;tugSelectedTeam='';renderTugAvatarPicker();renderTugTeamChoice();
-    initRaceFirebase().then(()=>cq('#tugConnection').textContent='Online').catch(()=>cq('#tugConnection').textContent='Offline');
+    initRaceFirebase().then(async()=>{cq('#tugConnection').textContent='Online';await tugTryRestore()}).catch(()=>cq('#tugConnection').textContent='Offline');
   }
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -470,7 +503,7 @@ function nextCustomChallenge(){
   }else{
     cq('#customLives').textContent=tugTeam==='red'?'A':'B';
     cq('#customLives').className=tugTeam==='red'?'team-red-text':'team-blue-text';
-    tugPromptStartedAt=performance.now();tugPromptErrors=0;
+    tugPromptStartedAt=performance.now();tugPromptPauseBase=tugPausedMilliseconds();tugPromptErrors=0;tugSaveRecovery();
   }
   renderCustomTarget();renderCustomKeyboard();
 }
@@ -539,37 +572,43 @@ function renderCustomKeyboard(){
   renderEasyCustomKeyboard(box)
 }
 function customBackspace(){
-  if(!customValue)return;
+  if(!customValue||!tugCanType())return;
   customValue=customValue.slice(0,previousTextBoundary(customValue,customValue.length));
-  cq('#customTyped').textContent=customValue;renderCustomTarget();renderCustomKeyboard();
+  cq('#customTyped').textContent=customValue;renderCustomTarget();renderCustomKeyboard();if(customMode==='tug')tugSaveRecovery();
 }
 function currentTugAccuracy(){return tugAttemptedChars?Math.max(0,Math.min(100,(tugCorrectChars/tugAttemptedChars)*100)):0}
 function currentTugWpm(){
-  const elapsed=Math.max(1,(Date.now()-tugGameStartedAt)/1000);
+  const elapsed=Math.max(1,(tugNow()-Math.max(tugGameStartedAt,Number(tugRoom?.startsAt)||0)-tugPausedMilliseconds())/1000);
   return Math.max(0,(tugCorrectChars/5)/(elapsed/60));
 }
 function syncTugPlayer(finished=false){
-  if(tugRole!=='player'||!tugCode||!tugPlayerId||!fb)return Promise.resolve();
-  return fb.update(tugPlayerRef(tugCode,tugPlayerId),{
-    score:customScore,index:customIndex,finished:!!finished,finishedAt:finished?Date.now():0,
+  if(tugRole!=='player'||!tugCode||!tugPlayerId||!fb||tugRoom?.status!=='playing')return Promise.resolve();
+  const roundStartedAt=Number(tugRoom.startedAt)||0;
+  const progress={score:Math.min(100,Math.max(0,customScore)),index:customIndex,finished:!!finished,finishedAt:finished?tugNow():0,
     correctChars:tugCorrectChars,attemptedChars:tugAttemptedChars,errors:tugErrors,
-    wpm:Number(currentTugWpm().toFixed(1)),accuracy:Number(currentTugAccuracy().toFixed(1))
-  }).catch(()=>{});
+    wpm:Number(Math.min(500,currentTugWpm()).toFixed(1)),accuracy:Number(currentTugAccuracy().toFixed(1)),roundStartedAt};
+  // A stale Chromebook write must never overwrite Race Again or a newer word.
+  return fb.runTransaction(tugPlayerRef(tugCode,tugPlayerId),prior=>{
+    if(!prior||Number(prior.roundStartedAt||0)!==roundStartedAt||prior.finished)return;
+    if((Number(prior.index)||0)>customIndex)return;
+    if((Number(prior.index)||0)===customIndex&&(Number(prior.attemptedChars)||0)>tugAttemptedChars)return;
+    return {...prior,...progress};
+  },{applyLocally:false}).catch(()=>{});
 }
 function acceptCustomInput(value){
-  if(customLive.hidden||!customItems[customIndex])return;
+  if(customLive.hidden||!customItems[customIndex]||!tugCanType())return;
   const remaining=customItems[customIndex].slice(customValue.length);
   const units=Math.max(1,textUnits(value));
   if(remaining.startsWith(value)){
     if(customMode==='tug'){tugAttemptedChars+=units;tugCorrectChars+=units}
-    customValue+=value;cq('#customTyped').textContent=customValue;renderCustomTarget();
+    customValue+=value;cq('#customTyped').textContent=customValue;renderCustomTarget();if(customMode==='tug')tugSaveRecovery();
     if(customValue===customItems[customIndex]){
       if(customMode==='tug'){
-        const elapsed=Math.max(.5,(performance.now()-tugPromptStartedAt)/1000);
+        const elapsed=Math.max(.5,(performance.now()-tugPromptStartedAt-(tugPausedMilliseconds()-tugPromptPauseBase))/1000);
         const promptWpm=(textUnits(customItems[customIndex])/5)/(elapsed/60);
         const bonus=promptWpm>=speedBonusWpm()&&tugPromptErrors===0?1:0;
-        customScore+=1+bonus;customIndex++;
-        syncTugPlayer(customIndex>=customItems.length);nextCustomChallenge();
+        customScore+=tugMode()==='accuracy'?(tugPromptErrors===0?2:1):(1+bonus);customIndex++;
+        tugSaveRecovery();syncTugPlayer(customIndex>=customItems.length);nextCustomChallenge();
       }else{
         customScore++;customIndex++;nextCustomChallenge();
       }
@@ -577,7 +616,7 @@ function acceptCustomInput(value){
   }else{
     const feedback=cq('#customTyped');feedback.classList.add('wrong');
     clearTimeout(feedback._wrongTimer);feedback._wrongTimer=setTimeout(()=>feedback.classList.remove('wrong'),300);
-    if(customMode==='tug'){tugAttemptedChars+=units;tugErrors++;tugPromptErrors++}
+    if(customMode==='tug'){tugAttemptedChars+=units;tugErrors++;tugPromptErrors++;if(tugMode()!=='classic')customScore=Math.max(0,customScore-tugPenalty());tugSaveRecovery();syncTugPlayer(false)}
     else if(customDifficulty()==='hard'){customLives--;nextCustomChallenge()}
   }
 }
@@ -596,7 +635,8 @@ function finishCustomGame(){
 }
 
 function tugTeamStats(players){
-  const groups={red:players.filter(p=>p.team==='red'),blue:players.filter(p=>p.team==='blue')};
+  const eligible=tugRoom?.scoredRoster&&tugRoom.status!=='waiting'?players.filter(p=>tugRoom.scoredRoster.includes(p.id)&&!p.lateJoin):players.filter(p=>!p.lateJoin);
+  const groups={red:eligible.filter(p=>p.team==='red'),blue:eligible.filter(p=>p.team==='blue')};
   const calc=list=>{const total=list.reduce((sum,p)=>sum+(Number(p.score)||0),0);return{players:list,total,avg:list.length?total/list.length:0}};
   return{red:calc(groups.red),blue:calc(groups.blue)};
 }
@@ -639,11 +679,11 @@ cq('#tugCreateForm').onsubmit=async event=>{
       const code=makeTugCode(),ref=tugRoomRef(code),existing=await fb.get(ref);
       if(existing.exists())continue;
       const now=Date.now(),challenges=shuffledChallenges(source,count),items=challenges.map(entry=>entry.text),itemLanguages=challenges.map(entry=>entry.language||'');
-      await fb.set(ref,{hostUid:currentUser.uid,items,itemLanguages,difficulty:normalizeTugDifficulty(cq('#tugDifficulty').value),challengeCount:items.length,language:selectedLanguage,keyboardMode:cq('#tugHostAuto').checked?'auto':'manual',teamMode:cq('#tugTeamMode').value,winLead:TUG_WIN_LEAD,status:'waiting',winner:'',createdAt:now,expiresAt:now+14400000,startedAt:0,finishedAt:0,players:{}});
+      await fb.set(ref,{hostUid:currentUser.uid,items,itemLanguages,difficulty:normalizeTugDifficulty(cq('#tugDifficulty').value),challengeCount:items.length,language:selectedLanguage,keyboardMode:cq('#tugHostAuto').checked?'auto':'manual',teamMode:cq('#tugTeamMode').value,scoringMode:cq('#tugScoringMode').value,wrongKeyPenalty:Number(cq('#tugPenalty').value)||1,winLead:TUG_WIN_LEAD,status:'waiting',winner:'',createdAt:now,expiresAt:now+14400000,startedAt:0,startsAt:0,pausedAt:0,pausedMs:0,finishedAt:0,players:{}});
       tugCode=code;created=true;
     }
     if(!created)throw new Error('Could not create a room. Please try again.');
-    tugRole='host';tugPlayerId='';tugSyncHeaderLanguage(selectedLanguage);showTugLobby({players:[]});watchTugRoom();
+    tugRole='host';tugPlayerId='';tugSyncHeaderLanguage(selectedLanguage);tugSaveRecovery();showTugLobby({players:[]});watchTugRoom();
   }catch(error){tugError(error.message||'Could not create the Tug of War room.')}
 };
 
@@ -660,7 +700,7 @@ async function previewTugRoom(){
     const room=snap.val(),players=Object.values(room.players||{}),stats=tugTeamStats(players);
     cq('#tugJoinLanguage').textContent=`This room starts with the ${tugLanguageName(room.language)} keyboard. You can switch your own keyboard during play.`;
     cq('#tugJoinLanguage').hidden=false;
-    if(room.teamMode==='choose'){
+    if(room.teamMode==='choose'&&room.status==='waiting'){
       cq('#tugTeamField').hidden=false;
       const redBlocked=stats.red.players.length>stats.blue.players.length;
       const blueBlocked=stats.blue.players.length>stats.red.players.length;
@@ -683,12 +723,13 @@ cq('#tugJoinForm').onsubmit=async event=>{
     const snap=await fb.get(tugRoomRef(code));if(!snap.exists())throw new Error('Tug of War room not found. Check the code.');
     const room=snap.val();
     if(room.expiresAt&&room.expiresAt<Date.now())throw new Error('This Tug of War room has expired.');
-    if(room.status!=='waiting')throw new Error('This Tug of War game has already started.');
+    if(!['waiting','playing','paused'].includes(room.status))throw new Error('This Tug of War game is already finished.');
     const players=Object.values(room.players||{});
     if(players.length>=40)throw new Error('This room is full.');
     if(players.some(player=>String(player.name||'').toLowerCase()===rawName.toLowerCase()&&player.id!==currentUser.uid))throw new Error('That name is already in this room. Add an initial.');
     let team='unassigned';
-    if(room.teamMode==='random')team=chooseBalancedTeam(players);
+    if(room.status!=='waiting')team=chooseBalancedTeam(players);
+    else if(room.teamMode==='random')team=chooseBalancedTeam(players);
     else if(room.teamMode==='choose'){
       if(!['red','blue'].includes(tugSelectedTeam))throw new Error('Choose Team A or Team B.');
       const stats=tugTeamStats(players);
@@ -697,9 +738,9 @@ cq('#tugJoinForm').onsubmit=async event=>{
       team=tugSelectedTeam;
     }
     tugCode=code;tugRole='player';tugPlayerId=currentUser.uid;tugPlayerName=rawName;tugTeam=team;tugSyncHeaderLanguage(room.language);
-    const player={id:currentUser.uid,name:rawName,avatar:tugAvatarIndex,team,score:0,index:0,finished:false,joinedAt:Date.now(),finishedAt:0,correctChars:0,attemptedChars:0,errors:0,wpm:0,accuracy:0};
-    await fb.set(tugPlayerRef(code,currentUser.uid),player);
-    showTugLobby({players:[...players.filter(p=>p.id!==currentUser.uid),player]});watchTugRoom();
+    const prior=room.players?.[currentUser.uid];const player=prior||{id:currentUser.uid,name:rawName,avatar:tugAvatarIndex,team,score:0,index:0,finished:false,joinedAt:Date.now(),finishedAt:0,correctChars:0,attemptedChars:0,errors:0,wpm:0,accuracy:0,roundStartedAt:room.status==='waiting'?0:(Number(room.startedAt)||0),lateJoin:room.status!=='waiting'};
+    if(!prior)await fb.set(tugPlayerRef(code,currentUser.uid),player);
+    tugSaveRecovery();showTugLobby({players:[...players.filter(p=>p.id!==currentUser.uid),player]});watchTugRoom();
   }catch(error){tugError(error.message||'Could not join the Tug of War room.')}
 };
 
@@ -708,7 +749,7 @@ function showTugLobby(data){
   cq('#tugRoomCode').textContent=tugCode;
   tugUpdateRoomLanguage(tugRoom?.language||customLanguage);
   const host=tugRole==='host';
-  cq('#startTugRoom').hidden=!host;
+  cq('#startTugRoom').hidden=!host;cq('#tugBalanceTeams').hidden=!host;
   cq('#tugLobbyTitle').textContent=host?'Waiting for players':tugTeam==='unassigned'?'You joined! Waiting for a team':'You joined '+teamLabel(tugTeam)+'!';
   cq('#tugLobbyHint').textContent=host?'Share the room code. Start when both teams are ready.':tugTeam==='unassigned'?'Your avatar is ready. The host will place you on a team.':'Your avatar is ready. Wait for the host to start.';
   renderTugLobbyPlayers(data.players||[]);
@@ -757,17 +798,19 @@ cq('#startTugRoom').onclick=async()=>{
     if(room.hostUid!==currentUser.uid)throw new Error('Only the host can start this game.');
     if(!stats.red.players.length||!stats.blue.players.length)throw new Error('Both teams need at least one player.');
     if(players.some(p=>!['red','blue'].includes(p.team)))throw new Error('Assign every player to a team first.');
-    const updates={status:'playing',winner:'',startedAt:Date.now(),finishedAt:0};
-    Object.keys(room.players||{}).forEach(uid=>{updates[`players/${uid}/score`]=0;updates[`players/${uid}/index`]=0;updates[`players/${uid}/finished`]=false;updates[`players/${uid}/finishedAt`]=0;updates[`players/${uid}/correctChars`]=0;updates[`players/${uid}/attemptedChars`]=0;updates[`players/${uid}/errors`]=0;updates[`players/${uid}/wpm`]=0;updates[`players/${uid}/accuracy`]=0});
+    const now=tugNow();const updates={status:'playing',winner:'',startedAt:now,startsAt:now+3500,pausedAt:0,pausedMs:0,scoredRoster:players.map(p=>p.id),finishedAt:0};
+    Object.keys(room.players||{}).forEach(uid=>{updates[`players/${uid}/score`]=0;updates[`players/${uid}/index`]=0;updates[`players/${uid}/finished`]=false;updates[`players/${uid}/finishedAt`]=0;updates[`players/${uid}/correctChars`]=0;updates[`players/${uid}/attemptedChars`]=0;updates[`players/${uid}/errors`]=0;updates[`players/${uid}/wpm`]=0;updates[`players/${uid}/accuracy`]=0;updates[`players/${uid}/roundStartedAt`]=now});
     await fb.update(tugRoomRef(tugCode),updates);
   }catch(error){cq('#tugLobbyHint').textContent=error.message}
 };
 
 function watchTugRoom(){
   if(tugUnsubscribe)tugUnsubscribe();
+  if(!tugRoundTicker)tugRoundTicker=setInterval(tugUpdateOverlay,250);
+  if(fb?.onValue&&!tugOffsetUnsubscribe){tugOffsetUnsubscribe=fb.onValue(fb.ref(db,'.info/serverTimeOffset'),snap=>{tugServerOffset=Number(snap.val())||0})}
   tugUnsubscribe=fb.onValue(tugRoomRef(tugCode),snap=>{
     if(!snap.exists()){tugError('This Tug of War room is no longer available.');return}
-    tugRoom=snap.val();cq('#tugConnection').textContent='Online';
+    tugRoom=snap.val();cq('#tugConnection').textContent='Online';tugUpdateOverlay();
     if(tugRole==='host'||tugRole==='player')tugSyncHeaderLanguage(tugRoom.language);
     const players=Object.values(tugRoom.players||{});
     if(tugRoom.status==='waiting'){
@@ -775,11 +818,12 @@ function watchTugRoom(){
       if(tugRole==='player'){const me=tugRoom.players?.[tugPlayerId];if(me)tugTeam=me.team}
       showTugLobby({players});return;
     }
-    if(tugRoom.status==='playing'){
+    if(tugRoom.status==='playing'||tugRoom.status==='paused'){
       if(tugRole==='host'){
         renderTugTeacherLive(tugRoom,players);
-        const allFinished=players.length>0&&players.every(player=>player.finished);
-        const outcome=tugOutcome(players,allFinished);
+        const counted=players.filter(p=>(!tugRoom.scoredRoster||tugRoom.scoredRoster.includes(p.id))&&!p.lateJoin);
+        const allFinished=counted.length>0&&counted.every(player=>player.finished);
+        const outcome=tugRoom.status==='playing'&&tugNow()>=(Number(tugRoom.startsAt)||0)?tugOutcome(counted,allFinished):null;
         if(outcome&&!tugFinishing){
           tugFinishing=true;
           fb.update(tugRoomRef(tugCode),{status:'finished',winner:outcome.winner,finishedAt:Date.now()}).finally(()=>tugFinishing=false);
@@ -805,12 +849,13 @@ function beginTugPlayer(room){
   customItems=Array.isArray(room.items)?room.items:Object.values(room.items||{});
   customIndex=Math.max(0,Math.min(customItems.length,Number(me.index)||0));
   customScore=Number(me.score)||0;customValue='';customLanguage=normalizeTugLanguage(room.language);customDifficultyMode=normalizeTugDifficulty(room.difficulty);customKeyboardShifted=false;
-  tugTeam=me.team;tugCorrectChars=Number(me.correctChars)||0;tugAttemptedChars=Number(me.attemptedChars)||0;tugErrors=Number(me.errors)||0;tugGameStartedAt=room.startedAt||Date.now();
+  tugTeam=me.team;tugCorrectChars=Number(me.correctChars)||0;tugAttemptedChars=Number(me.attemptedChars)||0;tugErrors=Number(me.errors)||0;tugGameStartedAt=room.startedAt||tugNow();
+  const recovered=tugGetRecovery();if(recovered?.code===tugCode&&recovered?.uid===tugPlayerId&&Number(recovered.round)===Number(room.startedAt)&&Number(recovered.index)===customIndex){customValue=String(recovered.value||'');tugCorrectChars=Math.max(tugCorrectChars,Number(recovered.correct)||0);tugAttemptedChars=Math.max(tugAttemptedChars,Number(recovered.attempted)||0);tugErrors=Math.max(tugErrors,Number(recovered.errors)||0);tugPromptErrors=Number(recovered.promptErrors)||0}
   cq('#tugLobby').hidden=true;cq('#tugClassSetup').hidden=true;cq('#tugTeacherLive').hidden=true;customResults.hidden=true;cq('#customResultActions').hidden=true;customLive.hidden=false;
   cq('#adventureWorld').hidden=true;cq('#tugWorld').hidden=false;cq('#customStatusLabel').textContent='Prompt';cq('#customLifeLabel').textContent='Team';
   cq('#customTarget').lang=languageTagFor(room.language);cq('#customTyped').lang=languageTagFor(room.language);
   tugUpdateRoomLanguage(customLanguage);cq('#tugPlayerLanguage').textContent=`Practice text: ${tugLanguageName(room.language)}`;cq('#tugPlayerLanguage').hidden=false;
-  updateTugPlayerArena(room,Object.values(room.players||{}));nextCustomChallenge();
+  updateTugPlayerArena(room,Object.values(room.players||{}));nextCustomChallenge();if(recovered?.value&&Number(recovered.index)===customIndex&&Number(recovered.round)===Number(room.startedAt)){customValue=String(recovered.value).slice(0,customItems[customIndex]?.length||0);tugPromptErrors=Number(recovered.promptErrors)||0;cq('#customTyped').textContent=customValue;renderCustomTarget();renderCustomKeyboard();tugSaveRecovery()}tugUpdateOverlay();
 }
 function updateTugAvatarRow(selector,players,team,pulseMap={}){
   updateTugAvatarList(cq(selector),players,team,{highlight:true,pulses:pulseMap});
@@ -821,6 +866,7 @@ function updateTugPlayerArena(room,players){
   cq('#tugPlayerRopeMarker').style.left=`${position}%`;
   updateTugAvatarRow('#tugRedAvatars',players,'red',pulseMap);updateTugAvatarRow('#tugBlueAvatars',players,'blue',pulseMap);
   const myStats=tugTeam==='red'?stats.red:stats.blue,other=tugTeam==='red'?stats.blue:stats.red;
+  const notice=cq('#tugPlayerFeedback');if(notice)notice.textContent=`${tugMode(room)==='classic'?'Classic Tug':tugMode(room)==='accuracy'?'Accuracy Tug':'Balanced Tug'} · ${tugErrors} mistakes · ${Math.round(currentTugAccuracy())}% accuracy${room.players?.[tugPlayerId]?.lateJoin?' · Practice only':''}`;
   const lead=myStats.avg-other.avg;
   cq('#tugPlayerStatus').textContent=lead>.05?`${teamLabel(tugTeam)} is pulling ahead!`:lead<-.05?'The other team is pulling ahead — keep typing!':'The rope is nearly centered. Keep pulling!';
 }
@@ -871,7 +917,7 @@ function updateTugPlayerCard(card,player,total){
   card.classList.toggle('finished',!!player.finished);
   const [name,progress]=card.querySelector('.tug-score-info').children;
   name.textContent=player.name||'';
-  progress.textContent=tugProgressText(player,total);
+  progress.textContent=(player.lateJoin?'Practice only · ':'')+tugProgressText(player,total);
   const [points,speed]=card.querySelector('.tug-score-metrics').children;
   points.textContent=`${Number(player.score)||0} pulls`;
   speed.textContent=`${Number(player.wpm||0).toFixed(1)} WPM · ${tugDisplayedAccuracy(player)}`;
@@ -922,21 +968,23 @@ function renderTugTeacherArena(players){
   updateTugAvatarList(cq('#tugTeacherBlueAvatars'),stats.blue.players,'blue',{pulses:pulseMap});
 }
 function renderTugTeacherLive(room,players){
-  cq('#tugClassSetup').hidden=true;cq('#tugLobby').hidden=true;customLive.hidden=true;customResults.hidden=true;cq('#tugTeacherLive').hidden=false;cq('#tugTeacherResults').hidden=true;cq('#endTugRoom').hidden=false;cq('#tugLiveCode').textContent=tugCode;
+  cq('#tugClassSetup').hidden=true;cq('#tugLobby').hidden=true;customLive.hidden=true;customResults.hidden=true;cq('#tugTeacherLive').hidden=false;cq('#tugTeacherResults').hidden=true;cq('#endTugRoom').hidden=false;cq('#tugPauseRoom').hidden=false;cq('#tugPauseRoom').textContent=room.status==='paused'?'▶ Resume':'⏸ Pause';cq('#tugLiveCode').textContent=tugCode;
+  const status=cq('#tugTeacherStatus');if(status)status.textContent=`${room.status==='paused'?'Paused':'Live'} · ${tugMode(room)==='classic'?'Classic':tugMode(room)==='accuracy'?'Accuracy':'Balanced'} Tug · ${players.length} players · ${players.filter(p=>p.lateJoin).length} practice-only late joins`;
   renderTugTeacherArena(players);renderTugScoreboard(players,room.challengeCount||room.items?.length||0);
 }
 function bestPlayer(players,key,secondary='score'){return players.slice().sort((a,b)=>(Number(b[key])||0)-(Number(a[key])||0)||(Number(b[secondary])||0)-(Number(a[secondary])||0))[0]}
 function renderTugTeacherResults(room,players){
-  cq('#tugClassSetup').hidden=true;cq('#tugLobby').hidden=true;customLive.hidden=true;customResults.hidden=true;cq('#tugTeacherLive').hidden=false;cq('#endTugRoom').hidden=true;cq('#tugTeacherResults').hidden=false;cq('#tugLiveCode').textContent=tugCode;
+  cq('#tugClassSetup').hidden=true;cq('#tugLobby').hidden=true;customLive.hidden=true;customResults.hidden=true;cq('#tugTeacherLive').hidden=false;cq('#endTugRoom').hidden=true;cq('#tugPauseRoom').hidden=true;cq('#tugTeacherResults').hidden=false;cq('#tugLiveCode').textContent=tugCode;
   renderTugTeacherArena(players);renderTugScoreboard(players,room.challengeCount||room.items?.length||0);
   const stats=tugTeamStats(players),winner=room.winner||tugOutcome(players,true)?.winner||'tie';
   tugCelebrateArena(cq('#tugTeacherArena'),room,winner);
   cq('#tugTeacherResultTitle').textContent=winner==='tie'?'It’s a tie!':`${teamLabel(winner)} wins!`;
   cq('#tugTeacherSummary').textContent=`Team A: ${stats.red.avg.toFixed(1)} average pulls · Team B: ${stats.blue.avg.toFixed(1)} average pulls.`;
   const awards=cq('#tugAwards');awards.innerHTML='';
-  const topSpeed=bestPlayer(players.filter(p=>Number(p.index)>0&&Number(p.attemptedChars)>0&&Number(p.wpm)>0),'wpm');
-  const topAccuracy=tugAccuracyWinner(players,room);
-  const topPull=bestPlayer(players.filter(p=>Number(p.index)>0&&Number(p.score)>0),'score','accuracy');
+  const qualifying=players.filter(p=>!p.lateJoin&&(!room.scoredRoster||room.scoredRoster.includes(p.id)));
+  const topSpeed=bestPlayer(qualifying.filter(p=>Number(p.index)>0&&Number(p.attemptedChars)>0&&Number(p.wpm)>0),'wpm');
+  const topAccuracy=tugAccuracyWinner(qualifying,room);
+  const topPull=bestPlayer(qualifying.filter(p=>Number(p.index)>0&&Number(p.score)>0),'score','accuracy');
   [['⚡','Top Typist',topSpeed,topSpeed?`${Number(topSpeed.wpm).toFixed(1)} WPM`:'Complete a prompt'],['🎯','Highest Accuracy',topAccuracy,topAccuracy?`${Number(topAccuracy.accuracy).toFixed(0)}%`:`Complete ${tugAccuracyMinPrompts(room)} prompt(s) to qualify`],['💪','Most Team Pulls',topPull,topPull?`${topPull.score} pulls`:'Earn a pull to qualify']].forEach(([icon,title,player,value])=>{const card=document.createElement('div');card.innerHTML=`<span>${icon}</span><strong>${title}</strong><b></b><small>${value}</small>`;card.querySelector('b').textContent=player?.name||'No qualifying player';awards.appendChild(card)});
 }
 function renderTugPlayerFinished(room,players){
@@ -953,11 +1001,44 @@ cq('#endTugRoom').onclick=async()=>{
 };
 cq('#tugPlayAgain').onclick=async()=>{
   if(tugRole!=='host'||!tugRoom)return;
-  const updates={status:'waiting',winner:'',startedAt:0,finishedAt:0};
-  Object.keys(tugRoom.players||{}).forEach(uid=>{updates[`players/${uid}/score`]=0;updates[`players/${uid}/index`]=0;updates[`players/${uid}/finished`]=false;updates[`players/${uid}/finishedAt`]=0;updates[`players/${uid}/correctChars`]=0;updates[`players/${uid}/attemptedChars`]=0;updates[`players/${uid}/errors`]=0;updates[`players/${uid}/wpm`]=0;updates[`players/${uid}/accuracy`]=0});
+  const updates={status:'waiting',winner:'',startedAt:0,startsAt:0,pausedAt:0,pausedMs:0,scoredRoster:null,finishedAt:0};
+  Object.keys(tugRoom.players||{}).forEach(uid=>{updates[`players/${uid}/score`]=0;updates[`players/${uid}/index`]=0;updates[`players/${uid}/finished`]=false;updates[`players/${uid}/finishedAt`]=0;updates[`players/${uid}/correctChars`]=0;updates[`players/${uid}/attemptedChars`]=0;updates[`players/${uid}/errors`]=0;updates[`players/${uid}/wpm`]=0;updates[`players/${uid}/accuracy`]=0;updates[`players/${uid}/roundStartedAt`]=0;updates[`players/${uid}/lateJoin`]=false});
   await fb.update(tugRoomRef(tugCode),updates).catch(error=>tugError(error.message));
 };
 cq('#tugNewRoom').onclick=()=>{closeTugRoom();openCustomGame('tug')};
+cq('#tugBalanceTeams').onclick=async()=>{
+  if(tugRole!=='host'||tugRoom?.status!=='waiting')return;
+  const list=Object.values(tugRoom.players||{}).sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0));
+  const updates={};list.forEach((p,i)=>{updates[`players/${p.id}/team`]=i%2?'blue':'red'});
+  await fb.update(tugRoomRef(tugCode),updates).catch(error=>tugError(error.message));
+};
+cq('#tugPauseRoom').onclick=async()=>{
+  if(tugRole!=='host'||!tugRoom||!['playing','paused'].includes(tugRoom.status))return;
+  const now=tugNow(),paused=tugRoom.status==='paused';
+  const updates=paused?{status:'playing',pausedAt:0,pausedMs:(Number(tugRoom.pausedMs)||0)+Math.max(0,now-(Number(tugRoom.pausedAt)||now))}:{status:'paused',pausedAt:now};
+  await fb.update(tugRoomRef(tugCode),updates).catch(error=>tugError(error.message));
+};
+cq('#tugFullscreen').onclick=()=>{const stage=cq('#customGameStage');if(document.fullscreenElement===stage)document.exitFullscreen?.();else stage.requestFullscreen?.().catch(()=>{})};
+function tugCSVCell(v){const t=String(v??'');return '"'+(/^[=+@-]/.test(t)?"'":'')+t.replaceAll('"','""')+'"'}
+cq('#tugExportResults').onclick=()=>{
+  if(tugRole!=='host'||!tugRoom||tugRoom.status!=='finished')return;
+  const rows=[['Name','Team','Pull points','Words completed','WPM','Accuracy %','Mistakes','Practice only'],...Object.values(tugRoom.players||{}).map(p=>[p.name,teamLabel(p.team),p.score,p.index,p.wpm,p.accuracy,p.errors,p.lateJoin?'Yes':'No'])];
+  const blob=new Blob(['\uFEFF'+rows.map(row=>row.map(tugCSVCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`tug-results-${tugCode}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+cq('#tugPrintResults').onclick=()=>{if(tugRole==='host'&&tugRoom?.status==='finished')window.print()};
+async function tugTryRestore(){
+  const saved=tugGetRecovery();if(!saved?.code||!saved.role||tugRole)return;
+  try{
+    const snap=await fb.get(tugRoomRef(saved.code));if(!snap.exists())return;
+    const room=snap.val();if(room.expiresAt&&room.expiresAt<tugNow())return;
+    if(saved.role==='host'&&room.hostUid!==currentUser.uid)return;
+    if(saved.role==='player'&&!room.players?.[currentUser.uid])return;
+    tugCode=saved.code;tugRole=saved.role;tugPlayerId=saved.role==='player'?currentUser.uid:'';tugPlayerName=saved.name||'';tugTeam=room.players?.[tugPlayerId]?.team||'';
+    tugRoom=room;tugSyncHeaderLanguage(room.language);watchTugRoom();
+  }catch(error){console.warn('Tug restore unavailable',error)}
+}
+
 
 document.addEventListener('keydown',e=>{
   if(customStage.hidden||customLive.hidden||e.ctrlKey||e.metaKey||e.altKey)return;
