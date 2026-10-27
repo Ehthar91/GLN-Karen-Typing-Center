@@ -1,0 +1,30 @@
+/* v5.2: shared-car relay layout; no changes to non-relay racing */
+.race-v52-setting{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-width:100%;min-width:0;color:#e5efff}
+.race-v52-setting[hidden]{display:none!important}
+.race-v52-setting select{width:100%;min-width:0;max-width:100%;color:inherit;background:#09192f;border:1px solid #486989;border-radius:12px;padding:11px}
+.race-v52-setting small,.race-v52-lobby-note{color:#adc7e5;line-height:1.45}
+.race-v52-lobby-note{padding:12px 14px;background:rgba(41,98,162,.18);border:1px solid rgba(108,172,222,.4);border-radius:12px}
+.race-v52-board{margin:12px 0 22px;padding:15px;background:linear-gradient(135deg,#0b1b33,#102f53);border:1px solid #365d83;border-radius:18px;min-width:0}
+.race-v52-track{display:grid;gap:12px}
+.race-v52-team{--team-accent:#5b9cf9;padding:13px;border:1px solid color-mix(in srgb,var(--team-accent) 50%,transparent);border-left:5px solid var(--team-accent);background:#07192d;border-radius:13px;min-width:0}
+.race-v52-team.is-leading{box-shadow:inset 0 0 19px rgba(102,186,255,.11)}
+.race-v52-team-heading,.race-v52-team-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;color:#f1f6ff}
+.race-v52-team-heading strong{font-size:1.1rem}
+.race-v52-percent{font-weight:800;font-variant-numeric:tabular-nums}
+.race-v52-lane{margin:11px 0 6px;height:56px;position:relative;border-radius:10px;overflow:hidden;background:repeating-linear-gradient(90deg,transparent 0,transparent 44px,#274260 45px,#274260 46px),#122744}
+.race-v52-meter{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--team-accent) 26%,transparent));transition:width .28s ease}
+.race-v52-lane img{position:absolute;top:50%;transform:translateY(-50%);height:52px;width:85px;object-fit:contain;transition:left .3s ease;filter:drop-shadow(0 2px 6px #0009)}
+.race-v52-team-foot{font-size:.86rem;color:#b9d2e9}
+.race-v52-skip{padding:7px 12px;border:1px solid #668eae;border-radius:9px;background:#193958;color:#f1f6ff;cursor:pointer}
+.race-v52-skip:hover{background:#285477}
+.race-v52-turn{background:#163b5b;border:1px solid #5395c5;border-radius:12px;padding:12px;font-weight:700;color:#fff}
+.race-v52-mode .race-v52-keyboard-locked{opacity:.3;pointer-events:none;filter:grayscale(.85)}
+.race-v52-mode #raceLeaderboard,.race-v52-mode #raceV5TeamBoard,.race-v52-mode #teamScoreboard{display:none!important}
+.race-v52-mode #raceTrack{display:none!important}
+.race-v52-mode #racePodium,.race-v52-mode #raceOthers,.race-v52-mode #raceV5TeamResults{display:none!important}
+.race-v52-results{text-align:center;margin:10px 0 20px;padding:17px;border:1px solid #5e8fba;background:#092746;border-radius:15px;color:#fff}
+.race-v52-results h2{margin:0 0 14px;font-size:clamp(1.2rem,3vw,2rem)}
+.race-v52-results-list{display:grid;gap:8px}
+.race-v52-result{padding:12px;border-left:4px solid var(--team-accent);border-radius:9px;background:#123859;font-weight:700}
+@media(max-width:650px){.race-v52-board{padding:9px}.race-v52-team{padding:9px}.race-v52-lane{height:50px}.race-v52-lane img{width:64px;height:43px}.race-v52-team-heading strong{font-size:.96rem}}
+@media(prefers-reduced-motion:reduce){.race-v52-lane img,.race-v52-meter{transition:none}}

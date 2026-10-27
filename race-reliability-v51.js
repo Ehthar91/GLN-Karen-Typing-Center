@@ -264,7 +264,7 @@
       try{
         const snap=await fb.get(roomRef(raceCode));if(!snap.exists())throw new Error('Room not found.');
         const room=snap.val();if(room.hostUid!==currentUser?.uid)throw new Error('Only the teacher can restart.');
-        const changes={status:'waiting',startedAt:0,roundId:0,endedAt:0,pausedAt:0};
+        const changes={status:'waiting',startedAt:0,roundId:0,endedAt:0,pausedAt:0,relayV52:null};
         for (const uid of Object.keys(room.players||{})){
           const prefix=`players/${uid}/`;
           Object.assign(changes,{
