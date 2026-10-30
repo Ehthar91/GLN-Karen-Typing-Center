@@ -131,3 +131,24 @@ body.theme-rgb .event-slot-generator-grid label>small{color:#9fb2c9}
   }
   .event-slot-editor .event-slot-editor-remove{justify-self:end}
 }
+
+
+/* Parent/guardian interpreter request — Conference Sign-Up */
+.event-public-interpreter{display:grid;gap:11px;min-width:0;margin:2px 0 5px;padding:14px 16px;border:1px solid #c9dcec;border-radius:14px;background:#f5f9fe;color:#26445f}
+.event-public-interpreter legend{padding:0 5px;color:#173868;font-size:.86rem;font-weight:850}
+.event-public-interpreter-choices{display:flex;gap:10px;flex-wrap:wrap}
+.event-public-interpreter-choices label{display:flex;align-items:center;gap:9px;min-height:42px;padding:9px 14px;border:1px solid #c9dcec;border-radius:10px;background:#fff;color:#26445f;font-size:.78rem;font-weight:700;cursor:pointer}
+.event-public-interpreter-choices input{width:17px;height:17px;accent-color:#187bb1;flex-shrink:0}
+.event-public-interpreter-language{display:flex;flex-direction:column;gap:6px;font-size:.74rem;font-weight:800;color:#37536d;max-width:410px}
+.event-public-interpreter-language[hidden]{display:none!important}
+.event-public-interpreter-language input{min-width:0;width:100%;min-height:43px;padding:9px 12px;border:1px solid #c8d5e3;border-radius:9px;background:#fff;color:#173868;font:600 .82rem Inter,sans-serif}
+.event-public-interpreter>small{color:#687d90;font-size:.7rem;line-height:1.5}
+.event-manager-interpreter{display:inline-block;margin-top:5px;padding:4px 8px;border-radius:7px;border:1px solid #d9e4eb;background:#eef3f7;color:#54687b;font-size:.64rem;font-weight:750;line-height:1.35;overflow-wrap:anywhere}
+.event-manager-interpreter.is-needed{background:#fff2d6;border-color:#e7c675;color:#825408}
+body.theme-rgb .event-public-interpreter{background:#102239;border-color:#345370;color:#edf5ff}
+body.theme-rgb .event-public-interpreter legend,body.theme-rgb .event-public-interpreter-language{color:#edf5ff}
+body.theme-rgb .event-public-interpreter-choices label,body.theme-rgb .event-public-interpreter-language input{background:#101f35;border-color:#3a5677;color:#edf5ff}
+body.theme-rgb .event-public-interpreter>small{color:#a6bbd0}
+body.theme-rgb .event-manager-interpreter{background:#14283d;border-color:#365571;color:#c6d8e7}
+body.theme-rgb .event-manager-interpreter.is-needed{background:#3a2a15;border-color:#84642b;color:#ffe1a1}
+@media(max-width:560px){.event-public-interpreter{padding:12px}.event-public-interpreter-choices{flex-direction:column}.event-public-interpreter-choices label{width:100%}}

@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="quiz-kiosk.css?v=20260913-1" />
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
   <link rel="stylesheet" href="calculator.css?v=20260923-flashcards-fullscreen-1" />
-  <link rel="stylesheet" href="event-signup.css?v=20260912-14" />
+  <link rel="stylesheet" href="event-signup.css?v=20261030-interpreter-1" />
   <link rel="stylesheet" href="bus-call.css?v=20260917-google-recovery-1" />
   <link rel="stylesheet" href="grouping.css?v=20261022-tools-single-row-1" />
   <link rel="stylesheet" href="seating.css?v=20261022-print-orientation-fix-1" />
@@ -45,7 +45,9 @@
   <link rel="stylesheet" href="race-reliability-v51.css?v=20261026-v5-1" />
   <link rel="stylesheet" href="race-relay-v52.css?v=20261027-v5-2-2-finish-fix" />
   <link rel="stylesheet" href="race-wide-layout-v53.css?v=20261027-v5-2-wide-1" />
+  <link rel="stylesheet" href="race-finish-v523.css?v=20261027-v5-2-3-results" />
   <link rel="stylesheet" href="tug-classroom-v2.css?v=20261027-tug-v2" />
+  <link rel="stylesheet" href="chrome-extension-promo.css?v=20261028-chrome-extension-1" />
 </head>
 <body>
   <main class="app-shell">
@@ -75,9 +77,14 @@
         </div>
         <div class="type-heading-meta">
           <p class="hint" id="typeHint">KarenKNU layout — use your English keyboard or tap below.</p>
-          <a href="type/" class="type-studio-link" aria-label="Open the dedicated Type Studio page">
-            Open Type Studio <span aria-hidden="true">↗</span>
-          </a>
+          <div class="type-heading-actions">
+            <a href="type/" class="type-studio-link" aria-label="Open the dedicated Type Studio page">
+              Open Type Studio <span aria-hidden="true">↗</span>
+            </a>
+            <a href="https://chromewebstore.google.com/detail/ileanjapkpglnagokdebpbkgciibpmgm" class="type-studio-link chrome-extension-heading-link" target="_blank" rel="noopener noreferrer" aria-label="Get GLN Sgaw Karen Unicode Keyboard from the Chrome Web Store (opens in a new tab)">
+              Chrome Extension <span aria-hidden="true">↗</span>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -105,6 +112,22 @@
         <div class="guide" id="guide" hidden>This is the KarenKNU S’gaw Karen layout. Each key shows its English shortcut. Press Shift for the second layer.</div>
         <div class="keyboard" id="keyboard"></div>
       </section>
+
+      <aside class="chrome-extension-promo" aria-labelledby="chromeExtensionPromoTitle">
+        <div class="chrome-extension-promo-icon" aria-hidden="true">⌨</div>
+        <div class="chrome-extension-promo-content">
+          <span class="chrome-extension-promo-kicker">GLN CHROME EXTENSION</span>
+          <h2 id="chromeExtensionPromoTitle">Type S’gaw Karen on other websites</h2>
+          <p>Use our Karen Unicode keyboard in supported Chrome text fields. Switch between Karen and English; for Google Docs, use the extension’s copy-and-paste pad.</p>
+          <span class="chrome-extension-promo-note">Optional: You can already type Karen directly on this website.</span>
+        </div>
+        <div class="chrome-extension-promo-actions">
+          <a class="chrome-extension-promo-install" href="https://chromewebstore.google.com/detail/ileanjapkpglnagokdebpbkgciibpmgm" target="_blank" rel="noopener noreferrer" aria-label="Get GLN Sgaw Karen Unicode Keyboard on the Chrome Web Store (opens in a new tab)">
+            Get for Chrome <span aria-hidden="true">↗</span>
+          </a>
+          <a class="chrome-extension-promo-privacy" href="extension-privacy.html" target="_blank" rel="noopener noreferrer">Extension privacy policy</a>
+        </div>
+      </aside>
 
       <p class="privacy"><span aria-hidden="true">●</span> Your text stays on this device.</p>
     </section>
@@ -916,6 +939,18 @@ Fish = ညၣ်</textarea>
               <label><span class="event-public-contact-label">Email</span><input id="eventPublicEmail" type="email" maxlength="120" autocomplete="email" required placeholder="name@example.com" /><small>Contact email for this conference reservation.</small></label>
               <label><span class="event-public-contact-label">Phone <span class="optional">optional</span></span><input id="eventPublicPhone" type="tel" maxlength="30" autocomplete="tel" placeholder="Phone number" /><small>Optional contact number.</small></label>
             </div>
+            <fieldset class="event-public-interpreter" id="eventPublicInterpreterRequest">
+              <legend>Do you need a translator or interpreter for your conference?</legend>
+              <div class="event-public-interpreter-choices" role="group" aria-label="Interpreter requested">
+                <label><input type="radio" name="eventPublicInterpreterNeeded" value="yes" required /><span>Yes, I need an interpreter</span></label>
+                <label><input type="radio" name="eventPublicInterpreterNeeded" value="no" required /><span>No, thank you</span></label>
+              </div>
+              <label class="event-public-interpreter-language" id="eventPublicInterpreterLanguageWrap" hidden>
+                <span>What language do you need?</span>
+                <input id="eventPublicInterpreterLanguage" type="text" maxlength="60" placeholder="For example, S'gaw Karen" autocomplete="off" />
+              </label>
+              <small>This helps the school plan language support. Interpreter availability will be confirmed by the school.</small>
+            </fieldset>
             <section class="event-public-selected-section" aria-labelledby="eventPublicSelectedSlot">
               <div class="event-public-selected-heading"><strong>Your selected times</strong><p id="eventPublicSelectedSlot">Choose a time slot above.</p></div>
               <div class="event-public-selection-list" id="eventPublicSelectionList"></div>
@@ -1071,26 +1106,27 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="games.js?v=20260915-unified-keyboard-1"></script>
   <script src="game-language-auto.js?v=20261025-race-empty-screen-fix-1"></script>
   <script src="custom-games.js?v=20261027-tug-v2"></script>
-  <script src="race.js?v=20261027-v5-2-2-finish-fix"></script>
+  <script src="race.js?v=20261027-v5-2-3-results"></script>
   <script src="bus-call.js?v=20260917-lineup-toggle-1"></script>
-  <script src="race-features.js?v=20261026-vocabulary-v4-1"></script>
+  <script src="race-features.js?v=20261027-v5-2-3-results"></script>
   <script src="quiz.js?v=20261023-optional-parentheses-1"></script>
   <script src="quiz-classroom.js?v=20261022-classroom-upgrade-1"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
   <script src="calculator.js?v=20261022-auto-grouping-1"></script>
-  <script src="event-signup.js?v=20260917-conference-signup-1"></script>
+  <script src="event-signup.js?v=20261030-interpreter-1"></script>
   <script src="grouping.js?v=20261022-print-blank-page-fix-1"></script>
   <script src="seating.js?v=20260916-classroom-rules-physical-1"></script>
   <script src="rgb-theme.js?v=20260911-2"></script>
   <script src="navigation-state.js?v=20261022-shareable-routes-1"></script>
-  <script src="race-upgrade.js?v=20261026-v5-1"></script>
+  <script src="race-upgrade.js?v=20261027-v5-2-3-results"></script>
   <script src="race-experience.js?v=20261025-race-v3-polish-2"></script>
-  <script src="race-scoring.js?v=20261026-accuracy-reverse-1"></script>
+  <script src="race-scoring.js?v=20261027-v5-2-3-results"></script>
   <script src="race-education.js?v=20261026-race-v4-0"></script>
   <script src="race-vocabulary.js?v=20261026-v4-1"></script>
   <script src="race-advanced-settings.js?v=20261026-v4-2-unlimited-1"></script>
   <script src="race-team-v5.js?v=20261026-v5-1"></script>
-  <script src="race-reliability-v51.js?v=20261026-v5-1"></script>
-  <script src="race-relay-v52.js?v=20261027-v5-2-2-finish-fix"></script>
+  <script src="race-reliability-v51.js?v=20261027-v5-2-3-results"></script>
+  <script src="race-relay-v52.js?v=20261027-v5-2-3-results"></script>
+  <script src="race-finish-v523.js?v=20261027-v5-2-3-results"></script>
 </body>
 </html>

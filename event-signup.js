@@ -39,6 +39,9 @@ const eventPublicSelectedSlot=document.querySelector('#eventPublicSelectedSlot')
 const eventPublicParentName=document.querySelector('#eventPublicParentName');
 const eventPublicEmail=document.querySelector('#eventPublicEmail');
 const eventPublicPhone=document.querySelector('#eventPublicPhone');
+const eventPublicInterpreterChoices=document.querySelectorAll('input[name="eventPublicInterpreterNeeded"]');
+const eventPublicInterpreterLanguage=document.querySelector('#eventPublicInterpreterLanguage');
+const eventPublicInterpreterLanguageWrap=document.querySelector('#eventPublicInterpreterLanguageWrap');
 const eventPublicSelectionList=document.querySelector('#eventPublicSelectionList');
 const eventPublicSubmit=document.querySelector('#eventPublicSubmit');
 const eventPublicCancelSignup=document.querySelector('#eventPublicCancelSignup');
@@ -159,6 +162,18 @@ function publicCurrentSignups(){return eventSlotsArray(publicEventData).map(slot
 function signupStudentName(item){return String(item?.studentName||item?.name||'').trim()}
 function signupStudentGrade(item){return String(item?.studentGrade||item?.grade||'').trim()}
 function signupStudentTeacher(item){return String(item?.studentTeacher||item?.teacher||'').trim()}
+function eventInterpreterChoice(){return document.querySelector('input[name="eventPublicInterpreterNeeded"]:checked')?.value||''}
+function setEventInterpreterChoice(value){
+  const selected=value===true?'yes':value===false?'no':'';
+  for(const choice of eventPublicInterpreterChoices)choice.checked=choice.value===selected;
+  updateEventInterpreterLanguage();
+}
+function updateEventInterpreterLanguage(){
+  const needed=eventInterpreterChoice()==='yes';
+  if(eventPublicInterpreterLanguageWrap)eventPublicInterpreterLanguageWrap.hidden=!needed;
+  if(eventPublicInterpreterLanguage){eventPublicInterpreterLanguage.required=needed;if(!needed)eventPublicInterpreterLanguage.value=''}
+}
+for(const choice of eventPublicInterpreterChoices)choice.addEventListener('change',updateEventInterpreterLanguage);
 function buildSlotSpots(slot,existingEvent){
   const capacity=Math.max(1,Math.min(100,Number(slot.capacity)||1));
   const claimed=eventClaimsForSlot(existingEvent,slot.id).map(item=>item.spotId);
@@ -304,7 +319,14 @@ async function moveManagedReservation(eventId,reservation,source='owner'){
 }
 function makeSignupManagerList(eventId,slot,signups,source='owner'){
   const list=document.createElement('div');list.className='event-manager-people';if(!signups.length){const empty=document.createElement('small');empty.className='event-manager-empty';empty.textContent='No conference reservation yet';list.append(empty);return list}
-  for(const item of signups){const row=document.createElement('div');row.className='event-manager-person';const copy=document.createElement('div');const student=document.createElement('b');student.textContent=signupStudentName(item)||'Unnamed student';const details=document.createElement('small');const parts=[];const grade=signupStudentGrade(item);const teacher=signupStudentTeacher(item);if(grade)parts.push(`Grade ${grade}`);if(teacher)parts.push(`Teacher: ${teacher}`);if(item.parentName)parts.push(`Parent/Guardian: ${item.parentName}`);if(item.email)parts.push(item.email);if(item.phone)parts.push(item.phone);details.textContent=parts.join(' · ')||'Student';copy.append(student,details);const actions=document.createElement('div');actions.className='event-manager-actions';const move=document.createElement('button');move.type='button';move.className='event-manager-move';move.textContent='Move';move.addEventListener('click',()=>moveManagedReservation(eventId,item,source));const remove=document.createElement('button');remove.type='button';remove.className='event-manager-remove';remove.textContent='Remove';remove.addEventListener('click',()=>removeManagedReservation(eventId,item,source));actions.append(move,remove);row.append(copy,actions);list.append(row)}return list
+  for(const item of signups){const row=document.createElement('div');row.className='event-manager-person';const copy=document.createElement('div');const student=document.createElement('b');student.textContent=signupStudentName(item)||'Unnamed student';const details=document.createElement('small');const parts=[];const grade=signupStudentGrade(item);const teacher=signupStudentTeacher(item);if(grade)parts.push(`Grade ${grade}`);if(teacher)parts.push(`Teacher: ${teacher}`);if(item.parentName)parts.push(`Parent/Guardian: ${item.parentName}`);if(item.email)parts.push(item.email);if(item.phone)parts.push(item.phone);details.textContent=parts.join(' · ')||'Student';copy.append(student,details);
+    if(typeof item.interpreterNeeded==='boolean'){
+      const interpreter=document.createElement('span');interpreter.className=`event-manager-interpreter${item.interpreterNeeded?' is-needed':''}`;
+      const language=String(item.interpreterLanguage||'').trim();
+      interpreter.textContent=item.interpreterNeeded?`Interpreter requested${language?` · ${language}`:''}`:'Interpreter not needed';
+      copy.append(interpreter);
+    }
+    const actions=document.createElement('div');actions.className='event-manager-actions';const move=document.createElement('button');move.type='button';move.className='event-manager-move';move.textContent='Move';move.addEventListener('click',()=>moveManagedReservation(eventId,item,source));const remove=document.createElement('button');remove.type='button';remove.className='event-manager-remove';remove.textContent='Remove';remove.addEventListener('click',()=>removeManagedReservation(eventId,item,source));actions.append(move,remove);row.append(copy,actions);list.append(row)}return list
 }
 function appendManagerDaySlots(container,event,eventId,source='owner'){
   for(const [date,daySlots] of eventSlotsByDate(event)){const day=document.createElement('section');day.className='event-manager-day';const dayHead=document.createElement('div');dayHead.className='event-manager-day-head';const dayTitle=document.createElement('strong');dayTitle.textContent=eventDateText(date);const count=document.createElement('small');count.textContent=`${daySlots.length} time slot${daySlots.length===1?'':'s'}`;dayHead.append(dayTitle,count);day.append(dayHead);
@@ -372,11 +394,14 @@ async function openSharedEventEditor(id,token){
   catch(error){sharedEditorMessage(error?.code==='PERMISSION_DENIED'?'This editor link is invalid, expired, or has been revoked.':(error?.message||'Could not open the shared editor link.'),'error');eventSharedEditorSlots.innerHTML=''}
 }
 function publicMessage(text,type=''){eventPublicMessage.textContent=text;eventPublicMessage.classList.toggle('is-ok',type==='ok');eventPublicMessage.classList.toggle('is-error',type==='error')}
-function resetPublicFormFields(){eventPublicParentName.value='';eventPublicEmail.value='';eventPublicPhone.value='';publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicOwnSignups=new Map();publicSelectionInitialized=true}
+function resetPublicFormFields(){eventPublicParentName.value='';eventPublicEmail.value='';eventPublicPhone.value='';setEventInterpreterChoice(null);if(eventPublicInterpreterLanguage)eventPublicInterpreterLanguage.value='';publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicOwnSignups=new Map();publicSelectionInitialized=true}
 function applyPrivateReservationData(raw){
   publicOwnSignups=new Map();publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();let first=null;
   for(const [reservationId,item] of Object.entries(raw||{})){if(!item)continue;const slotId=String(item.slotId||reservationId);if(!publicEventData?.slots?.[slotId])continue;const record={...item,_reservationId:reservationId};publicOwnSignups.set(slotId,record);publicSelectedSlotIds.add(slotId);publicDraftStudentNames.set(slotId,signupStudentName(record));publicDraftStudentGrades.set(slotId,signupStudentGrade(record));publicDraftStudentTeachers.set(slotId,signupStudentTeacher(record));if(!first)first=record}
-  if(first){eventPublicParentName.value=first.parentName||'';eventPublicEmail.value=first.email||'';eventPublicPhone.value=first.phone||''}
+  if(first){eventPublicParentName.value=first.parentName||'';eventPublicEmail.value=first.email||'';eventPublicPhone.value=first.phone||'';
+    setEventInterpreterChoice(typeof first.interpreterNeeded==='boolean'?first.interpreterNeeded:null);
+    if(eventPublicInterpreterLanguage&&first.interpreterNeeded===true)eventPublicInterpreterLanguage.value=String(first.interpreterLanguage||'').slice(0,60);
+  }
   publicSelectionInitialized=true;
 }
 function initializePublicSelection(){if(publicSelectionInitialized)return;publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicOwnSignups=new Map();publicSelectionInitialized=true}
@@ -432,12 +457,17 @@ async function releaseClaim(slotId,spotId,token){
 async function savePublicSignup(event){
   event.preventDefault();if(!publicEventData||!publicSelectedSlotIds.size)return;const parentName=eventPublicParentName.value.trim().replace(/\s+/g,' ').slice(0,60);const email=eventPublicEmail.value.trim().toLowerCase().slice(0,120);const phone=eventPublicPhone.value.trim().replace(/\s+/g,' ').slice(0,30);
   if(!parentName){eventPublicParentName.focus();return}if(!email||!eventPublicEmail.checkValidity()){eventPublicEmail.focus();return}
+  const interpreterChoice=eventInterpreterChoice();
+  if(!interpreterChoice){eventPublicInterpreterChoices[0]?.focus();publicMessage('Please tell us whether you need a translator or interpreter.','error');return}
+  const interpreterNeeded=interpreterChoice==='yes';
+  const interpreterLanguage=interpreterNeeded?String(eventPublicInterpreterLanguage?.value||'').trim().replace(/\s+/g,' ').slice(0,60):'';
+  if(interpreterNeeded&&!interpreterLanguage){eventPublicInterpreterLanguage?.focus();publicMessage('Please enter the language you need for interpreting.','error');return}
   const selectedSlots=eventSlotsArray(publicEventData).filter(slot=>publicSelectedSlotIds.has(slot.id));if(!selectedSlots.length)return;const students=new Map();const grades=new Map();const teachers=new Map();for(const slot of selectedSlots){const raw=String(publicDraftStudentNames.has(slot.id)?publicDraftStudentNames.get(slot.id):signupStudentName(publicOwnSignups.get(slot.id))).trim().replace(/\s+/g,' ').slice(0,60);if(!raw){const input=eventPublicSelectionList.querySelector(`[data-slot-id="${slot.id}"] input`);input?.focus();publicMessage(`Enter the student name for ${eventDateText(eventSlotDate(slot,publicEventData))} at ${formatScheduleTime(slot.time)}.`,'error');return}students.set(slot.id,raw);const grade=String(publicDraftStudentGrades.has(slot.id)?publicDraftStudentGrades.get(slot.id):signupStudentGrade(publicOwnSignups.get(slot.id))).trim().slice(0,20);const teacher=String(publicDraftStudentTeachers.has(slot.id)?publicDraftStudentTeachers.get(slot.id):signupStudentTeacher(publicOwnSignups.get(slot.id))).trim().replace(/\s+/g,' ').slice(0,60);grades.set(slot.id,grade);teachers.set(slot.id,teacher)}
   const token=publicManageMode?publicManageToken:eventManageToken();const newlyClaimed=[];
   try{
     await initRaceFirebase();const now=Date.now();const claimedBySlot=new Map();for(const slot of selectedSlots){const previous=publicOwnSignups.get(slot.id);if(previous?.spotId){claimedBySlot.set(slot.id,previous.spotId);continue}const spotId=await claimEventSpot(slot,token);claimedBySlot.set(slot.id,spotId);newlyClaimed.push({slotId:slot.id,spotId})}
     const reservationUpdates={};const nextRecords=[];for(const [slotId,previous] of publicOwnSignups){if(publicSelectedSlotIds.has(slotId))continue;if(previous?._reservationId)reservationUpdates[previous._reservationId]=null}
-    for(const slot of selectedSlots){const previous=publicOwnSignups.get(slot.id);const studentName=students.get(slot.id);const studentGrade=grades.get(slot.id)||'';const studentTeacher=teachers.get(slot.id)||'';const spotId=claimedBySlot.get(slot.id);const reservationId=previous?._reservationId||eventReservationId();const record={manageToken:token,slotId:slot.id,spotId,name:studentName,studentName,parentName,email,phone,...(studentGrade?{studentGrade}:{}),...(studentTeacher?{studentTeacher}:{}),createdAt:previous?.createdAt||now,updatedAt:now};reservationUpdates[reservationId]=record;nextRecords.push([reservationId,record])}
+    for(const slot of selectedSlots){const previous=publicOwnSignups.get(slot.id);const studentName=students.get(slot.id);const studentGrade=grades.get(slot.id)||'';const studentTeacher=teachers.get(slot.id)||'';const spotId=claimedBySlot.get(slot.id);const reservationId=previous?._reservationId||eventReservationId();const record={manageToken:token,slotId:slot.id,spotId,name:studentName,studentName,parentName,email,phone,interpreterNeeded,...(interpreterNeeded?{interpreterLanguage}:{}),...(studentGrade?{studentGrade}:{}),...(studentTeacher?{studentTeacher}:{}),createdAt:previous?.createdAt||now,updatedAt:now};reservationUpdates[reservationId]=record;nextRecords.push([reservationId,record])}
     await fb.update(fb.ref(db,`eventSignups/${publicEventSignupId}/reservations/${token}`),reservationUpdates);
     for(const [slotId,previous] of publicOwnSignups){if(publicSelectedSlotIds.has(slotId))continue;if(previous?.spotId)await releaseClaim(slotId,previous.spotId,token)}
     if(publicManageMode){applyPrivateReservationData(Object.fromEntries(nextRecords));renderPublicEvent();publicMessage('Your conference changes were saved.','ok')}
@@ -453,7 +483,7 @@ async function loadPrivateSignup(id,token){
   publicOwnSignups=new Map();if(!token)return;try{const snap=await fb.get(fb.ref(db,`eventSignups/${id}/reservations/${token}`));if(snap.exists())applyPrivateReservationData(snap.val());else{publicSelectionInitialized=true;publicMessage('This private management link has no active appointments.','error')}}catch(error){publicSelectionInitialized=true;publicMessage(error?.code==='PERMISSION_DENIED'?'This private management link is not valid for the current Conference Sign-Up rules.':(error?.message||'Could not open this private management link.'),'error')}
 }
 async function openPublicEvent(id,manageToken=''){
-  publicEventSignupId=id;sharedEditorEventId='';publicManageToken=manageToken;publicManageMode=Boolean(manageToken);publicSubmissionComplete=false;publicSubmittedManageLink='';publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicSelectionInitialized=false;publicOwnSignups=new Map();if(eventPublicSuccess)eventPublicSuccess.hidden=true;document.body.classList.add('event-signup-public-mode');openCalculator('event-signup');eventSignupTeacherView.hidden=true;eventSignupSharedEditorView.hidden=true;eventSignupPublicView.hidden=false;
+  publicEventSignupId=id;sharedEditorEventId='';publicManageToken=manageToken;publicManageMode=Boolean(manageToken);publicSubmissionComplete=false;publicSubmittedManageLink='';publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicSelectionInitialized=false;publicOwnSignups=new Map();setEventInterpreterChoice(null);if(eventPublicSuccess)eventPublicSuccess.hidden=true;document.body.classList.add('event-signup-public-mode');openCalculator('event-signup');eventSignupTeacherView.hidden=true;eventSignupSharedEditorView.hidden=true;eventSignupPublicView.hidden=false;
   try{
     await initRaceFirebase();const base=`eventSignups/${id}`;const [titleSnap,dateSnap,descriptionSnap,statusSnap,allowMultipleSnap,slotsSnap,availabilitySnap]=await Promise.all([fb.get(fb.ref(db,`${base}/title`)),fb.get(fb.ref(db,`${base}/date`)),fb.get(fb.ref(db,`${base}/description`)),fb.get(fb.ref(db,`${base}/status`)),fb.get(fb.ref(db,`${base}/allowMultiple`)),fb.get(fb.ref(db,`${base}/slots`)),fb.get(fb.ref(db,`${base}/availability`))]);
     if(!titleSnap.exists()){eventPublicTitle.textContent='Conference not found';eventPublicSlots.innerHTML='';publicMessage('This conference sign-up link is no longer available.','error');return}
