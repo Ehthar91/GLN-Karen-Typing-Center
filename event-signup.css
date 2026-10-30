@@ -152,3 +152,33 @@ body.theme-rgb .event-public-interpreter>small{color:#a6bbd0}
 body.theme-rgb .event-manager-interpreter{background:#14283d;border-color:#365571;color:#c6d8e7}
 body.theme-rgb .event-manager-interpreter.is-needed{background:#3a2a15;border-color:#84642b;color:#ffe1a1}
 @media(max-width:560px){.event-public-interpreter{padding:12px}.event-public-interpreter-choices{flex-direction:column}.event-public-interpreter-choices label{width:100%}}
+
+
+/* Conference Sign-Up v1.1: clear, full dates on every slot and booking summary. */
+.event-public-slot{grid-template-columns:minmax(225px,1.15fr) minmax(145px,1fr) auto;gap:16px}
+.event-public-slot-datetime{display:flex;flex-direction:column;gap:5px;min-width:0}
+.event-public-slot-datetime .event-public-slot-date{display:block;color:#173868;font-size:.9rem;line-height:1.35;font-weight:850;overflow-wrap:break-word}
+.event-public-slot-datetime .event-public-slot-time{display:block;color:#176b9c;font-size:.84rem;font-weight:850;line-height:1.35}
+.event-public-selection-item{grid-template-columns:minmax(220px,260px) minmax(0,1fr) auto}
+.event-public-selection-time{gap:4px}
+.event-public-selection-time .event-selected-date{color:#173868;font-size:.85rem;line-height:1.35;overflow-wrap:break-word}
+.event-public-selection-time .event-selected-time{color:#176b9c;font-size:.82rem;line-height:1.35}
+.event-public-success #eventPublicSuccessText{white-space:pre-line;line-height:1.8;font-weight:700;overflow-wrap:anywhere}
+.event-manager-slot-date{display:block;font-size:.68rem;font-weight:850;color:#174f88;line-height:1.4;overflow-wrap:break-word}
+.event-slot-row-manager>strong,.event-shared-slot-head>strong{line-height:1.45;overflow-wrap:anywhere}
+.event-move-date{overflow-wrap:break-word;line-height:1.4}
+body.theme-rgb .event-public-slot-datetime .event-public-slot-date,
+body.theme-rgb .event-public-selection-time .event-selected-date{color:#f0f6ff}
+body.theme-rgb .event-public-slot-datetime .event-public-slot-time,
+body.theme-rgb .event-public-selection-time .event-selected-time{color:#8ad2ff}
+body.theme-rgb .event-manager-slot-date{color:#8ad2ff}
+@media (max-width:1000px) and (min-width:721px){
+  .event-public-slot{grid-template-columns:minmax(185px,.95fr) minmax(120px,1fr) auto;gap:10px}
+  .event-public-selection-item{grid-template-columns:minmax(175px,215px) minmax(0,1fr) auto}
+}
+@media(max-width:720px){
+  .event-public-slot{grid-template-columns:1fr;gap:11px}
+  .event-public-slot-datetime .event-public-slot-date{font-size:.95rem}
+  .event-public-slot-datetime .event-public-slot-time{font-size:.9rem}
+  .event-public-selection-item{grid-template-columns:1fr}
+}
