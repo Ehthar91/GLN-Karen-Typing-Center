@@ -67,6 +67,7 @@ let eventSignupEditorSlots=[];
 let editingEventSignupId='';
 let publicEventSignupId='';
 let publicSelectedSlotIds=new Set();
+let publicExpandedSlotId='';
 let publicDraftStudentNames=new Map();
 let publicDraftStudentGrades=new Map();
 let publicDraftStudentTeachers=new Map();
@@ -407,17 +408,19 @@ async function openSharedEventEditor(id,token){
   catch(error){sharedEditorMessage(error?.code==='PERMISSION_DENIED'?'This editor link is invalid, expired, or has been revoked.':(error?.message||'Could not open the shared editor link.'),'error');eventSharedEditorSlots.innerHTML=''}
 }
 function publicMessage(text,type=''){eventPublicMessage.textContent=text;eventPublicMessage.classList.toggle('is-ok',type==='ok');eventPublicMessage.classList.toggle('is-error',type==='error')}
-function resetPublicFormFields(){eventPublicParentName.value='';eventPublicEmail.value='';eventPublicPhone.value='';setEventInterpreterChoice(null);if(eventPublicInterpreterLanguage)eventPublicInterpreterLanguage.value='';publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicOwnSignups=new Map();publicSelectionInitialized=true}
+function resetPublicFormFields(){publicExpandedSlotId='';eventPublicParentName.value='';eventPublicEmail.value='';eventPublicPhone.value='';setEventInterpreterChoice(null);if(eventPublicInterpreterLanguage)eventPublicInterpreterLanguage.value='';publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicOwnSignups=new Map();publicSelectionInitialized=true}
 function applyPrivateReservationData(raw){
+  const previousExpandedSlotId=publicExpandedSlotId;
   publicOwnSignups=new Map();publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();let first=null;
   for(const [reservationId,item] of Object.entries(raw||{})){if(!item)continue;const slotId=String(item.slotId||reservationId);if(!publicEventData?.slots?.[slotId])continue;const record={...item,_reservationId:reservationId};publicOwnSignups.set(slotId,record);publicSelectedSlotIds.add(slotId);publicDraftStudentNames.set(slotId,signupStudentName(record));publicDraftStudentGrades.set(slotId,signupStudentGrade(record));publicDraftStudentTeachers.set(slotId,signupStudentTeacher(record));if(!first)first=record}
   if(first){eventPublicParentName.value=first.parentName||'';eventPublicEmail.value=first.email||'';eventPublicPhone.value=first.phone||'';
     setEventInterpreterChoice(typeof first.interpreterNeeded==='boolean'?first.interpreterNeeded:null);
     if(eventPublicInterpreterLanguage&&first.interpreterNeeded===true)eventPublicInterpreterLanguage.value=String(first.interpreterLanguage||'').slice(0,60);
   }
+  publicExpandedSlotId=publicSelectedSlotIds.has(previousExpandedSlotId)?previousExpandedSlotId:(publicSelectedSlotIds.values().next().value||'');
   publicSelectionInitialized=true;
 }
-function initializePublicSelection(){if(publicSelectionInitialized)return;publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicOwnSignups=new Map();publicSelectionInitialized=true}
+function initializePublicSelection(){if(publicSelectionInitialized)return;publicExpandedSlotId='';publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicOwnSignups=new Map();publicSelectionInitialized=true}
 function showPublicSuccess(link,slots,parentName){
   publicSubmissionComplete=true;publicSubmittedManageLink=link;if(eventPublicSuccess){eventPublicSuccess.hidden=false;if(eventPublicSuccessText){const dates=(slots||[]).map(slot=>eventSlotDateTimeLabel(slot,publicEventData));eventPublicSuccessText.textContent=`${dates.length} appointment${dates.length===1?'':'s'} saved for ${parentName}.${dates.length?'\n'+dates.join('\n'):''}`;}if(eventPublicManageLink)eventPublicManageLink.value=link;if(eventPublicManageLinkWrap)eventPublicManageLinkWrap.hidden=false;if(eventPublicCopyManageLink)eventPublicCopyManageLink.hidden=false;if(eventPublicFallbackNote)eventPublicFallbackNote.textContent='This is your private link to manage or cancel your conference time. Save it somewhere safe.'}publicMessage('Conference time confirmed. Save your private management link below.','ok');renderPublicEvent();
 }
@@ -436,7 +439,7 @@ function renderPublicSelection(){
     const gradeLabel=document.createElement('label');gradeLabel.innerHTML='<span>Grade <em>optional</em></span>';const grade=document.createElement('input');grade.type='text';grade.maxLength=20;grade.autocomplete='off';grade.placeholder='Enter grade';grade.setAttribute('aria-label','Student grade');grade.value=publicDraftStudentGrades.has(slot.id)?publicDraftStudentGrades.get(slot.id):signupStudentGrade(publicOwnSignups.get(slot.id));grade.addEventListener('input',()=>publicDraftStudentGrades.set(slot.id,grade.value));gradeLabel.append(grade);
     const teacherLabel=document.createElement('label');teacherLabel.innerHTML='<span>Teacher <em>optional</em></span>';const teacher=document.createElement('input');teacher.type='text';teacher.maxLength=60;teacher.autocomplete='off';teacher.placeholder='Teacher name';teacher.value=publicDraftStudentTeachers.has(slot.id)?publicDraftStudentTeachers.get(slot.id):signupStudentTeacher(publicOwnSignups.get(slot.id));teacher.addEventListener('input',()=>publicDraftStudentTeachers.set(slot.id,teacher.value));teacherLabel.append(teacher);
     fields.append(studentLabel,gradeLabel,teacherLabel);
-    const remove=document.createElement('button');remove.type='button';remove.className='event-public-selection-remove';remove.textContent=publicOwnSignups.has(slot.id)?'Remove':'×';remove.setAttribute('aria-label',`Remove ${eventSlotDateTimeLabel(slot,publicEventData)} appointment`);remove.addEventListener('click',()=>{publicDraftStudentNames.set(slot.id,student.value);publicDraftStudentGrades.set(slot.id,grade.value);publicDraftStudentTeachers.set(slot.id,teacher.value);publicSelectedSlotIds.delete(slot.id);renderPublicEvent()});
+    const remove=document.createElement('button');remove.type='button';remove.className='event-public-selection-remove';remove.textContent=publicOwnSignups.has(slot.id)?'Remove':'×';remove.setAttribute('aria-label',`Remove ${eventSlotDateTimeLabel(slot,publicEventData)} appointment`);remove.addEventListener('click',()=>{publicDraftStudentNames.set(slot.id,student.value);publicDraftStudentGrades.set(slot.id,grade.value);publicDraftStudentTeachers.set(slot.id,teacher.value);publicSelectedSlotIds.delete(slot.id);if(publicExpandedSlotId===slot.id)publicExpandedSlotId=publicSelectedSlotIds.values().next().value||'';renderPublicEvent()});
     item.append(timeWrap,fields,remove);eventPublicSelectionList.append(item);
   }
   if(eventPublicSubmit){eventPublicSubmit.textContent=publicManageMode?'Save changes':(slots.length>1?`Save ${slots.length} conference times`:'Save conference time');eventPublicSubmit.disabled=!slots.length}
@@ -444,17 +447,60 @@ function renderPublicSelection(){
 function renderPublicEvent(){
   const event=publicEventData;if(!event)return;initializePublicSelection();eventPublicTitle.textContent=event.title||'Conference Sign-Up';eventPublicDate.textContent=eventDateSummary(event);eventPublicDescription.textContent=event.description||'Choose an available time slot below.';
   if(eventPublicSuccess)eventPublicSuccess.hidden=!publicSubmissionComplete;if(publicSubmissionComplete&&!publicManageMode){eventPublicSlots.hidden=true;eventPublicForm.hidden=true;eventPublicCancelSignup.hidden=true;return}
+  // Capture the focused input before the slot list is rebuilt by live Firebase updates.
+  const focusedElement=document.activeElement;
+  const formHadFocus=focusedElement&&eventPublicForm.contains(focusedElement);
+  const focusedFieldId=formHadFocus?focusedElement.id:'';
+  const focusedStudentRow=formHadFocus?focusedElement.closest('.event-public-selection-item'):null;
+  const focusedStudentSlotId=focusedStudentRow?.dataset.slotId||'';
+  const focusedStudentInputIndex=focusedStudentRow?Array.from(focusedStudentRow.querySelectorAll('input')).indexOf(focusedElement):-1;
   eventPublicSlots.hidden=false;eventPublicSlots.innerHTML='';const own=publicCurrentSignups();eventPublicCancelSignup.hidden=!(publicManageMode&&own.length);eventPublicCancelSignup.textContent=own.length>1?'Cancel all appointments':'Cancel appointment';
   if(publicManageMode){publicMessage(own.length?'Private management link verified. You can change or cancel only this conference reservation.':'This private management link has no active appointments. You can choose a new time if the conference is still open.',own.length?'ok':'')}
   else if(event.status==='closed')publicMessage('This conference is closed for new reservations.','error');else publicMessage(event.allowMultiple===false?'Choose one time slot, then enter the parent/guardian and student information.':'Choose one or more time slots. Parent/guardian information is entered once; each time gets its own student details.');
+  const orderedSelected=eventSlotsArray(event).filter(slot=>publicSelectedSlotIds.has(slot.id));
+  if(!publicSelectedSlotIds.has(publicExpandedSlotId))publicExpandedSlotId=orderedSelected[0]?.id||'';
   let publicDay='';for(const slot of eventSlotsArray(event)){
     const slotDate=eventSlotDate(slot,event);if(slotDate!==publicDay){publicDay=slotDate;const heading=document.createElement('div');heading.className='event-public-day-heading';const strong=document.createElement('strong');strong.textContent=eventSlotFullDateText(slotDate);const small=document.createElement('small');small.textContent='Choose an available time';heading.append(strong,small);eventPublicSlots.append(heading)}
     const selected=publicSelectedSlotIds.has(slot.id);const mine=publicOwnSignups.has(slot.id);const spotIds=eventSpotIds(slot);const filled=eventPublicFilledCount(event,slot.id);const capacity=spotIds.length||Number(slot.capacity||1);const full=capacity>0&&filled>=capacity&&!mine;
     const row=document.createElement('div');row.className=`event-public-slot${selected?' is-selected':''}${full?' is-full':''}`;const dateTime=document.createElement('div');dateTime.className='event-public-slot-datetime';const day=document.createElement('strong');day.className='event-public-slot-date';day.textContent=eventSlotFullDateText(slotDate);const time=document.createElement('span');time.className='event-public-slot-time';time.textContent=eventSlotTimeRange(slot);dateTime.append(day,time);const copy=document.createElement('div');const label=document.createElement('b');label.textContent=slot.label||`${slot.duration||15} minute appointment`;const availability=document.createElement('small');
     if(mine)availability.textContent=`${filled}/${capacity} filled · Your appointment`;else if(full)availability.textContent=`${filled}/${capacity} filled · FULL`;else availability.textContent=`${filled}/${capacity} filled · ${Math.max(0,capacity-filled)} spot${capacity-filled===1?'':'s'} left`;
-    copy.append(label,availability);const choose=document.createElement('button');choose.type='button';choose.textContent=selected?'Selected':full?'Full':'Choose';choose.disabled=(event.status==='closed'&&!mine)||full;choose.setAttribute('aria-label',`${selected?'Unselect':full?'Full': 'Choose'} ${eventSlotDateTimeLabel(slot,event)}`);choose.addEventListener('click',()=>{if(selected){publicSelectedSlotIds.delete(slot.id)}else{if(event.allowMultiple===false)publicSelectedSlotIds.clear();publicSelectedSlotIds.add(slot.id)}renderPublicEvent();if(!selected)setTimeout(()=>eventPublicSelectionList?.querySelector(`[data-slot-id="${slot.id}"] input`)?.focus(),0)});row.append(dateTime,copy,choose);eventPublicSlots.append(row)
+    copy.append(label,availability);
+    const choose=document.createElement('button');choose.type='button';
+    choose.textContent=selected?'Remove':full?'Full':'Choose';
+    choose.disabled=(event.status==='closed'&&!mine)||full;
+    choose.setAttribute('aria-label',`${selected?'Remove':full?'Full':'Choose'} ${eventSlotDateTimeLabel(slot,event)}`);
+    const isExpanded=selected&&slot.id===publicExpandedSlotId;
+    if(isExpanded){choose.setAttribute('aria-expanded','true');choose.setAttribute('aria-controls','eventPublicForm')}
+    choose.addEventListener('click',()=>{
+      if(selected){
+        publicSelectedSlotIds.delete(slot.id);
+        if(publicExpandedSlotId===slot.id)publicExpandedSlotId=eventSlotsArray(publicEventData).find(item=>publicSelectedSlotIds.has(item.id))?.id||'';
+      }else{
+        if(event.allowMultiple===false)publicSelectedSlotIds.clear();
+        publicSelectedSlotIds.add(slot.id);publicExpandedSlotId=slot.id;
+      }
+      renderPublicEvent();
+      if(!selected)eventPublicSelectionList?.querySelector(`[data-slot-id="${slot.id}"] input`)?.focus({preventScroll:true});
+    });
+    row.append(dateTime,copy,choose);
+    if(isExpanded){
+      const expandedGroup=document.createElement('div');expandedGroup.className='event-public-expanded-group';expandedGroup.dataset.expandedSlotId=slot.id;
+      const inlinePanel=document.createElement('div');inlinePanel.className='event-public-inline-panel';
+      inlinePanel.setAttribute('aria-label',`Booking details for ${eventSlotDateTimeLabel(slot,event)}`);
+      inlinePanel.append(eventPublicForm);expandedGroup.append(row,inlinePanel);eventPublicSlots.append(expandedGroup);
+    }else eventPublicSlots.append(row);
+
   }
-  const hasSelection=publicSelectedSlotIds.size>0;eventPublicForm.hidden=!(hasSelection||own.length);if(hasSelection||own.length)renderPublicSelection();else if(eventPublicSelectionList)eventPublicSelectionList.innerHTML='';
+  const hasSelection=publicSelectedSlotIds.size>0;
+  // Keep the original form inside the selected card; use its original position only if no slot remains selected.
+  if(!hasSelection)eventPublicSlots.after(eventPublicForm);
+  eventPublicForm.hidden=!(hasSelection||own.length);
+  if(hasSelection||own.length)renderPublicSelection();else if(eventPublicSelectionList)eventPublicSelectionList.innerHTML='';
+  if(formHadFocus){
+    const replacement=focusedFieldId?document.getElementById(focusedFieldId):
+      (focusedStudentSlotId&&focusedStudentInputIndex>=0?Array.from(eventPublicSelectionList.querySelectorAll('.event-public-selection-item')).find(row=>row.dataset.slotId===focusedStudentSlotId)?.querySelectorAll('input')[focusedStudentInputIndex]:null);
+    if(replacement&&document.activeElement!==replacement)replacement.focus({preventScroll:true});
+  }
 }
 async function claimEventSpot(slot,token){
   const spotIds=eventSpotIds(slot);if(!spotIds.length)throw new Error('This conference needs to be updated by the organizer before it can accept new reservations.');let lastPermission=null;
@@ -496,7 +542,7 @@ async function loadPrivateSignup(id,token){
   publicOwnSignups=new Map();if(!token)return;try{const snap=await fb.get(fb.ref(db,`eventSignups/${id}/reservations/${token}`));if(snap.exists())applyPrivateReservationData(snap.val());else{publicSelectionInitialized=true;publicMessage('This private management link has no active appointments.','error')}}catch(error){publicSelectionInitialized=true;publicMessage(error?.code==='PERMISSION_DENIED'?'This private management link is not valid for the current Conference Sign-Up rules.':(error?.message||'Could not open this private management link.'),'error')}
 }
 async function openPublicEvent(id,manageToken=''){
-  publicEventSignupId=id;sharedEditorEventId='';publicManageToken=manageToken;publicManageMode=Boolean(manageToken);publicSubmissionComplete=false;publicSubmittedManageLink='';publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicSelectionInitialized=false;publicOwnSignups=new Map();setEventInterpreterChoice(null);if(eventPublicSuccess)eventPublicSuccess.hidden=true;document.body.classList.add('event-signup-public-mode');openCalculator('event-signup');eventSignupTeacherView.hidden=true;eventSignupSharedEditorView.hidden=true;eventSignupPublicView.hidden=false;
+  publicEventSignupId=id;sharedEditorEventId='';publicExpandedSlotId='';publicManageToken=manageToken;publicManageMode=Boolean(manageToken);publicSubmissionComplete=false;publicSubmittedManageLink='';publicSelectedSlotIds=new Set();publicDraftStudentNames=new Map();publicDraftStudentGrades=new Map();publicDraftStudentTeachers=new Map();publicSelectionInitialized=false;publicOwnSignups=new Map();setEventInterpreterChoice(null);if(eventPublicSuccess)eventPublicSuccess.hidden=true;document.body.classList.add('event-signup-public-mode');openCalculator('event-signup');eventSignupTeacherView.hidden=true;eventSignupSharedEditorView.hidden=true;eventSignupPublicView.hidden=false;
   try{
     await initRaceFirebase();const base=`eventSignups/${id}`;const [titleSnap,dateSnap,descriptionSnap,statusSnap,allowMultipleSnap,slotsSnap,availabilitySnap]=await Promise.all([fb.get(fb.ref(db,`${base}/title`)),fb.get(fb.ref(db,`${base}/date`)),fb.get(fb.ref(db,`${base}/description`)),fb.get(fb.ref(db,`${base}/status`)),fb.get(fb.ref(db,`${base}/allowMultiple`)),fb.get(fb.ref(db,`${base}/slots`)),fb.get(fb.ref(db,`${base}/availability`))]);
     if(!titleSnap.exists()){eventPublicTitle.textContent='Conference not found';eventPublicSlots.innerHTML='';publicMessage('This conference sign-up link is no longer available.','error');return}

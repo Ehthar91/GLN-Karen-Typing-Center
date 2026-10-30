@@ -182,3 +182,17 @@ body.theme-rgb .event-manager-slot-date{color:#8ad2ff}
   .event-public-slot-datetime .event-public-slot-time{font-size:.9rem}
   .event-public-selection-item{grid-template-columns:1fr}
 }
+
+/* Conference Sign-Up v1.3 — inline booking under chosen appointment. */
+.event-public-expanded-group{display:grid;gap:0;min-width:0}
+.event-public-expanded-group>.event-public-slot{border-radius:14px 14px 0 0;border-color:#278ac0;border-bottom-color:#a4cbe1;box-shadow:none}
+.event-public-inline-panel{min-width:0;border:1px solid #278ac0;border-top:0;border-radius:0 0 14px 14px;overflow:hidden;background:#f3f9fe;box-shadow:0 5px 18px rgba(26,91,146,.08)}
+.event-public-inline-panel>.event-public-form{min-width:0;width:100%;margin:0;padding:20px;border:0;border-radius:0;background:#f3f9fe;box-shadow:none}
+.event-public-expanded-group>.event-public-slot button{background:#a63a48;color:white}
+.event-public-expanded-group>.event-public-slot.is-selected button:hover{background:#8d2a39}
+.event-public-inline-panel .event-public-selection-item{min-width:0}
+body.theme-rgb .event-public-inline-panel{background:#112840;border-color:#3b92bc}
+body.theme-rgb .event-public-inline-panel>.event-public-form{background:#112840!important}
+body.theme-rgb .event-public-expanded-group>.event-public-slot{border-color:#3b92bc;border-bottom-color:#335979}
+@media(max-width:720px){.event-public-inline-panel>.event-public-form{padding:15px 12px}.event-public-expanded-group>.event-public-slot{padding:12px}}
+@media(prefers-reduced-motion:no-preference){.event-public-inline-panel{animation:eventPublicInlineAppear .18s ease-out}@keyframes eventPublicInlineAppear{from{opacity:.7;transform:translateY(-5px)}to{opacity:1;transform:none}}}
