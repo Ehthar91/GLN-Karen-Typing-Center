@@ -276,12 +276,29 @@ queueFitNumberGeneratorResult();
 // Optional audible alerts. Preferences stay in localStorage and are never synced to other teachers.
 const SCHEDULE_SOUND_STORAGE_KEY='glnScheduleTimerSoundsV1';
 const SCHEDULE_SOUND_LEADS=[15,30,60,120,180,300];
+// All original ringtone previews plus both electric school-bell revisions.
+const SCHEDULE_SOUND_ASSETS={
+  glass:'schedule-timer-sounds/01-Warning-Gentle-Glass-Chime.mp3',
+  marimba:'schedule-timer-sounds/02-Warning-Marimba.mp3',
+  piano:'schedule-timer-sounds/03-Warning-Soft-Piano.mp3',
+  notification:'schedule-timer-sounds/04-Warning-Modern-Notification.mp3',
+  classic:'schedule-timer-sounds/05-Times-Up-Classic-School-Bell.mp3',
+  clock:'schedule-timer-sounds/06-Times-Up-Clock-Chime.mp3',
+  victory:'schedule-timer-sounds/07-Times-Up-Modern-Victory-Bell.mp3',
+  digital:'schedule-timer-sounds/08-Times-Up-Rhythmic-Digital-Alarm.mp3',
+  'electric-original':'schedule-timer-sounds/09-Times-Up-Original-Motor-Bell.mp3',
+  'electric-bright':'schedule-timer-sounds/10-Times-Up-Bright-Fast-Electric-Bell.mp3'
+};
+const SCHEDULE_WARNING_SOUND_IDS=['glass','marimba','piano','notification'];
+const SCHEDULE_RING_SOUND_IDS=['electric-bright','classic','clock','victory','digital','electric-original'];
 const scheduleSoundTrigger=document.querySelector('#scheduleSoundTrigger');
 const scheduleSoundWidget=document.querySelector('#scheduleSoundWidget');
 const scheduleSoundPanel=document.querySelector('#scheduleSoundPanel');
 const scheduleSoundClose=document.querySelector('#scheduleSoundClose');
 const scheduleChimeEnabled=document.querySelector('#scheduleChimeEnabled');
 const scheduleChimeLead=document.querySelector('#scheduleChimeLead');
+const scheduleChimeSound=document.querySelector('#scheduleChimeSound');
+const scheduleRingSound=document.querySelector('#scheduleRingSound');
 const scheduleRingEnabled=document.querySelector('#scheduleRingEnabled');
 const scheduleChimePreview=document.querySelector('#scheduleChimePreview');
 const scheduleRingPreview=document.querySelector('#scheduleRingPreview');
@@ -290,17 +307,21 @@ const scheduleSoundVolumeLabel=document.querySelector('#scheduleSoundVolumeLabel
 const scheduleSoundEnable=document.querySelector('#scheduleSoundEnable');
 const scheduleSoundStatus=document.querySelector('#scheduleSoundStatus');
 function loadScheduleSoundSettings(){
-  const defaults={chime:false,ring:false,lead:60,volume:65};
+  const defaults={chime:false,ring:false,lead:60,volume:65,chimeSound:'glass',ringSound:'electric-bright'};
   try{
     const saved=JSON.parse(localStorage.getItem(SCHEDULE_SOUND_STORAGE_KEY)||'null');
     if(!saved||typeof saved!=='object')return defaults;
     const lead=Number(saved.lead),volume=Number(saved.volume);
-    return{chime:saved.chime===true,ring:saved.ring===true,lead:SCHEDULE_SOUND_LEADS.includes(lead)?lead:60,volume:Number.isFinite(volume)?Math.max(0,Math.min(100,volume)):65};
+    return{chime:saved.chime===true,ring:saved.ring===true,lead:SCHEDULE_SOUND_LEADS.includes(lead)?lead:60,volume:Number.isFinite(volume)?Math.max(0,Math.min(100,volume)):65,chimeSound:SCHEDULE_WARNING_SOUND_IDS.includes(saved.chimeSound)?saved.chimeSound:'glass',ringSound:SCHEDULE_RING_SOUND_IDS.includes(saved.ringSound)?saved.ringSound:'electric-bright'};
   }catch{return defaults}
 }
 let scheduleSoundSettings=loadScheduleSoundSettings();
 let scheduleSoundContext=null;
 let scheduleSoundTracked=null;
+const scheduleSoundBufferCache=new Map();
+const scheduleSoundLoadPending=new Map();
+let scheduleSoundRequestId=0;
+let scheduleSoundPlaying=null;
 function saveScheduleSoundSettings(){
   try{localStorage.setItem(SCHEDULE_SOUND_STORAGE_KEY,JSON.stringify(scheduleSoundSettings))}catch{}
   renderScheduleSoundSettings();
@@ -310,6 +331,8 @@ function renderScheduleSoundSettings(){
   scheduleChimeEnabled.checked=scheduleSoundSettings.chime;
   scheduleRingEnabled.checked=scheduleSoundSettings.ring;
   scheduleChimeLead.value=String(scheduleSoundSettings.lead);
+  scheduleChimeSound.value=scheduleSoundSettings.chimeSound;
+  scheduleRingSound.value=scheduleSoundSettings.ringSound;
   scheduleChimeLead.disabled=!scheduleSoundSettings.chime;
   scheduleSoundVolume.value=String(scheduleSoundSettings.volume);
   scheduleSoundVolumeLabel.textContent=`${scheduleSoundSettings.volume}%`;
@@ -328,6 +351,7 @@ async function unlockScheduleSound(){
     if(!scheduleSoundContext||scheduleSoundContext.state==='closed')scheduleSoundContext=new AudioClass();
     if(scheduleSoundContext.state!=='running')await scheduleSoundContext.resume();
     renderScheduleSoundSettings();
+    warmSelectedScheduleSounds();
     return scheduleSoundContext.state==='running';
   }catch{if(scheduleSoundStatus)scheduleSoundStatus.textContent='Browser sound is blocked. Click Enable sound again.';return false}
 }
@@ -344,19 +368,74 @@ function scheduleTone(start,frequency,length,level){
   oscillator.start(start);oscillator.stop(start+length+0.04);
   oscillator.onended=()=>{oscillator.disconnect();gain.disconnect()};
 }
-function playScheduleAlert(kind){
-  if(!scheduleSoundContext||scheduleSoundContext.state!=='running')return false;
+// Load the selected MP3 into the existing Web Audio context. No other hosting or services required.
+function loadScheduleSoundBuffer(id){
+  if(scheduleSoundBufferCache.has(id))return Promise.resolve(scheduleSoundBufferCache.get(id));
+  if(scheduleSoundLoadPending.has(id))return scheduleSoundLoadPending.get(id);
+  if(!scheduleSoundContext||!SCHEDULE_SOUND_ASSETS[id])return Promise.reject(new Error('Sound is unavailable'));
+  const context=scheduleSoundContext;
+  const request=fetch(SCHEDULE_SOUND_ASSETS[id],{cache:'force-cache'})
+    .then(response=>{if(!response.ok)throw new Error('Sound file not found');return response.arrayBuffer()})
+    .then(data=>context.decodeAudioData(data))
+    .then(buffer=>{scheduleSoundBufferCache.set(id,buffer);return buffer})
+    .finally(()=>scheduleSoundLoadPending.delete(id));
+  scheduleSoundLoadPending.set(id,request);
+  return request;
+}
+function warmSelectedScheduleSounds(){
+  if(scheduleSoundContext?.state!=='running')return;
+  [scheduleSoundSettings.chimeSound,scheduleSoundSettings.ringSound].forEach(id=>{
+    loadScheduleSoundBuffer(id).catch(()=>{});
+  });
+}
+function stopScheduleSoundPlayback(){
+  if(scheduleSoundPlaying){
+    try{scheduleSoundPlaying.source.stop()}catch{}
+    scheduleSoundPlaying=null;
+  }
+}
+// Backup chimes are only used if a sound file is missing or cannot be decoded.
+function playScheduleBasicFallback(kind){
+  if(scheduleSoundContext?.state!=='running')return false;
   const at=scheduleSoundContext.currentTime+0.03;
   if(kind==='chime'){
     scheduleTone(at,784,0.35,0.12);scheduleTone(at+0.3,1046.5,0.62,0.1);
   }else{
-    // A brief, recognizable ringing pattern; ends without manual dismissal.
     [0,0.65,1.3].forEach(offset=>{
       scheduleTone(at+offset,880,0.34,0.12);
       scheduleTone(at+offset+0.28,659.25,0.36,0.1);
     });
   }
   return true;
+}
+async function playScheduleAlert(kind){
+  if(!scheduleSoundContext||scheduleSoundContext.state!=='running')return false;
+  const chosenId=kind==='chime'?scheduleSoundSettings.chimeSound:scheduleSoundSettings.ringSound;
+  const requestId=++scheduleSoundRequestId;
+  const requestedAt=Date.now();
+  stopScheduleSoundPlayback();
+  try{
+    const buffer=await loadScheduleSoundBuffer(chosenId);
+    // Ignore stale fetches (e.g. a teacher quickly previews different sounds).
+    if(requestId!==scheduleSoundRequestId||Date.now()-requestedAt>5000||scheduleSoundContext?.state!=='running')return false;
+    if(chosenId!==(kind==='chime'?scheduleSoundSettings.chimeSound:scheduleSoundSettings.ringSound))return false;
+    const source=scheduleSoundContext.createBufferSource();
+    source.buffer=buffer;
+    const gain=scheduleSoundContext.createGain();
+    gain.gain.value=scheduleSoundSettings.volume/100;
+    source.connect(gain);gain.connect(scheduleSoundContext.destination);
+    scheduleSoundPlaying={source,gain};
+    source.onended=()=>{
+      if(scheduleSoundPlaying?.source===source)scheduleSoundPlaying=null;
+      source.disconnect();gain.disconnect();
+    };
+    source.start();
+    return true;
+  }catch(error){
+    if(requestId!==scheduleSoundRequestId)return false;
+    if(scheduleSoundStatus)scheduleSoundStatus.textContent='Could not load the selected audio file. Using the basic alert instead. Check the sound files were uploaded.';
+    return playScheduleBasicFallback(kind);
+  }
 }
 // Use end timestamps rather than exactly hitting 00:00 in a half-second update.
 // A slept/background tab may skip several ticks, but should not ring minutes late.
@@ -397,7 +476,15 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!scheduleSo
 scheduleChimeEnabled?.addEventListener('change',()=>{scheduleSoundSettings.chime=scheduleChimeEnabled.checked;saveScheduleSoundSettings();if(scheduleSoundSettings.chime)unlockScheduleSound()});
 scheduleRingEnabled?.addEventListener('change',()=>{scheduleSoundSettings.ring=scheduleRingEnabled.checked;saveScheduleSoundSettings();if(scheduleSoundSettings.ring)unlockScheduleSound()});
 scheduleChimeLead?.addEventListener('change',()=>{const v=Number(scheduleChimeLead.value);scheduleSoundSettings.lead=SCHEDULE_SOUND_LEADS.includes(v)?v:60;saveScheduleSoundSettings()});
-scheduleSoundVolume?.addEventListener('input',()=>{scheduleSoundSettings.volume=Math.max(0,Math.min(100,Number(scheduleSoundVolume.value)||0));saveScheduleSoundSettings()});
+scheduleChimeSound?.addEventListener('change',()=>{
+  scheduleSoundSettings.chimeSound=SCHEDULE_WARNING_SOUND_IDS.includes(scheduleChimeSound.value)?scheduleChimeSound.value:'glass';
+  saveScheduleSoundSettings();warmSelectedScheduleSounds();
+});
+scheduleRingSound?.addEventListener('change',()=>{
+  scheduleSoundSettings.ringSound=SCHEDULE_RING_SOUND_IDS.includes(scheduleRingSound.value)?scheduleRingSound.value:'electric-bright';
+  saveScheduleSoundSettings();warmSelectedScheduleSounds();
+});
+scheduleSoundVolume?.addEventListener('input',()=>{scheduleSoundSettings.volume=Math.max(0,Math.min(100,Number(scheduleSoundVolume.value)||0));if(scheduleSoundPlaying)scheduleSoundPlaying.gain.gain.value=scheduleSoundSettings.volume/100;saveScheduleSoundSettings()});
 scheduleSoundEnable?.addEventListener('click',unlockScheduleSound);
 scheduleChimePreview?.addEventListener('click',async()=>{if(await unlockScheduleSound())playScheduleAlert('chime')});
 scheduleRingPreview?.addEventListener('click',async()=>{if(await unlockScheduleSound())playScheduleAlert('ring')});

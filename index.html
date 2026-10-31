@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="quiz-classroom.css?v=20261022-classroom-upgrade-1" />
   <link rel="stylesheet" href="quiz-kiosk.css?v=20260913-1" />
   <link rel="stylesheet" href="quiz-print.css?v=20260913-2" />
-  <link rel="stylesheet" href="calculator.css?v=20261030-schedule-sounds-1" />
+  <link rel="stylesheet" href="calculator.css?v=20261030-sound-library-v2" />
   <link rel="stylesheet" href="event-signup.css?v=20261030-inline-v13" />
   <link rel="stylesheet" href="bus-call.css?v=20260917-google-recovery-1" />
   <link rel="stylesheet" href="grouping.css?v=20261022-tools-single-row-1" />
@@ -577,10 +577,28 @@ Fish = ညၣ်</textarea>
                     <option value="300">5 minutes before</option>
                   </select>
                 </label>
-                <button type="button" class="schedule-sound-preview" id="scheduleChimePreview">▶ Preview chime</button>
+                <label class="schedule-sound-setting"><span>Warning chime sound</span>
+                  <select id="scheduleChimeSound" aria-label="Choose warning chime">
+                    <option value="glass" selected>Gentle Glass Chime (default)</option>
+                    <option value="marimba">Marimba</option>
+                    <option value="piano">Soft Piano</option>
+                    <option value="notification">Modern Notification</option>
+                  </select>
+                </label>
+                <button type="button" class="schedule-sound-preview" id="scheduleChimePreview">▶ Preview selected chime</button>
                 <div class="schedule-sound-rule"></div>
                 <label class="schedule-sound-toggle"><span><strong>Time's up — ringtone</strong><small>Ring briefly when the activity ends</small></span><input type="checkbox" id="scheduleRingEnabled" /></label>
-                <button type="button" class="schedule-sound-preview" id="scheduleRingPreview">▶ Preview ringtone</button>
+                <label class="schedule-sound-setting"><span>Time's up ringtone</span>
+                  <select id="scheduleRingSound" aria-label="Choose time's up ringtone">
+                    <option value="electric-bright" selected>Bright &amp; Fast Electric School Bell (default)</option>
+                    <option value="classic">Classic School Bell</option>
+                    <option value="clock">Clock Chime</option>
+                    <option value="victory">Modern Victory Bell</option>
+                    <option value="digital">Rhythmic Digital Alarm</option>
+                    <option value="electric-original">Original Motor School Bell</option>
+                  </select>
+                </label>
+                <button type="button" class="schedule-sound-preview" id="scheduleRingPreview">▶ Preview selected ringtone</button>
                 <div class="schedule-sound-rule"></div>
                 <label class="schedule-sound-setting"><span>Alert volume <output id="scheduleSoundVolumeLabel" for="scheduleSoundVolume">65%</output></span><input id="scheduleSoundVolume" type="range" min="0" max="100" step="5" value="65" /></label>
                 <button type="button" class="schedule-sound-enable" id="scheduleSoundEnable">🔊 Enable sound for this visit</button>
@@ -1137,7 +1155,7 @@ Taylor</textarea><small>Enter one student per line.</small></label>
   <script src="quiz.js?v=20261023-optional-parentheses-1"></script>
   <script src="quiz-classroom.js?v=20261022-classroom-upgrade-1"></script>
   <script src="quiz-kiosk.js?v=20260913-1"></script>
-  <script src="calculator.js?v=20261030-schedule-sounds-1"></script>
+  <script src="calculator.js?v=20261030-sound-library-v2"></script>
   <script src="event-signup.js?v=20261030-inline-v13"></script>
   <script src="conference-slot-date-guard.js?v=20261030-per-slot-date-v12"></script>
   <script src="grouping.js?v=20261022-print-blank-page-fix-1"></script>

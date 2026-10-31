@@ -536,3 +536,8 @@ body.theme-rgb .schedule-sound-setting select{background:#0b1b30;border-color:#4
 body.theme-rgb .schedule-sound-enable{background:#18486a;color:#eaffff;border-color:#53b5df}
 body.theme-rgb .schedule-sound-rule{background:#32516f}
 @media(max-width:620px){.schedule-timer-toolbar{flex-wrap:wrap}.schedule-timer-toolbar-actions{justify-content:flex-start}.schedule-sound-panel{right:auto;left:0;width:min(340px,calc(100vw - 70px))}}
+
+/* Sound library v2 — select a chime and ringtone independently. */
+.schedule-sound-setting select{max-width:100%;box-sizing:border-box;text-overflow:ellipsis}
+.schedule-sound-preview:focus-visible,.schedule-sound-setting select:focus-visible{outline:3px solid #60b7ee;outline-offset:2px}
+@media(max-width:480px){.schedule-sound-panel{max-height:min(80vh,680px)}.schedule-sound-setting select{font-size:.77rem}}
