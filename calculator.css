@@ -503,3 +503,36 @@ body.theme-rgb .wheel-color-row{border-color:#294967;background:#10243c}body.the
   .flashcards-tool-frame{min-height:640px;border-radius:14px}
   .flashcards-tool-frame iframe{height:calc(100vh - 160px);min-height:640px}
 }
+
+
+/* Schedule Timer — optional sound alerts (local to this browser) */
+.schedule-sound-widget{position:relative;z-index:18}
+.schedule-sound-trigger{white-space:nowrap;min-height:42px}
+.schedule-sound-panel[hidden]{display:none!important}
+.schedule-sound-panel{box-sizing:border-box;position:absolute;right:0;top:calc(100% + 10px);z-index:30;width:min(352px,calc(100vw - 38px));max-height:min(75vh,600px);overflow:auto;padding:18px;border:1px solid #cbdbea;border-radius:16px;background:#fff;color:#243d5c;box-shadow:0 20px 48px rgba(14,34,66,.23);font-family:Inter,system-ui,sans-serif;text-align:left}
+.schedule-sound-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px}
+.schedule-sound-panel-head strong{font-size:1.04rem;color:#173868}
+.schedule-sound-panel-head button{min-width:32px;min-height:32px;border:0;background:#eff5fc;color:#23446b;border-radius:9px;font-size:1.4rem;cursor:pointer}
+.schedule-sound-toggle{display:flex;justify-content:space-between;align-items:center;gap:16px;cursor:pointer}
+.schedule-sound-toggle>span{display:grid;gap:4px;min-width:0}
+.schedule-sound-toggle strong{font-size:.85rem;line-height:1.35;color:#203e61}
+.schedule-sound-toggle small{font-size:.72rem;line-height:1.35;color:#6b7c91}
+.schedule-sound-toggle input{width:20px;height:20px;flex:none;accent-color:#147eb5;cursor:pointer}
+.schedule-sound-setting{display:grid;gap:8px;margin-top:13px;color:#415977;font-weight:800;font-size:.75rem}
+.schedule-sound-setting>span{display:flex;justify-content:space-between;gap:8px}
+.schedule-sound-setting select{min-width:0;width:100%;min-height:41px;padding:0 11px;border:1px solid #bfd1e3;border-radius:10px;background:#f8fbff;color:#1b3a5b;font:800 .8rem Inter,system-ui,sans-serif}
+.schedule-sound-setting select:disabled{opacity:.52;cursor:not-allowed}
+.schedule-sound-setting input[type=range]{width:100%;accent-color:#147eb5}
+.schedule-sound-preview{width:100%;min-height:35px;margin-top:10px;border:1px solid #c9d9e9;border-radius:9px;background:#f0f6fc;color:#245b83;font:800 .75rem Inter,system-ui,sans-serif;cursor:pointer}
+.schedule-sound-rule{height:1px;margin:16px 0;background:#e0eaf2}
+.schedule-sound-enable{width:100%;min-height:38px;margin-top:15px;border:1px solid #63b6d9;border-radius:10px;background:#e8f8ff;color:#125b83;font:900 .76rem Inter,system-ui,sans-serif;cursor:pointer}
+.schedule-sound-enable[hidden]{display:none}
+.schedule-sound-status{min-height:26px;margin:10px 0 0;font-size:.72rem;line-height:1.45;color:#60758c}
+body.theme-rgb .schedule-sound-panel{border-color:#416588;background:#10243e;color:#e9f5ff;box-shadow:0 22px 50px rgba(0,0,0,.45)}
+body.theme-rgb .schedule-sound-panel-head strong,body.theme-rgb .schedule-sound-toggle strong{color:#f2f8ff}
+body.theme-rgb .schedule-sound-toggle small,body.theme-rgb .schedule-sound-setting,body.theme-rgb .schedule-sound-status{color:#b2c8df}
+body.theme-rgb .schedule-sound-panel-head button,body.theme-rgb .schedule-sound-preview{background:#1a3454;border-color:#486a8a;color:#f0f7ff}
+body.theme-rgb .schedule-sound-setting select{background:#0b1b30;border-color:#486a8a;color:#e9f5ff}
+body.theme-rgb .schedule-sound-enable{background:#18486a;color:#eaffff;border-color:#53b5df}
+body.theme-rgb .schedule-sound-rule{background:#32516f}
+@media(max-width:620px){.schedule-timer-toolbar{flex-wrap:wrap}.schedule-timer-toolbar-actions{justify-content:flex-start}.schedule-sound-panel{right:auto;left:0;width:min(340px,calc(100vw - 70px))}}

@@ -273,6 +273,136 @@ renderNumberHistory();
 queueFitNumberGeneratorResult();
 
 // Scheduled Classroom Timer
+// Optional audible alerts. Preferences stay in localStorage and are never synced to other teachers.
+const SCHEDULE_SOUND_STORAGE_KEY='glnScheduleTimerSoundsV1';
+const SCHEDULE_SOUND_LEADS=[15,30,60,120,180,300];
+const scheduleSoundTrigger=document.querySelector('#scheduleSoundTrigger');
+const scheduleSoundWidget=document.querySelector('#scheduleSoundWidget');
+const scheduleSoundPanel=document.querySelector('#scheduleSoundPanel');
+const scheduleSoundClose=document.querySelector('#scheduleSoundClose');
+const scheduleChimeEnabled=document.querySelector('#scheduleChimeEnabled');
+const scheduleChimeLead=document.querySelector('#scheduleChimeLead');
+const scheduleRingEnabled=document.querySelector('#scheduleRingEnabled');
+const scheduleChimePreview=document.querySelector('#scheduleChimePreview');
+const scheduleRingPreview=document.querySelector('#scheduleRingPreview');
+const scheduleSoundVolume=document.querySelector('#scheduleSoundVolume');
+const scheduleSoundVolumeLabel=document.querySelector('#scheduleSoundVolumeLabel');
+const scheduleSoundEnable=document.querySelector('#scheduleSoundEnable');
+const scheduleSoundStatus=document.querySelector('#scheduleSoundStatus');
+function loadScheduleSoundSettings(){
+  const defaults={chime:false,ring:false,lead:60,volume:65};
+  try{
+    const saved=JSON.parse(localStorage.getItem(SCHEDULE_SOUND_STORAGE_KEY)||'null');
+    if(!saved||typeof saved!=='object')return defaults;
+    const lead=Number(saved.lead),volume=Number(saved.volume);
+    return{chime:saved.chime===true,ring:saved.ring===true,lead:SCHEDULE_SOUND_LEADS.includes(lead)?lead:60,volume:Number.isFinite(volume)?Math.max(0,Math.min(100,volume)):65};
+  }catch{return defaults}
+}
+let scheduleSoundSettings=loadScheduleSoundSettings();
+let scheduleSoundContext=null;
+let scheduleSoundTracked=null;
+function saveScheduleSoundSettings(){
+  try{localStorage.setItem(SCHEDULE_SOUND_STORAGE_KEY,JSON.stringify(scheduleSoundSettings))}catch{}
+  renderScheduleSoundSettings();
+}
+function renderScheduleSoundSettings(){
+  if(!scheduleSoundPanel)return;
+  scheduleChimeEnabled.checked=scheduleSoundSettings.chime;
+  scheduleRingEnabled.checked=scheduleSoundSettings.ring;
+  scheduleChimeLead.value=String(scheduleSoundSettings.lead);
+  scheduleChimeLead.disabled=!scheduleSoundSettings.chime;
+  scheduleSoundVolume.value=String(scheduleSoundSettings.volume);
+  scheduleSoundVolumeLabel.textContent=`${scheduleSoundSettings.volume}%`;
+  const anyOn=scheduleSoundSettings.chime||scheduleSoundSettings.ring;
+  const ready=scheduleSoundContext?.state==='running';
+  scheduleSoundEnable.hidden=!anyOn||ready;
+  scheduleSoundTrigger.textContent=anyOn?'🔔 Sound settings':'🔕 Sound settings';
+  if(!anyOn)scheduleSoundStatus.textContent='Both alerts are off. You can preview either sound.';
+  else if(ready)scheduleSoundStatus.textContent='Sound is enabled in this browser. Each alert plays only once per activity.';
+  else scheduleSoundStatus.textContent='Click “Enable sound for this visit” to allow automatic alerts.';
+}
+async function unlockScheduleSound(){
+  const AudioClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioClass){if(scheduleSoundStatus)scheduleSoundStatus.textContent='This browser does not support audio alerts.';return false}
+  try{
+    if(!scheduleSoundContext||scheduleSoundContext.state==='closed')scheduleSoundContext=new AudioClass();
+    if(scheduleSoundContext.state!=='running')await scheduleSoundContext.resume();
+    renderScheduleSoundSettings();
+    return scheduleSoundContext.state==='running';
+  }catch{if(scheduleSoundStatus)scheduleSoundStatus.textContent='Browser sound is blocked. Click Enable sound again.';return false}
+}
+function scheduleTone(start,frequency,length,level){
+  const ctx=scheduleSoundContext;
+  if(!ctx||ctx.state!=='running'||scheduleSoundSettings.volume===0)return;
+  const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+  oscillator.type='sine';oscillator.frequency.setValueAtTime(frequency,start);
+  const amplitude=level*(scheduleSoundSettings.volume/100);
+  gain.gain.setValueAtTime(0.0001,start);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002,amplitude),start+0.018);
+  gain.gain.exponentialRampToValueAtTime(0.0001,start+length);
+  oscillator.connect(gain);gain.connect(ctx.destination);
+  oscillator.start(start);oscillator.stop(start+length+0.04);
+  oscillator.onended=()=>{oscillator.disconnect();gain.disconnect()};
+}
+function playScheduleAlert(kind){
+  if(!scheduleSoundContext||scheduleSoundContext.state!=='running')return false;
+  const at=scheduleSoundContext.currentTime+0.03;
+  if(kind==='chime'){
+    scheduleTone(at,784,0.35,0.12);scheduleTone(at+0.3,1046.5,0.62,0.1);
+  }else{
+    // A brief, recognizable ringing pattern; ends without manual dismissal.
+    [0,0.65,1.3].forEach(offset=>{
+      scheduleTone(at+offset,880,0.34,0.12);
+      scheduleTone(at+offset+0.28,659.25,0.36,0.1);
+    });
+  }
+  return true;
+}
+// Use end timestamps rather than exactly hitting 00:00 in a half-second update.
+// A slept/background tab may skip several ticks, but should not ring minutes late.
+function scheduleSoundTick(now,active){
+  const nowMs=now.getTime();
+  if(scheduleSoundTracked&&(scheduleSoundTracked.key!==active?.key||nowMs>=scheduleSoundTracked.end)){
+    const previous=scheduleSoundTracked;
+    if(!previous.suppressed&&nowMs>=previous.end&&nowMs-previous.end<=10000&&previous.lastSeen<previous.end&&scheduleSoundSettings.ring){
+      playScheduleAlert('ring');
+    }
+    scheduleSoundTracked=null;
+  }
+  if(!active)return;
+  const start=active.start.getTime(),end=active.end.getTime();
+  const remaining=end-nowMs;
+  if(!scheduleSoundTracked||scheduleSoundTracked.key!==active.key||scheduleSoundTracked.end!==end){
+    scheduleSoundTracked={key:active.key,start,end,lastRemaining:remaining,lastSeen:nowMs,warningPlayed:false,suppressed:false};
+    return;
+  }
+  const tracked=scheduleSoundTracked,leadMs=scheduleSoundSettings.lead*1000;
+  if(!tracked.warningPlayed&&scheduleSoundSettings.chime&&end-start>leadMs&&tracked.lastRemaining>leadMs&&remaining<=leadMs&&remaining>0){
+    tracked.warningPlayed=true;
+    playScheduleAlert('chime');
+  }
+  tracked.lastRemaining=remaining;
+  tracked.lastSeen=nowMs;
+}
+function suppressScheduleSound(){if(scheduleSoundTracked)scheduleSoundTracked.suppressed=true}
+function setScheduleSoundPanel(open){
+  if(!scheduleSoundPanel)return;
+  scheduleSoundPanel.hidden=!open;
+  scheduleSoundTrigger?.setAttribute('aria-expanded',String(open));
+}
+scheduleSoundTrigger?.addEventListener('click',()=>setScheduleSoundPanel(scheduleSoundPanel.hidden));
+scheduleSoundClose?.addEventListener('click',()=>setScheduleSoundPanel(false));
+document.addEventListener('pointerdown',event=>{if(scheduleSoundWidget&&!scheduleSoundWidget.contains(event.target))setScheduleSoundPanel(false)});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!scheduleSoundPanel?.hidden){setScheduleSoundPanel(false);scheduleSoundTrigger?.focus()}});
+scheduleChimeEnabled?.addEventListener('change',()=>{scheduleSoundSettings.chime=scheduleChimeEnabled.checked;saveScheduleSoundSettings();if(scheduleSoundSettings.chime)unlockScheduleSound()});
+scheduleRingEnabled?.addEventListener('change',()=>{scheduleSoundSettings.ring=scheduleRingEnabled.checked;saveScheduleSoundSettings();if(scheduleSoundSettings.ring)unlockScheduleSound()});
+scheduleChimeLead?.addEventListener('change',()=>{const v=Number(scheduleChimeLead.value);scheduleSoundSettings.lead=SCHEDULE_SOUND_LEADS.includes(v)?v:60;saveScheduleSoundSettings()});
+scheduleSoundVolume?.addEventListener('input',()=>{scheduleSoundSettings.volume=Math.max(0,Math.min(100,Number(scheduleSoundVolume.value)||0));saveScheduleSoundSettings()});
+scheduleSoundEnable?.addEventListener('click',unlockScheduleSound);
+scheduleChimePreview?.addEventListener('click',async()=>{if(await unlockScheduleSound())playScheduleAlert('chime')});
+scheduleRingPreview?.addEventListener('click',async()=>{if(await unlockScheduleSound())playScheduleAlert('ring')});
+renderScheduleSoundSettings();
+
 const SCHEDULE_TIMER_STORAGE_KEY='glnScheduleTimersV1';
 const scheduleClock=document.querySelector('#scheduleClock');
 const scheduleActiveState=document.querySelector('#scheduleActiveState');
@@ -563,6 +693,7 @@ function updateScheduleTimerClock(){
   if(!scheduleClock)return;const now=new Date();scheduleClock.textContent=formatScheduleClock(now);if(deactivateExpiredSpecialSchedules(now))renderScheduleTimers();const specialToday=specialScheduleExistsToday(now);
   if(scheduleSpecialDay){scheduleSpecialDay.hidden=!specialToday;scheduleSpecialDay.textContent=specialToday?`Special schedule active today · ${formatScheduleDate(localScheduleDateKey(now))} · Weekly schedule paused for today`:''}
   const active=activeTimerOccurrence(now);
+  scheduleSoundTick(now,active);
   if(active){
     const remaining=active.end-now;const total=Math.max(1,active.end-active.start);const elapsed=Math.max(0,now-active.start);const pct=Math.min(100,Math.max(0,elapsed/total*100));const remainingText=formatTimerRemaining(remaining);const isManual=String(active.key).startsWith('manual:');
     scheduleActiveState.textContent=isManual?'RUNNING NOW':active.type==='special'?'SPECIAL SCHEDULE':'RUNNING AUTOMATICALLY';scheduleActiveName.textContent=active.displayName;scheduleCountdown.textContent=remainingText;scheduleActiveRange.textContent=`${formatScheduleTime(`${String(active.start.getHours()).padStart(2,'0')}:${String(active.start.getMinutes()).padStart(2,'0')}`)} – ${formatScheduleTime(`${String(active.end.getHours()).padStart(2,'0')}:${String(active.end.getMinutes()).padStart(2,'0')}`)}${active.type==='special'&&active.entry?.name?` · ${active.entry.name}`:''}`;scheduleProgress.style.width=`${pct}%`;stopScheduleTimer.hidden=false;showScheduleTimer.textContent=`Schedule Timer · ${remainingText}`;
@@ -603,8 +734,9 @@ if(scheduleTimerForm)scheduleTimerForm.addEventListener('submit',event=>{
   saveClassroomSchedules();renderScheduleTimers();updateScheduleTimerClock();resetScheduleEditor();
 });
 if(cancelScheduleEdit)cancelScheduleEdit.addEventListener('click',resetScheduleEditor);
-if(clearScheduleTimers)clearScheduleTimers.addEventListener('click',()=>{if(!classroomSchedules.length)return;if(confirm('Clear all saved weekly and special schedules?')){classroomSchedules=[];manualTimer=null;saveClassroomSchedules();renderScheduleTimers();resetScheduleEditor();updateScheduleTimerClock()}});
+if(clearScheduleTimers)clearScheduleTimers.addEventListener('click',()=>{if(!classroomSchedules.length)return;if(confirm('Clear all saved weekly and special schedules?')){suppressScheduleSound();classroomSchedules=[];manualTimer=null;saveClassroomSchedules();renderScheduleTimers();resetScheduleEditor();updateScheduleTimerClock()}});
 if(stopScheduleTimer)stopScheduleTimer.addEventListener('click',()=>{
+  suppressScheduleSound();
   const now=new Date();if(manualTimer&&now<manualTimer.end){manualTimer=null}else{const active=getActiveScheduledOccurrence(now);if(active)dismissedScheduleOccurrences.add(active.key)}updateScheduleTimerClock();
 });
 loadClassroomSchedules();specialEditorSlots=[defaultSpecialSlot()];setScheduleEditorType('weekly',{keepSpecial:true});renderSpecialSlotEditor();renderScheduleTimers();updateScheduleTimerClock();syncScheduleFullscreenUI();setInterval(updateScheduleTimerClock,500);
