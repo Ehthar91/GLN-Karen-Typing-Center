@@ -67,3 +67,37 @@
 .tug-recoil-red .tug-rope-line,.tug-recoil-blue .tug-rope-line{animation:tug-v2-recoil .32s ease-out}
 @keyframes tug-v2-recoil{0%,100%{transform:translateX(0)}28%{transform:translateX(-4px)}58%{transform:translateX(4px)}}
 @media(prefers-reduced-motion:reduce){.tug-recoil-red .tug-rope-line,.tug-recoil-blue .tug-rope-line{animation:none}}
+
+/* Classic Light avatar selection contrast repair (2026-10-31).
+   The shared anime avatar card artwork uses dark navy backgrounds by default.
+   Restrict the lighter presentation to Classic Light only so Gaming RGB stays as-is. */
+body:not(.theme-rgb) #tugAvatarPicker .tug-avatar-choice {
+  color: #1d3757;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f6fd 100%);
+  border: 1px solid #bdcfe4;
+  box-shadow: 0 8px 19px rgba(22, 54, 96, .09);
+}
+body:not(.theme-rgb) #tugAvatarPicker .tug-avatar-choice .tug-avatar-choice-label {
+  color: #193b63;
+  text-shadow: none;
+}
+body:not(.theme-rgb) #tugAvatarPicker .tug-avatar-choice:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #e9f3ff 100%);
+  border-color: #79a8e2;
+  box-shadow: 0 12px 24px rgba(22, 54, 96, .14);
+}
+body:not(.theme-rgb) #tugAvatarPicker .tug-avatar-choice.selected,
+body:not(.theme-rgb) #tugAvatarPicker .tug-avatar-choice.selected:hover {
+  color: #123c6f;
+  background: linear-gradient(180deg, #edf6ff 0%, #dbeaff 100%);
+  border: 2px solid #2879df;
+  box-shadow: 0 0 0 3px rgba(40, 121, 223, .16), 0 12px 25px rgba(22, 54, 96, .13);
+}
+body:not(.theme-rgb) #tugAvatarPicker .tug-avatar-choice.selected .tug-avatar-choice-label {
+  color: #103d78;
+  text-shadow: none;
+}
+body:not(.theme-rgb) #tugAvatarPicker .tug-avatar-choice:focus-visible {
+  outline: 3px solid #1d74d4;
+  outline-offset: 4px;
+}
