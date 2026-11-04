@@ -3,3 +3,63 @@
 @media(max-width:650px){.qb-two,.qb-choices,.qb-team-list{grid-template-columns:1fr}.qb-top{align-items:start}.qb-lane{grid-template-columns:65px minmax(90px,1fr) 40px;font-size:.72rem;gap:7px}.qb-tug-visual{grid-template-columns:1fr 2fr 1fr}.qb-tug-visual strong{font-size:1rem}.qb-visual,.qb-question{padding:12px}.qb-host-controls button{flex:1 1 145px}.qb-panel{padding:8px}.qb-library button{flex:1 1 65px}}
 /* Optional typing layouts reuse the site's actual S'gaw/Pwo GLN keyboard maps. */
 .qb-keyboard-panel{margin-top:14px}.qb-keyboard-panel[hidden]{display:none}.qb-keyboard-panel>label{display:grid;gap:5px;font-size:.85rem;font-weight:700;max-width:360px}.qb-kbd-select{font:inherit;max-width:100%;padding:9px;border:1px solid #87afd9;background:transparent;color:inherit;border-radius:8px}.qb-on-screen-keys{display:grid;gap:5px;margin:12px 0}.qb-on-screen-keys[hidden]{display:none}.qb-kbd-row,.qb-kbd-controls{display:flex;gap:3px;justify-content:center;flex-wrap:nowrap}.qb-kbd-controls button{padding:6px 10px}.qb-kbd-key{flex:1;min-width:0;max-width:73px;min-height:43px;padding:2px;border:1px solid rgba(112,169,220,.55);border-radius:7px;background:rgba(110,163,225,.15);color:inherit;cursor:pointer;font:inherit;display:grid;justify-content:center;gap:2px}.qb-kbd-key small{font-size:.6rem;opacity:.6}.qb-kbd-key strong{font-size:.92rem}.qb-kbd-key:hover{background:rgba(92,157,230,.32)}@media(max-width:500px){.qb-kbd-row{gap:1px}.qb-kbd-key{padding:2px 0;min-height:36px}.qb-kbd-key small{font-size:.48rem}.qb-kbd-key strong{font-size:.75rem}}
+
+
+/* v1.1 — keep quiz settings inside the actual host-panel width.
+   Desktop pages may have narrow host columns, so viewport media queries
+   alone cannot determine whether two settings fit side by side. */
+.qb-quiz-options{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  container-type:inline-size;
+  container-name:qb-settings;
+}
+.qb-two{
+  grid-template-columns:minmax(0,1fr);
+  min-width:0;
+  width:100%;
+}
+.qb-two>label{
+  min-width:0;
+  max-width:100%;
+  width:100%;
+  box-sizing:border-box;
+}
+.qb-two>label>select{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+/* Only form two columns when the quiz panel itself has room for them. */
+@container qb-settings (min-width:540px){
+  .qb-two{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+/* Arrange quiz actions compactly instead of stacking three oversized buttons. */
+.qb-library{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch;
+  gap:8px;
+  min-width:0;
+}
+.qb-library>select{
+  grid-column:1 / -1;
+  min-width:0;
+  width:100%;
+  box-sizing:border-box;
+}
+.qb-library>.button{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  margin:0;
+  padding:10px 6px;
+  white-space:normal;
+  line-height:1.25;
+}
