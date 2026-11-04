@@ -360,7 +360,7 @@ function renderEventSignupList(){
     const card=document.createElement('article');card.className=`event-card${event.status==='closed'?' is-closed':''}`;
     const head=document.createElement('div');head.className='event-card-head';const copy=document.createElement('div');const title=document.createElement('div');title.className='event-card-title';const name=document.createElement('strong');name.textContent=event.title||'Untitled Conference';const status=document.createElement('span');status.className=`event-badge${event.status==='closed'?' is-closed':''}`;status.textContent=event.status==='closed'?'Closed':'Open';title.append(name,status);if(event.linkedSchedule){const linked=document.createElement('span');linked.className='event-badge is-linked';linked.textContent='Schedule linked';title.append(linked)}if(event.editorAccess?.active){const editorBadge=document.createElement('span');editorBadge.className='event-badge is-editor';editorBadge.textContent='Editor shared';title.append(editorBadge)}const dates=eventDates(event);const meta=document.createElement('small');meta.textContent=`${eventDateSummary(event)} · ${dates.length||1} day${dates.length===1?'':'s'} · ${eventSlotsArray(event).length} slots · ${eventSignupCount(event)} reservation${eventSignupCount(event)===1?'':'s'}`;copy.append(title,meta);
     const actions=document.createElement('div');actions.className='event-card-actions';const share=document.createElement('button');share.type='button';share.className='primary';share.textContent='Copy conference link';share.addEventListener('click',()=>copyEventLink(id));const open=document.createElement('button');open.type='button';open.textContent='Open conference sign-up';open.addEventListener('click',()=>openEventLink(id));const editorLink=document.createElement('button');editorLink.type='button';editorLink.className='editor-link';editorLink.textContent=event.editorAccess?.active?'Copy editor link':'Create editor link';editorLink.addEventListener('click',()=>copyEventEditorLink(id,event));const edit=document.createElement('button');edit.type='button';edit.textContent='Edit';edit.addEventListener('click',()=>editEventSignup(id));actions.append(share,open,editorLink);if(event.editorAccess?.active){const regenerate=document.createElement('button');regenerate.type='button';regenerate.textContent='New editor link';regenerate.addEventListener('click',()=>{if(confirm('Generate a new editor link? The old editor link will stop working.'))copyEventEditorLink(id,event,true)});const revoke=document.createElement('button');revoke.type='button';revoke.className='danger';revoke.textContent='Revoke editor';revoke.addEventListener('click',()=>revokeEventEditorLink(id,event));actions.append(regenerate,revoke)}const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='Delete';del.addEventListener('click',()=>deleteEventSignup(id,event));window.GLNConferenceRoster?.addOwnerButtons(id,event,actions);actions.append(edit,del);head.append(copy,actions);
-    const slots=document.createElement('div');slots.className='event-slot-summary';appendManagerDaySlots(slots,event,id,'owner');card.append(head,slots);eventSignupList.append(card);
+    const slots=document.createElement('div');slots.className='event-slot-summary';appendManagerDaySlots(slots,event,id,'owner');card.append(head,buildEventSignupSummary(event,'event-owner-signup-summary'),slots);eventSignupList.append(card);
   }
 }
 
@@ -415,19 +415,28 @@ function sharedEditorSignupTotals(event,slots=eventSlotsArray(event)){
   }
   return{booked,capacity,available};
 }
+// Reuse the same live totals and cards for the organizer and shared editor.
+// The organizer view creates one summary for each conference, so events never mix totals.
+function buildEventSignupSummary(event,extraClass=''){
+  const summary=document.createElement('section');
+  summary.className=`event-shared-signup-summary${extraClass?' '+extraClass:''}`;
+  summary.setAttribute('aria-label','Conference signup totals');
+  const stats=[['booked','Signed up','Confirmed appointments'],['capacity','Total spots','Appointment capacity'],['available','Available','Remaining openings']];
+  const totals=sharedEditorSignupTotals(event);
+  for(const [key,label,description] of stats){
+    const card=document.createElement('div');card.className=`event-shared-signup-stat event-shared-signup-${key}`;
+    const title=document.createElement('span');title.textContent=label;
+    const value=document.createElement('strong');value.dataset.signupStat=key;value.textContent=totals[key].toLocaleString();
+    const foot=document.createElement('small');foot.textContent=description;
+    card.append(title,value,foot);summary.append(card);
+  }
+  return summary;
+}
 function updateSharedEditorSignupSummary(event){
   const list=eventSharedEditorSlots;if(!list)return;
   let summary=document.querySelector('#eventSharedEditorSignupSummary');
   if(!summary){
-    summary=document.createElement('section');summary.id='eventSharedEditorSignupSummary';summary.className='event-shared-signup-summary';summary.setAttribute('aria-label','Conference signup totals');
-    const stats=[['booked','Signed up','Confirmed appointments'],['capacity','Total spots','Appointment capacity'],['available','Available','Remaining openings']];
-    for(const [key,label,description] of stats){
-      const card=document.createElement('div');card.className=`event-shared-signup-stat event-shared-signup-${key}`;
-      const title=document.createElement('span');title.textContent=label;
-      const value=document.createElement('strong');value.dataset.signupStat=key;value.textContent='0';
-      const foot=document.createElement('small');foot.textContent=description;
-      card.append(title,value,foot);summary.append(card);
-    }
+    summary=buildEventSignupSummary(event);summary.id='eventSharedEditorSignupSummary';
     list.parentNode.insertBefore(summary,list);
   }
   const totals=sharedEditorSignupTotals(event);
