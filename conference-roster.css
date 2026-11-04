@@ -28,3 +28,48 @@ body.theme-rgb .event-roster-table-wrap{border-color:#304965;background:#14263b}
 @media(max-width:850px){.event-roster-overlay{padding:0}.event-roster-shell{border-radius:0;min-height:100vh}.event-roster-header{flex-direction:column;align-items:stretch;padding:19px}.event-roster-header-actions{justify-content:flex-start}.event-roster-toolbar{grid-template-columns:1fr 1fr;padding:0 18px 14px}.event-roster-search{grid-column:1/-1}.event-roster-stats{padding:14px 18px}.event-roster-table-wrap{margin:0 18px 12px}.event-roster-footer{padding:10px 18px 20px}}
 @media(max-width:500px){.event-roster-header-actions{display:grid;grid-template-columns:1fr 1fr}.event-roster-header-actions button:last-child{grid-column:1/-1}.event-roster-toolbar{grid-template-columns:1fr 1fr;gap:9px}.event-roster-toolbar label>span{font-size:.68rem}.event-roster-stat{min-width:0;flex:1}.event-roster-table{min-width:980px}}
 @media print{body *{visibility:hidden!important}#eventRosterOverlay,#eventRosterOverlay *{visibility:visible!important}#eventRosterOverlay{position:absolute!important;inset:0!important;padding:0!important;background:white!important;overflow:visible!important}#eventRosterOverlay .event-roster-shell{border:0!important;box-shadow:none!important;min-height:0!important;background:white!important}#eventRosterOverlay .event-roster-toolbar,#eventRosterOverlay .event-roster-header-actions,#eventRosterOverlay .event-roster-footer,#eventRosterOverlay .event-roster-row-actions{display:none!important}#eventRosterOverlay .event-roster-table-wrap{border:0!important;overflow:visible!important}#eventRosterOverlay .event-roster-table{min-width:0!important;font-size:8pt;color:black!important}#eventRosterOverlay .event-roster-table th,#eventRosterOverlay .event-roster-table td{color:black!important;border-bottom:1px solid #999!important;padding:4px!important;background:white!important}#eventRosterOverlay .event-roster-heading h2{color:black!important}#eventRosterOverlay .event-roster-table th[data-roster-column="Actions"]{display:none!important}}
+
+/* Conference Roster v1.7 — column controls and privacy-safe display */
+.event-roster-column-panel[hidden],.event-roster-queue-actions[hidden],.event-roster-queue-banner[hidden]{display:none!important}
+.event-roster-column-panel{margin:12px 26px 15px;padding:15px;background:#f0f7fd;border:1px solid #cbdeee;border-radius:12px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;color:#254862}
+.event-roster-column-heading{display:flex;flex-direction:column;gap:4px;min-width:220px;max-width:360px}
+.event-roster-column-heading small{font-size:.71rem;line-height:1.45;color:#5c7288}
+.event-roster-column-checks{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px}
+.event-roster-checkbox{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:750;cursor:pointer;color:#264c6f}
+.event-roster-checkbox input{width:17px;height:17px;accent-color:#247bc1;flex:none}
+.event-roster-column-panel>button{font:inherit;cursor:pointer;padding:9px 12px;border-radius:8px}
+.event-roster-queue-banner{display:flex;gap:12px;padding:0 26px 13px}
+.event-roster-queue-card{flex:1;min-width:0;border-radius:11px;padding:12px 16px;display:flex;flex-direction:column;gap:5px;background:#dff5ea;color:#116143;border:1px solid #b8dfca}
+.event-roster-queue-card.next{background:#e9f1ff;color:#2c5f95;border-color:#c4daf6}
+.event-roster-queue-card small{font-size:.67rem;font-weight:850;letter-spacing:.1em}
+.event-roster-queue-card strong{font-size:clamp(.85rem,1.5vw,1.1rem);font-weight:850;font-variant-numeric:tabular-nums}
+.event-roster-queue-notice{margin:0;color:#64798e;font-size:.75rem}
+.event-roster-queue-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 26px 14px}
+.event-roster-queue-actions button{font:inherit;font-size:.75rem;font-weight:850;padding:9px 12px;border-radius:9px;cursor:pointer}
+.event-roster-queue-action{color:#fff;background:#126cb2;border:1px solid #126cb2}
+.event-roster-queue-guidance{font-size:.7rem;color:#6a7e90;flex:1}
+.event-roster-table{min-width:0;width:100%!important}
+.event-roster-table th,.event-roster-table td{white-space:normal}
+.event-roster-table .event-roster-status{white-space:nowrap;font-weight:800}
+.event-roster-table .status-now-serving{color:#147647}.event-roster-table .status-up-next{color:#216fa9}
+.event-roster-overlay.is-display{padding:0!important;background:#f7fbff!important}
+.event-roster-overlay.is-display .event-roster-shell{width:100%;min-height:100vh;border-radius:0;border:0;box-shadow:none}
+.event-roster-overlay.is-display .event-roster-header{padding:22px 32px}
+.event-roster-overlay.is-display .event-roster-header-actions button:not(.event-roster-display-toggle):not(.event-roster-columns-toggle){display:none!important}
+.event-roster-overlay.is-display .event-roster-toolbar,.event-roster-overlay.is-display .event-roster-stats,.event-roster-overlay.is-display .event-roster-queue-actions,.event-roster-overlay.is-display .event-roster-footer{display:none!important}
+.event-roster-overlay.is-display .event-roster-table-wrap{margin:14px 30px 30px}
+.event-roster-overlay.is-display .event-roster-table{font-size:clamp(1rem,1.7vw,1.45rem)}
+.event-roster-overlay.is-display .event-roster-table th{font-size:clamp(.85rem,1.3vw,1.1rem)}
+.event-roster-overlay.is-display .event-roster-table td{padding:16px 14px}
+.event-roster-overlay.is-display .event-roster-queue-card{padding:18px 24px}
+.event-roster-overlay.is-display .event-roster-queue-card strong{font-size:clamp(1.15rem,2.2vw,1.8rem)}
+body.theme-rgb .event-roster-column-panel{background:#162c46;border-color:#345572;color:#e0f0ff}
+body.theme-rgb .event-roster-column-heading small,body.theme-rgb .event-roster-queue-guidance,body.theme-rgb .event-roster-queue-notice{color:#a8c0da}
+body.theme-rgb .event-roster-checkbox{color:#d6e8fb}
+body.theme-rgb .event-roster-queue-card{background:#123d35;color:#a3f0ce;border-color:#286d60}
+body.theme-rgb .event-roster-queue-card.next{background:#203957;color:#b9d7ff;border-color:#385c84}
+body.theme-rgb .event-roster-table .status-now-serving{color:#91f5b7}body.theme-rgb .event-roster-table .status-up-next{color:#a6ccff}
+body.theme-rgb .event-roster-overlay.is-display{background:#101d30!important}
+@media(max-width:850px){.event-roster-column-panel{margin:8px 18px 12px}.event-roster-queue-banner,.event-roster-queue-actions{padding-left:18px;padding-right:18px}.event-roster-column-checks{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.event-roster-header-actions{display:flex;gap:7px}.event-roster-header-actions button{flex:1;min-width:90px;padding:9px 10px}.event-roster-column-panel{flex-direction:column;align-items:stretch}.event-roster-column-checks{grid-template-columns:repeat(2,minmax(0,1fr))}.event-roster-table{min-width:0}.event-roster-overlay.is-display .event-roster-header{padding:15px}.event-roster-overlay.is-display .event-roster-queue-banner{padding:10px}.event-roster-overlay.is-display .event-roster-table-wrap{margin:10px}}
+@media print{#eventRosterOverlay .event-roster-column-panel,#eventRosterOverlay .event-roster-queue-actions,#eventRosterOverlay .event-roster-queue-banner{display:none!important}}
