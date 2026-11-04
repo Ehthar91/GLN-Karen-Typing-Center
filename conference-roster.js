@@ -1,20 +1,42 @@
-/* GLN Conference Sign-Up v1.7 — one protected link, privacy-limited viewer + customizable columns */
+/* GLN Conference Sign-Up v1.8 — one protected roster link, name formats + customizable columns */
 (function(){
   'use strict';
-  let panel, tableBody, tableHead, statusEl, searchEl, dateEl, gradeEl, sortEl, titleEl, metaEl, countEl, capacityEl, permissionsEl, filterCountEl, columnsPanel, columnsButton, displayButton, queueBanner, queueActions;
+  let panel, tableBody, tableHead, statusEl, searchEl, dateEl, gradeEl, sortEl, titleEl, metaEl, countEl, capacityEl, permissionsEl, filterCountEl, columnsPanel, columnsButton, displayButton, queueBanner, queueActions, nameFormatControl, nameFormatSelect;
   let active=null, selectedRows=[], viewerUnsubscribe=[], managerQueueUnsubscribe=null, syncing=new Map(), pendingSync=new Map(), savedManagerColumns=null;
   const html=(tag,cls='',text='')=>{const element=document.createElement(tag);if(cls)element.className=cls;if(text!==undefined&&text!==null)element.textContent=String(text);return element};
   const button=(label,cls,action)=>{const element=html('button',cls,label);element.type='button';element.addEventListener('click',action);return element};
   const safeId=id=>/^[A-Z2-9]{6,20}$/i.test(String(id||''));
-  const rosterPath=id=>`eventSignupPublicRosters/${id}`; // Public data never contains full names, contact information, interpreter details or private tokens.
+  const rosterPath=id=>`eventSignupPublicRosters/${id}`; // Shared data includes organizer-approved student names, but NEVER contact, interpreter details or private tokens.
   const QUEUE_FIELDS=['Queue','Date','Time','Student','Grade','Teacher','Parent/Guardian','Contact','Interpreter','Status','Actions'];
   const PUBLIC_COLUMNS=['Queue','Date','Time','Student','Grade','Teacher','Status'];
   const DEFAULT_PUBLIC=['Queue','Date','Time','Status'];
   const DEFAULT_STAFF=['Date','Time','Student','Grade','Teacher','Parent/Guardian','Contact','Interpreter','Status','Actions'];
-  const DEFAULT_DISPLAY=['Queue','Time','Status'];
+  const DEFAULT_DISPLAY=['Queue','Time','Student','Status'];
   const uniqueKey=row=>`${row.slotId}/${row.spotId}`;
   const publicInitials=name=>String(name||'').trim().split(/\s+/).filter(Boolean).slice(0,3).map(part=>part[0].toUpperCase()+'.').join(' ');
-  const toPublicRow=row=>({slotId:row.slotId,spotId:row.spotId,date:row.date,time:row.time,timeRange:row.timeRange,slotLabel:row.slotLabel||'',studentInitials:publicInitials(row.studentName),studentGrade:row.studentGrade||'',studentTeacher:row.studentTeacher||''});
+  const NAME_FORMATS=[['first-last','First Name + Last Initial'],['full','Full Name'],['initials','Initials Only'],['first-middle-last','First Name + Middle Initial + Last Initial']];
+  const DEFAULT_NAME_FORMAT='first-last';
+  const nameParts=name=>String(name||'').trim().split(/\s+/u).filter(Boolean);
+  const initial=part=>part?`${Array.from(part)[0].toLocaleUpperCase()}.`:'';
+  function formatStudentName(name,format=DEFAULT_NAME_FORMAT){
+    const parts=nameParts(name);if(!parts.length)return '—';
+    if(format==='full')return parts.join(' ');
+    if(format==='initials')return parts.map(initial).join(' ');
+    if(format==='first-middle-last'&&parts.length>=3)return `${parts[0]} ${initial(parts[1])} ${initial(parts.at(-1))}`;
+    return parts.length>=2?`${parts[0]} ${initial(parts.at(-1))}`:parts[0];
+  }
+  const nameFormatKey=id=>`glnConferenceRosterV18:nameFormat:${id}`;
+  function loadNameFormat(){
+    let saved='';try{saved=localStorage.getItem(nameFormatKey(active.id))||''}catch{}
+    active.nameFormat=NAME_FORMATS.some(([key])=>key===saved)?saved:DEFAULT_NAME_FORMAT;
+  }
+  function setNameFormat(format){
+    if(!active||!NAME_FORMATS.some(([key])=>key===format))return;
+    active.nameFormat=format;
+    try{localStorage.setItem(nameFormatKey(active.id),format)}catch{}
+    render();
+  }
+  const toPublicRow=row=>({slotId:row.slotId,spotId:row.spotId,date:row.date,time:row.time,timeRange:row.timeRange,slotLabel:row.slotLabel||'',studentName:String(row.studentName||'').trim().slice(0,60),studentInitials:publicInitials(row.studentName),studentGrade:row.studentGrade||'',studentTeacher:row.studentTeacher||''});
   function linkFor(id,token){const url=new URL(location.href);url.hash='';url.search='';url.searchParams.set('eventRoster',id);url.searchParams.set('viewer',token);return url.toString()}
   function rowFromRecord(slot,event,record){
     return{slotId:String(slot.id||''),spotId:String(record.spotId||''),date:eventSlotDate(slot,event),time:String(slot.time||''),timeRange:eventSlotTimeRange(slot),slotLabel:String(slot.label||''),studentName:signupStudentName(record),studentGrade:signupStudentGrade(record),studentTeacher:signupStudentTeacher(record),parentName:String(record.parentName||''),email:String(record.email||''),phone:String(record.phone||''),interpreterNeeded:record.interpreterNeeded===true,interpreterLanguage:String(record.interpreterLanguage||''),createdAt:Number(record.createdAt)||0,updatedAt:Number(record.updatedAt)||0};
@@ -45,7 +67,7 @@
     if(!safeId(id)||!event||!fb||!db||!currentUser)return;
     const next=projection(event),signature=JSON.stringify(next);
     if(!force&&syncing.get(id)===signature)return;
-    // Only managers have permission to write the sanitized snapshot; this never includes private tokens.
+    // This organizer-approved snapshot includes student names, but never parent contacts, interpreter data, or private tokens.
     const rootRef=fb.ref(db,rosterPath(id));
     await fb.update(rootRef,{title:next.title,dateSummary:next.dateSummary,capacity:next.capacity,rows:Object.keys(next.rows).length?next.rows:null,updatedAt:Date.now()});
     syncing.set(id,signature);
@@ -153,7 +175,7 @@
         if(control.checked)active.columns.add(name);else active.columns.delete(name);
         if(!active.columns.size){active.columns.add(name);control.checked=true;showNotice('Keep at least one column visible.',true);statusEl.hidden=false;return}
         saveColumns();render();
-      });label.append(control,html('span','',name==='Student'&&(!isStaff()||active.displayMode)?'Student initials':name));checks.append(label);
+      });label.append(control,html('span','',name==='Student'&&!isStaff()&&!active.displayMode?'Student initials':name));checks.append(label);
     }
     columnsPanel.append(checks);
     columnsPanel.append(button('Restore default columns','event-roster-secondary',()=>{active.columns=new Set((isStaff()?DEFAULT_STAFF:DEFAULT_PUBLIC).filter(c=>allowedColumns().includes(c)));saveColumns();render()}));
@@ -218,7 +240,8 @@
     const right=html('div','event-roster-header-actions');
     columnsButton=button('Columns','event-roster-secondary event-roster-columns-toggle',toggleColumns);columnsButton.setAttribute('aria-expanded','false');
     displayButton=button('Display Mode','event-roster-secondary event-roster-display-toggle',()=>setDisplayMode(!active?.displayMode));
-    right.append(columnsButton,displayButton,button('Export CSV','event-roster-secondary event-roster-export',exportCSV),button('Print','event-roster-secondary event-roster-print',()=>window.print()),button('Close','event-roster-close',closeRoster));header.append(left,right);
+    nameFormatControl=html('label','event-roster-name-format');nameFormatControl.append(html('span','','Name Format'));nameFormatSelect=html('select');nameFormatSelect.setAttribute('aria-label','Student name format in Display Mode');for(const [value,label] of NAME_FORMATS){const opt=html('option','',label);opt.value=value;nameFormatSelect.append(opt)}nameFormatSelect.addEventListener('change',()=>setNameFormat(nameFormatSelect.value));nameFormatControl.append(nameFormatSelect);
+    right.append(columnsButton,nameFormatControl,displayButton,button('Export CSV','event-roster-secondary event-roster-export',exportCSV),button('Print','event-roster-secondary event-roster-print',()=>window.print()),button('Close','event-roster-close',closeRoster));header.append(left,right);
     columnsPanel=html('div','event-roster-column-panel');columnsPanel.hidden=true;
     const stats=html('div','event-roster-stats');for(const [key,title] of [['count','Signed up'],['capacity','Total spots']]){
       const card=html('div','event-roster-stat');card.append(html('small','',title));const value=html('strong','event-roster-stat-value','0');if(key==='count')countEl=value;else capacityEl=value;card.append(value);stats.append(card);
@@ -249,11 +272,12 @@
       const vals=[row.date,row.time,row.timeRange,row.slotLabel];
       if(isStaff())vals.push(row.studentName,row.studentInitials,row.studentGrade,row.studentTeacher,row.parentName,row.email,row.phone,row.interpreterLanguage);
       else vals.push(row.studentInitials,row.studentGrade,row.studentTeacher);
+      if(active.displayMode)vals.push(formatStudentName(row.studentName||'',active.nameFormat));
       return vals.join(' ').toLowerCase().includes(q);
     };
     const rows=active.rows.filter(row=>(!date||row.date===date)&&(!grade||row.studentGrade===grade)&&(!q||matches(row)));
     const by=key=>(a,b)=>String(a[key]||'').localeCompare(String(b[key]||''),undefined,{numeric:true,sensitivity:'base'});
-    rows.sort(order==='student'?by(isStaff()?'studentName':'studentInitials'):order==='grade'?by('studentGrade'):order==='teacher'?by('studentTeacher'):order==='parent'&&isStaff()?by('parentName'):order==='date-desc'?(a,b)=>-chronology(a,b):chronology);
+    rows.sort(order==='student'?by(isStaff()||active.displayMode?'studentName':'studentInitials'):order==='grade'?by('studentGrade'):order==='teacher'?by('studentTeacher'):order==='parent'&&isStaff()?by('parentName'):order==='date-desc'?(a,b)=>-chronology(a,b):chronology);
     return rows;
   }
   function cellValue(row,column){
@@ -261,7 +285,7 @@
       case 'Queue':return `#${String(queueIndex(row)+1).padStart(2,'0')}`;
       case 'Date':return eventSlotFullDateText(row.date);
       case 'Time':return row.timeRange||formatScheduleTime(row.time);
-      case 'Student':return (active.displayMode||!isStaff())?(row.studentInitials||publicInitials(row.studentName)||'—'):(row.studentName||'—');
+      case 'Student':return active.displayMode?(row.studentName?formatStudentName(row.studentName,active.nameFormat):(row.studentInitials||'—')):isStaff()?(row.studentName||'—'):(row.studentInitials||publicInitials(row.studentName)||'—');
       case 'Grade':return row.studentGrade||'—';
       case 'Teacher':return row.studentTeacher||'—';
       case 'Parent/Guardian':return isStaff()?(row.parentName||'—'):'—';
@@ -275,14 +299,15 @@
   function render(){
     if(!panel||!active)return;
     titleEl.textContent=active.title||'Conference Sign-Up';
-    metaEl.textContent=active.displayMode?(activeDay()?`${eventSlotFullDateText(activeDay())} · Appointments in scheduled order`:'Appointment schedule · No signed-up appointments'):(active.source==='viewer'?(isStaff()?'Staff access verified · One shared roster link':'Read-only shared roster · Private student and contact details protected'):'All sign-ups · Confirmed reservations only · Empty slots hidden');
+    if(nameFormatSelect&&active.nameFormat)nameFormatSelect.value=active.nameFormat;
+    metaEl.textContent=active.displayMode?(activeDay()?`${eventSlotFullDateText(activeDay())} · Appointments in scheduled order`:'Appointment schedule · No signed-up appointments'):(active.source==='viewer'?(isStaff()?'Staff access verified · One shared roster link':'Read-only shared roster · Student names shared by organizer · Family contacts protected'):'All sign-ups · Confirmed reservations only · Empty slots hidden');
     countEl.textContent=active.rows.length.toLocaleString();capacityEl.textContent=active.capacity!=null?Number(active.capacity).toLocaleString():'—';
     fillSelect(dateEl,[...new Set(active.rows.map(row=>row.date).filter(Boolean))].sort(),'All dates');
     fillSelect(gradeEl,[...new Set(active.rows.map(row=>row.studentGrade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})),'All grades');
-    const options=[['date','Date / time ↑'],['date-desc','Date / time ↓'],['student',isStaff()?'Student A–Z':'Initials A–Z'],['grade','Grade'],['teacher','Teacher']];if(isStaff())options.push(['parent','Parent A–Z']);
+    const options=[['date','Date / time ↑'],['date-desc','Date / time ↓'],['student',active.displayMode?'Student A–Z':isStaff()?'Student A–Z':'Initials A–Z'],['grade','Grade'],['teacher','Teacher']];if(isStaff())options.push(['parent','Parent A–Z']);
     const currentSort=sortEl.value||'date';sortEl.replaceChildren();for(const [value,label] of options){const option=html('option','',label);option.value=value;sortEl.append(option)}sortEl.value=options.some(option=>option[0]===currentSort)?currentSort:'date';
     selectedRows=filterRows();tableBody.replaceChildren();tableHead.replaceChildren();const allowed=allowedColumns();const visible=[...QUEUE_FIELDS].filter(c=>allowed.includes(c)&&active.columns.has(c));
-    const heading=html('tr');visible.forEach(name=>{const th=html('th','',name==='Student'&&(!isStaff()||active.displayMode)?'Student initials':name);th.dataset.rosterColumn=name;heading.append(th)});tableHead.append(heading);
+    const heading=html('tr');visible.forEach(name=>{const th=html('th','',name==='Student'&&!isStaff()&&!active.displayMode?'Student initials':name);th.dataset.rosterColumn=name;heading.append(th)});tableHead.append(heading);
     if(!selectedRows.length){const tr=html('tr');const cell=html('td','event-roster-empty',active.rows.length?'No sign-ups match your search or filters.':'No one has signed up yet.');cell.colSpan=Math.max(1,visible.length);tr.append(cell);tableBody.append(tr)}
     for(const row of selectedRows){
       const tr=html('tr');for(const name of visible){const td=html('td',name==='Student'?'event-roster-student':name==='Actions'?'event-roster-row-actions':name==='Status'?`event-roster-status status-${currentStatus(row).toLowerCase().replace(/\W+/g,'-')}`:'');td.dataset.rosterColumn=name;
@@ -290,14 +315,14 @@
         else td.textContent=cellValue(row,name);tr.append(td)}tableBody.append(tr);
     }
     filterCountEl.textContent=`Showing ${selectedRows.length} of ${active.rows.length} confirmed sign-ups`;
-    permissionsEl.textContent=isManager()?'Verified manager · Move/Remove available':isStaff()?'Verified staff · Full details (read-only on this link)':'Shared viewer · Private names, contacts, and interpreter details not included';
+    permissionsEl.textContent=isManager()?'Verified manager · Move/Remove available':isStaff()?'Verified staff · Full details (read-only on this link)':'Shared viewer · Student names may be visible · Family contacts and interpreter details excluded';
     panel.classList.toggle('is-viewer',!isManager());panel.classList.toggle('is-staff-viewer',active.source==='viewer'&&isStaff());
     refreshColumnSettings();updateQueueBanner();updateQueueActions();
   }
   function stopSubscriptions(){for(const stop of viewerUnsubscribe)try{stop()}catch{}viewerUnsubscribe=[];if(managerQueueUnsubscribe){managerQueueUnsubscribe();managerQueueUnsubscribe=null}}
   function showRoster(data){
     ensureUI();stopSubscriptions();active={...data,queue:data.queue||{},displayMode:false,staffAuthorized:!!data.staffAuthorized};
-    loadColumns();searchEl.value='';dateEl.value='';gradeEl.value='';sortEl.value='date';columnsPanel.hidden=true;columnsButton.setAttribute('aria-expanded','false');
+    loadColumns();loadNameFormat();searchEl.value='';dateEl.value='';gradeEl.value='';sortEl.value='date';columnsPanel.hidden=true;columnsButton.setAttribute('aria-expanded','false');
     panel.classList.remove('is-display');displayButton.textContent='Display Mode';panel.hidden=false;document.body.classList.add('event-roster-open');statusEl.hidden=true;render();
   }
   function closeRoster(){if(!panel)return;if(active?.source==='viewer'){stopSubscriptions();location.href=new URL(location.pathname,location.origin).toString();return}stopSubscriptions();panel.hidden=true;document.body.classList.remove('event-roster-open');active=null;}

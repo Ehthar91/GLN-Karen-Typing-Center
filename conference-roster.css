@@ -73,3 +73,24 @@ body.theme-rgb .event-roster-overlay.is-display{background:#101d30!important}
 @media(max-width:850px){.event-roster-column-panel{margin:8px 18px 12px}.event-roster-queue-banner,.event-roster-queue-actions{padding-left:18px;padding-right:18px}.event-roster-column-checks{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){.event-roster-header-actions{display:flex;gap:7px}.event-roster-header-actions button{flex:1;min-width:90px;padding:9px 10px}.event-roster-column-panel{flex-direction:column;align-items:stretch}.event-roster-column-checks{grid-template-columns:repeat(2,minmax(0,1fr))}.event-roster-table{min-width:0}.event-roster-overlay.is-display .event-roster-header{padding:15px}.event-roster-overlay.is-display .event-roster-queue-banner{padding:10px}.event-roster-overlay.is-display .event-roster-table-wrap{margin:10px}}
 @media print{#eventRosterOverlay .event-roster-column-panel,#eventRosterOverlay .event-roster-queue-actions,#eventRosterOverlay .event-roster-queue-banner{display:none!important}}
+
+/* Conference Roster v1.8 — name formats for display mode, classic light and RGB dark */
+.event-roster-name-format{display:none;flex-direction:column;gap:4px;min-width:195px;max-width:310px;font-size:.68rem;color:#52718d;font-weight:850;line-height:1.2}
+.event-roster-name-format select{min-height:40px;border-radius:9px;padding:8px 10px;border:1px solid #cbdcec;background:#fff;color:#18334e;font:inherit;font-weight:750;font-size:.75rem;max-width:100%;cursor:pointer}
+.event-roster-overlay.is-display .event-roster-name-format{display:flex}
+body.theme-rgb .event-roster-name-format{color:#b8d0ea}
+body.theme-rgb .event-roster-name-format select{background:#192f49;color:#eef7ff;border-color:#3e5d7d}
+@media(max-width:850px){.event-roster-name-format{min-width:165px}}
+@media(max-width:500px){.event-roster-overlay.is-display .event-roster-header-actions{display:grid;grid-template-columns:1fr 1fr;align-items:end}.event-roster-overlay.is-display .event-roster-name-format{grid-column:1/-1;max-width:none;width:100%}.event-roster-overlay.is-display .event-roster-name-format select{width:100%;box-sizing:border-box}}
+@media print{#eventRosterOverlay .event-roster-name-format{display:none!important}}
+/* Compact readable queue on mobile; keep times and statuses from breaking mid-number. */
+@media(max-width:550px){
+  .event-roster-overlay.is-display .event-roster-table{table-layout:fixed;font-size:.77rem}
+  .event-roster-overlay.is-display .event-roster-table th,.event-roster-overlay.is-display .event-roster-table td{padding:10px 6px!important;word-break:normal;overflow-wrap:normal;white-space:normal;line-height:1.45}
+  .event-roster-overlay.is-display .event-roster-table th{font-size:.7rem}
+  .event-roster-overlay.is-display .event-roster-table td[data-roster-column="Time"]{font-size:.72rem;min-width:0;font-variant-numeric:tabular-nums}
+  .event-roster-overlay.is-display .event-roster-table th[data-roster-column="Queue"]{width:12%}
+  .event-roster-overlay.is-display .event-roster-table th[data-roster-column="Time"]{width:30%}
+  .event-roster-overlay.is-display .event-roster-table th[data-roster-column="Student"]{width:30%}
+  .event-roster-overlay.is-display .event-roster-table th[data-roster-column="Status"]{width:28%}
+}
