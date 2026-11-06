@@ -1,4 +1,4 @@
-/* GLN Conference Sign-Up v1.8 — one protected roster link, name formats + customizable columns */
+/* GLN Conference Sign-Up v1.9 — name formats in both roster and display */
 (function(){
   'use strict';
   let panel, tableBody, tableHead, statusEl, searchEl, dateEl, gradeEl, sortEl, titleEl, metaEl, countEl, capacityEl, permissionsEl, filterCountEl, columnsPanel, columnsButton, displayButton, queueBanner, queueActions, nameFormatControl, nameFormatSelect;
@@ -9,13 +9,13 @@
   const rosterPath=id=>`eventSignupPublicRosters/${id}`; // Shared data includes organizer-approved student names, but NEVER contact, interpreter details or private tokens.
   const QUEUE_FIELDS=['Queue','Date','Time','Student','Grade','Teacher','Parent/Guardian','Contact','Interpreter','Status','Actions'];
   const PUBLIC_COLUMNS=['Queue','Date','Time','Student','Grade','Teacher','Status'];
-  const DEFAULT_PUBLIC=['Queue','Date','Time','Status'];
+  const DEFAULT_PUBLIC=['Queue','Date','Time','Student','Grade','Status'];
   const DEFAULT_STAFF=['Date','Time','Student','Grade','Teacher','Parent/Guardian','Contact','Interpreter','Status','Actions'];
   const DEFAULT_DISPLAY=['Queue','Time','Student','Status'];
   const uniqueKey=row=>`${row.slotId}/${row.spotId}`;
   const publicInitials=name=>String(name||'').trim().split(/\s+/).filter(Boolean).slice(0,3).map(part=>part[0].toUpperCase()+'.').join(' ');
   const NAME_FORMATS=[['first-last','First Name + Last Initial'],['full','Full Name'],['initials','Initials Only'],['first-middle-last','First Name + Middle Initial + Last Initial']];
-  const DEFAULT_NAME_FORMAT='first-last';
+  const DEFAULT_NAME_FORMAT='first-middle-last';
   const nameParts=name=>String(name||'').trim().split(/\s+/u).filter(Boolean);
   const initial=part=>part?`${Array.from(part)[0].toLocaleUpperCase()}.`:'';
   function formatStudentName(name,format=DEFAULT_NAME_FORMAT){
@@ -25,7 +25,7 @@
     if(format==='first-middle-last'&&parts.length>=3)return `${parts[0]} ${initial(parts[1])} ${initial(parts.at(-1))}`;
     return parts.length>=2?`${parts[0]} ${initial(parts.at(-1))}`:parts[0];
   }
-  const nameFormatKey=id=>`glnConferenceRosterV18:nameFormat:${id}`;
+  const nameFormatKey=id=>`glnConferenceRosterV19:nameFormat:${id}`;
   function loadNameFormat(){
     let saved='';try{saved=localStorage.getItem(nameFormatKey(active.id))||''}catch{}
     active.nameFormat=NAME_FORMATS.some(([key])=>key===saved)?saved:DEFAULT_NAME_FORMAT;
@@ -240,7 +240,7 @@
     const right=html('div','event-roster-header-actions');
     columnsButton=button('Columns','event-roster-secondary event-roster-columns-toggle',toggleColumns);columnsButton.setAttribute('aria-expanded','false');
     displayButton=button('Display Mode','event-roster-secondary event-roster-display-toggle',()=>setDisplayMode(!active?.displayMode));
-    nameFormatControl=html('label','event-roster-name-format');nameFormatControl.append(html('span','','Name Format'));nameFormatSelect=html('select');nameFormatSelect.setAttribute('aria-label','Student name format in Display Mode');for(const [value,label] of NAME_FORMATS){const opt=html('option','',label);opt.value=value;nameFormatSelect.append(opt)}nameFormatSelect.addEventListener('change',()=>setNameFormat(nameFormatSelect.value));nameFormatControl.append(nameFormatSelect);
+    nameFormatControl=html('label','event-roster-name-format');nameFormatControl.append(html('span','','Name Format'));nameFormatSelect=html('select');nameFormatSelect.setAttribute('aria-label','Student name format for roster and display');for(const [value,label] of NAME_FORMATS){const opt=html('option','',label);opt.value=value;nameFormatSelect.append(opt)}nameFormatSelect.addEventListener('change',()=>setNameFormat(nameFormatSelect.value));nameFormatControl.append(nameFormatSelect);
     right.append(columnsButton,nameFormatControl,displayButton,button('Export CSV','event-roster-secondary event-roster-export',exportCSV),button('Print','event-roster-secondary event-roster-print',()=>window.print()),button('Close','event-roster-close',closeRoster));header.append(left,right);
     columnsPanel=html('div','event-roster-column-panel');columnsPanel.hidden=true;
     const stats=html('div','event-roster-stats');for(const [key,title] of [['count','Signed up'],['capacity','Total spots']]){
@@ -271,13 +271,13 @@
     const matches=row=>{
       const vals=[row.date,row.time,row.timeRange,row.slotLabel];
       if(isStaff())vals.push(row.studentName,row.studentInitials,row.studentGrade,row.studentTeacher,row.parentName,row.email,row.phone,row.interpreterLanguage);
-      else vals.push(row.studentInitials,row.studentGrade,row.studentTeacher);
-      if(active.displayMode)vals.push(formatStudentName(row.studentName||'',active.nameFormat));
+      else vals.push(row.studentName,row.studentInitials,row.studentGrade,row.studentTeacher);
+      vals.push(formatStudentName(row.studentName||'',active.nameFormat));
       return vals.join(' ').toLowerCase().includes(q);
     };
     const rows=active.rows.filter(row=>(!date||row.date===date)&&(!grade||row.studentGrade===grade)&&(!q||matches(row)));
     const by=key=>(a,b)=>String(a[key]||'').localeCompare(String(b[key]||''),undefined,{numeric:true,sensitivity:'base'});
-    rows.sort(order==='student'?by(isStaff()||active.displayMode?'studentName':'studentInitials'):order==='grade'?by('studentGrade'):order==='teacher'?by('studentTeacher'):order==='parent'&&isStaff()?by('parentName'):order==='date-desc'?(a,b)=>-chronology(a,b):chronology);
+    rows.sort(order==='student'?by('studentName'):order==='grade'?by('studentGrade'):order==='teacher'?by('studentTeacher'):order==='parent'&&isStaff()?by('parentName'):order==='date-desc'?(a,b)=>-chronology(a,b):chronology);
     return rows;
   }
   function cellValue(row,column){
@@ -285,7 +285,7 @@
       case 'Queue':return `#${String(queueIndex(row)+1).padStart(2,'0')}`;
       case 'Date':return eventSlotFullDateText(row.date);
       case 'Time':return row.timeRange||formatScheduleTime(row.time);
-      case 'Student':return active.displayMode?(row.studentName?formatStudentName(row.studentName,active.nameFormat):(row.studentInitials||'—')):isStaff()?(row.studentName||'—'):(row.studentInitials||publicInitials(row.studentName)||'—');
+      case 'Student':return row.studentName?formatStudentName(row.studentName,active.nameFormat):(row.studentInitials||'—');
       case 'Grade':return row.studentGrade||'—';
       case 'Teacher':return row.studentTeacher||'—';
       case 'Parent/Guardian':return isStaff()?(row.parentName||'—'):'—';
@@ -304,10 +304,10 @@
     countEl.textContent=active.rows.length.toLocaleString();capacityEl.textContent=active.capacity!=null?Number(active.capacity).toLocaleString():'—';
     fillSelect(dateEl,[...new Set(active.rows.map(row=>row.date).filter(Boolean))].sort(),'All dates');
     fillSelect(gradeEl,[...new Set(active.rows.map(row=>row.studentGrade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})),'All grades');
-    const options=[['date','Date / time ↑'],['date-desc','Date / time ↓'],['student',active.displayMode?'Student A–Z':isStaff()?'Student A–Z':'Initials A–Z'],['grade','Grade'],['teacher','Teacher']];if(isStaff())options.push(['parent','Parent A–Z']);
+    const options=[['date','Date / time ↑'],['date-desc','Date / time ↓'],['student','Student A–Z'],['grade','Grade'],['teacher','Teacher']];if(isStaff())options.push(['parent','Parent A–Z']);
     const currentSort=sortEl.value||'date';sortEl.replaceChildren();for(const [value,label] of options){const option=html('option','',label);option.value=value;sortEl.append(option)}sortEl.value=options.some(option=>option[0]===currentSort)?currentSort:'date';
     selectedRows=filterRows();tableBody.replaceChildren();tableHead.replaceChildren();const allowed=allowedColumns();const visible=[...QUEUE_FIELDS].filter(c=>allowed.includes(c)&&active.columns.has(c));
-    const heading=html('tr');visible.forEach(name=>{const th=html('th','',name==='Student'&&!isStaff()&&!active.displayMode?'Student initials':name);th.dataset.rosterColumn=name;heading.append(th)});tableHead.append(heading);
+    const heading=html('tr');visible.forEach(name=>{const th=html('th','',name);th.dataset.rosterColumn=name;heading.append(th)});tableHead.append(heading);
     if(!selectedRows.length){const tr=html('tr');const cell=html('td','event-roster-empty',active.rows.length?'No sign-ups match your search or filters.':'No one has signed up yet.');cell.colSpan=Math.max(1,visible.length);tr.append(cell);tableBody.append(tr)}
     for(const row of selectedRows){
       const tr=html('tr');for(const name of visible){const td=html('td',name==='Student'?'event-roster-student':name==='Actions'?'event-roster-row-actions':name==='Status'?`event-roster-status status-${currentStatus(row).toLowerCase().replace(/\W+/g,'-')}`:'');td.dataset.rosterColumn=name;
